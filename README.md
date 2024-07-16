@@ -31,13 +31,19 @@ Typical flow:
 
 ### Running the demo
 
-In terminal 1, run the prover agent:
+In terminal 1, run the nostr relay:
+
+```bash
+docker run -p 8080:8080 scsibug/nostr-rs-relay
+```
+
+In terminal 2, run the prover agent:
 
 ```bash
 cargo run --bin prover_agent
 ```
 
-In terminal 2, run the user CLI:
+In terminal 3, run the user CLI:
 
 ```bash
 cargo run --bin user_cli
@@ -56,3 +62,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🙏 Acknowledgements
 
 This demo is powered by the amazing [STWO Prover](https://github.com/starkware-libs/stwo) from StarkWare. A big thank you to the StarkWare team and all contributors!
+
+## 📚 Resources
+
+- [Nostr Rust relay](https://github.com/scsibug/nostr-rs-relay/)
+- [Nostr web tooling](https://nostrtool.com/)

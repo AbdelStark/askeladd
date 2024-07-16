@@ -20,6 +20,7 @@ async fn main() -> Result<()> {
     }
 
     client.connect().await;
+    println!("Client connected to relays.");
 
     let proving_req_sub_id = SubscriptionId::new(PROVING_REQ_SUB_ID);
     let filter = Filter::new().kind(Kind::TextNote).author(user_public_key);
@@ -30,6 +31,7 @@ async fn main() -> Result<()> {
 
     let proving_service: ProverService = Default::default();
 
+    println!("Subscribed to proving requests, waiting for requests...");
     client
         .handle_notifications(|notification| async {
             if let RelayPoolNotification::Event {

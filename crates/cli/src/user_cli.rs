@@ -19,6 +19,7 @@ async fn main() -> Result<()> {
     }
 
     client.connect().await;
+    println!("Client connected to relays.");
 
     // Generate a unique request ID
     let request_id = Uuid::new_v4().to_string();
@@ -34,6 +35,7 @@ async fn main() -> Result<()> {
     let request_json = serde_json::to_string(&proving_request)?;
 
     // Publish the proving request
+    println!("Publishing proving request...");
     let event_id = client.publish_text_note(request_json, []).await?;
 
     println!("Proving request published with event ID: {}", event_id);
@@ -67,6 +69,7 @@ async fn main() -> Result<()> {
                     {
                         // Verify the proof
                         let verifier_service: VerifierService = Default::default();
+                        println!("Verifying proof...");
                         match verifier_service.verify_proof(response) {
                             Ok(_) => println!("Proof successfully verified"),
                             Err(e) => println!("Proof verification failed: {}", e),
