@@ -14,6 +14,8 @@ Askeladd leverages [Nostr](https://github.com/nostr-protocol/nostr) for the comm
 
 As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there will be a need for decentralised infrastructure to be able to generate and verify proofs in a censorship-resistant way. Not everythng has to live on blockchain, and Askeladd is here to help, leveraging the simplicity of Nostr.
 
+> **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
+
 ## Architecture
 
 ![Askeladd Architecture](./docs/img/askeladd-architecture.png)
