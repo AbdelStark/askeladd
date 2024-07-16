@@ -5,6 +5,14 @@ resolver = "2"
 [workspace.package]
 version = "0.1.1"
 edition = "2021"
+authors = ["@AbdelStark"]
+homepage = "https://github.com/AbdelStark/askeladd"
+repository = "https://github.com/AbdelStark/askeladd.git"
+license = "MIT"
+
 
 [workspace.dependencies]
 stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
+tokio = { version = "1", default-features = false }
+tracing = { version = "0.1", default-features = false }
+tracing-subscriber = "0.3"

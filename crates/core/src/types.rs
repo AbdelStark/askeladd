@@ -1,18 +1,35 @@
+use serde::{Deserialize, Serialize};
 use stwo_prover::core::prover::StarkProof;
 
-/// A request to generate a proof for a Fibonnacci sequence.
+use crate::wrappers::{ConversionError, StarkProofWrapper};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FibonnacciProvingRequest {
-    /// The size of the log to generate.
+    pub request_id: String,
     pub log_size: u32,
-    /// The claim to be proved.
     pub claim: u32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct FibonnacciProvingResponse {
-    /// The size of the log to generate.
+    pub request_id: String,
     pub log_size: u32,
-    /// The claim to be proved.
     pub claim: u32,
-    /// The proof generated for the request.
-    pub proof: StarkProof,
+    pub proof: StarkProofWrapper,
+}
+
+impl FibonnacciProvingResponse {
+    pub fn new(request_id: String, log_size: u32, claim: u32, proof: StarkProof) -> Self {
+        Self {
+            request_id,
+            log_size,
+            claim,
+            proof: proof.into(),
+        }
+    }
+
+    pub fn into_stark_proof(self) -> Result<(String, u32, u32, StarkProof), ConversionError> {
+        let proof = self.proof.try_into().unwrap();
+        Ok((self.request_id, self.log_size, self.claim, proof))
+    }
 }

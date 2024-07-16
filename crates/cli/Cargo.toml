@@ -7,3 +7,20 @@ edition.workspace = true
 
 [dependencies]
 askeladd-core = { path = "../core" }
+nostr-sdk = "0.32.0"
+tokio = { version = "1", default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.3", features = ["v4"] }
+
+[[bin]]
+name = "user_cli"
+path = "src/user_cli.rs"
+
+[[bin]]
+name = "prover_agent"
+path = "src/prover_agent.rs"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros"] }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

@@ -14,11 +14,12 @@ impl ProverService {
     ) -> Result<FibonnacciProvingResponse, ProvingError> {
         let fib = Fibonacci::new(request.log_size, BaseField::from(request.claim));
         match fib.prove() {
-            Ok(proof) => Ok(FibonnacciProvingResponse {
+            Ok(proof) => Ok(FibonnacciProvingResponse::new(
+                request.request_id,
+                request.log_size,
+                request.claim,
                 proof,
-                log_size: request.log_size,
-                claim: request.claim,
-            }),
+            )),
             Err(e) => Err(e),
         }
     }
