@@ -29,17 +29,21 @@ Typical flow:
 
 ## Getting Started
 
-### Running the CLI
+### Running the demo
+
+In terminal 1, run the prover agent:
 
 ```bash
-cargo run --bin askeladd-cli
+cargo run --bin prover_agent
 ```
 
-### Use as library
+In terminal 2, run the user CLI:
 
 ```bash
-cargo add askeladd-core
+cargo run --bin user_cli
 ```
+
+The user CLI binary will submit a proving request to the Nostr network. The prover agent will generate a proof for the request and publish it to the Nostr network. The user CLI binary will be able to verify the proof.
 
 ## 🤝 Contributing
 
