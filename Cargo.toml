@@ -1,0 +1,10 @@
+[workspace]
+members = ["crates/cli", "crates/core"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.1"
+edition = "2021"
+
+[workspace.dependencies]
+stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }

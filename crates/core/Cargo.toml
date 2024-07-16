@@ -1,0 +1,7 @@
+[package]
+name = "askeladd-core"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+stwo-prover.workspace = true
