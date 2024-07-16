@@ -1,18 +1,19 @@
+use askeladd_core::data_fixture::{self, PROVING_REQ_SUB_ID, SUBSCRIBED_RELAYS};
 use askeladd_core::prover_service::ProverService;
 use askeladd_core::types::FibonnacciProvingRequest;
 use nostr_sdk::prelude::*;
 
-const SUBSCRIBED_RELAYS: &[&str] = &[
-    "wss://nostr.oxtr.dev",
-    "wss://relay.damus.io",
-    "wss://nostr.openchain.fr",
-];
-const PROVING_REQ_SUB_ID: &str = "askeladd_proving_request";
-
 #[tokio::main]
 async fn main() -> Result<()> {
+    let user_secret_key = SecretKey::from_bech32(data_fixture::USER_BECH32_SK)?;
+    let user_keys = Keys::new(user_secret_key);
+    let user_public_key = user_keys.public_key();
+
+    let prover_agent_keys =
+        Keys::new(SecretKey::from_bech32(data_fixture::PROVER_AGENT_SK).unwrap());
+
     let opts = Options::new().wait_for_send(false);
-    let client = Client::builder().opts(opts).build();
+    let client = Client::with_opts(&prover_agent_keys, opts);
 
     for relay in SUBSCRIBED_RELAYS {
         client.add_relay(Url::parse(relay).unwrap()).await?;
@@ -21,7 +22,7 @@ async fn main() -> Result<()> {
     client.connect().await;
 
     let proving_req_sub_id = SubscriptionId::new(PROVING_REQ_SUB_ID);
-    let filter = Filter::new().kind(Kind::TextNote);
+    let filter = Filter::new().kind(Kind::TextNote).author(user_public_key);
 
     client
         .subscribe_with_id(proving_req_sub_id.clone(), vec![filter], None)
