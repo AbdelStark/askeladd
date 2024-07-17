@@ -31,6 +31,13 @@ Typical flow:
 3. The proof is published to the Nostr network
 4. The user can verify the proof using the Askeladd verifier agent
 
+## Open questions / TODOs
+
+- [ ] Use [NIP-90 Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
+- [ ] Use [NIP-89 Recommended Application Handlers](https://nips.nostr.com/89) for prover agents to advertise their support for certain types of proving requests, their pricing model, etc.
+- [ ] Use [NIP-57 - Lightning Zaps](https://nips.nostr.com/57) to handle the payment for the proofs.
+- [ ] Use [NIP-13 - Proof of Work](https://nips.nostr.com/13) for spam protection.
+
 ## Running the demo
 
 ### Using docker-compose
