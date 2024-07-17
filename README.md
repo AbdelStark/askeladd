@@ -33,10 +33,11 @@ Typical flow:
 
 ## Open questions / TODOs
 
-- [ ] Use [NIP-90 Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
-- [ ] Use [NIP-89 Recommended Application Handlers](https://nips.nostr.com/89) for prover agents to advertise their support for certain types of proving requests, their pricing model, etc.
+- [ ] Use [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
+- [ ] Use [NIP-89 -Recommended Application Handlers](https://nips.nostr.com/89) for prover agents to advertise their support for certain types of proving requests, their pricing model, etc.
 - [ ] Use [NIP-57 - Lightning Zaps](https://nips.nostr.com/57) to handle the payment for the proofs.
 - [ ] Use [NIP-13 - Proof of Work](https://nips.nostr.com/13) for spam protection.
+- [ ] Use [NIP-94 - File Metadata](https://nips.nostr.com/94) and/or [NIP-96 - HTTP File Storage Integration](https://nips.nostr.com/96) to handle transport of the proofs and metadata over the network.
 
 ## Running the demo
 
