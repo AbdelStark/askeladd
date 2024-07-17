@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::prover::StarkProof;
 
-use crate::wrappers::{ConversionError, StarkProofWrapper};
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FibonnacciProvingRequest {
     pub request_id: String,
@@ -15,7 +13,7 @@ pub struct FibonnacciProvingResponse {
     pub request_id: String,
     pub log_size: u32,
     pub claim: u32,
-    pub proof: StarkProofWrapper,
+    pub proof: StarkProof,
 }
 
 impl FibonnacciProvingResponse {
@@ -24,12 +22,7 @@ impl FibonnacciProvingResponse {
             request_id,
             log_size,
             claim,
-            proof: proof.into(),
+            proof,
         }
-    }
-
-    pub fn into_stark_proof(self) -> Result<(String, u32, u32, StarkProof), ConversionError> {
-        let proof = self.proof.try_into().unwrap();
-        Ok((self.request_id, self.log_size, self.claim, proof))
     }
 }
