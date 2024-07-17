@@ -18,7 +18,7 @@ As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there
 
 Check out this video demonstration of Askeladd in action:
 
-<https://github.com/AbdelStark/askeladd/assets/AbdelStark/docs/img/askeladd-demo.mp4>
+[![asciicast](https://asciinema.org/a/668441.png)](https://asciinema.org/a/668441)
 
 ## Architecture
 
