@@ -16,6 +16,10 @@ As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there
 
 > **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
 
+Check out this video demonstration of Askeladd in action:
+
+<https://github.com/AbdelStark/askeladd/assets/AbdelStark/docs/img/askeladd-demo.mp4>
+
 ## Architecture
 
 ![Askeladd Architecture](./docs/img/askeladd-architecture.png)
@@ -27,9 +31,21 @@ Typical flow:
 3. The proof is published to the Nostr network
 4. The user can verify the proof using the Askeladd verifier agent
 
-## Getting Started
+## Running the demo
 
-### Running the demo
+### Using docker-compose
+
+```bash
+./run_demo.sh
+```
+
+### Manually
+
+Create a `.env` file, you can use the `.env.example` file as a reference.
+
+```bash
+cp .env.example .env
+```
 
 In terminal 1, run the nostr relay:
 

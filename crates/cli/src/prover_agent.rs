@@ -1,28 +1,32 @@
-use askeladd_core::data_fixture::{self, PROVING_REQ_SUB_ID, SUBSCRIBED_RELAYS};
+use askeladd_core::config::Settings;
 use askeladd_core::prover_service::ProverService;
 use askeladd_core::types::FibonnacciProvingRequest;
+use dotenv::dotenv;
 use nostr_sdk::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let user_secret_key = SecretKey::from_bech32(data_fixture::USER_BECH32_SK)?;
+    // Load configuration from .env file
+    dotenv().ok();
+    let settings = Settings::new().expect("Failed to load settings");
+
+    let user_secret_key = SecretKey::from_bech32(&settings.user_bech32_sk)?;
     let user_keys = Keys::new(user_secret_key);
     let user_public_key = user_keys.public_key();
 
-    let prover_agent_keys =
-        Keys::new(SecretKey::from_bech32(data_fixture::PROVER_AGENT_SK).unwrap());
+    let prover_agent_keys = Keys::new(SecretKey::from_bech32(&settings.prover_agent_sk).unwrap());
 
     let opts = Options::new().wait_for_send(false);
     let client = Client::with_opts(&prover_agent_keys, opts);
 
-    for relay in SUBSCRIBED_RELAYS {
-        client.add_relay(Url::parse(relay).unwrap()).await?;
+    for relay in settings.subscribed_relays {
+        client.add_relay(&relay).await?;
     }
 
     client.connect().await;
     println!("Client connected to relays.");
 
-    let proving_req_sub_id = SubscriptionId::new(PROVING_REQ_SUB_ID);
+    let proving_req_sub_id = SubscriptionId::new(settings.proving_req_sub_id);
     let filter = Filter::new().kind(Kind::TextNote).author(user_public_key);
 
     client

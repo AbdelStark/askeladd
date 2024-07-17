@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  nostr-relay:
+    image: scsibug/nostr-rs-relay:latest
+    ports:
+      - "8080:8080"
+
+  prover-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: prover_agent
+    env_file: .env
+    volumes:
+      - ./config:/usr/src/askeladd/config
+    depends_on:
+      nostr-relay:
+        condition: service_started
+    environment:
+      - APP_SUBSCRIBED_RELAYS=ws://nostr-relay:8080
+
+  user-cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: user_cli
+    env_file: .env
+    volumes:
+      - ./config:/usr/src/askeladd/config
+    depends_on:
+      nostr-relay:
+        condition: service_started
+      prover-agent:
+        condition: service_started
+    environment:
+      - APP_SUBSCRIBED_RELAYS=ws://nostr-relay:8080

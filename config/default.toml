@@ -1,0 +1,5 @@
+subscribed_relays = ["ws://127.0.0.1:8080"]
+proving_req_sub_id = "askeladd.proving.request"
+proving_resp_sub_id = "askeladd.proving.response"
+user_bech32_sk = "nsec1tsaxyqcxp8atqup4facwp0as52f2c0evj4cxpw6yaqetusu7sg8qqzkr3k"
+prover_agent_sk = "nsec18s6wcqlkglhjmfz3tnjkh0qscf6cqen96ecp5k5k73ktew3l97tstuvy2x"
