@@ -1,13 +1,18 @@
-use askeladd_core::config::Settings;
-use askeladd_core::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
-use askeladd_core::verifier_service::VerifierService;
+use askeladd::config::Settings;
+use askeladd::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
+use askeladd::verifier_service::VerifierService;
 use dotenv::dotenv;
 use nostr_sdk::prelude::*;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    pretty_env_logger::init();
+
     println!("User agent starting...");
     println!("Waiting 5 seconds before submitting proving request...");
     // Add a delay before connecting
@@ -30,7 +35,7 @@ async fn main() -> Result<()> {
     }
 
     client.connect().await;
-    println!("Client connected to relays.");
+    debug!("Nostr client connected to relays.");
 
     // Generate a unique request ID
     let request_id = Uuid::new_v4().to_string();
@@ -46,10 +51,10 @@ async fn main() -> Result<()> {
     let request_json = serde_json::to_string(&proving_request)?;
 
     // Publish the proving request
-    println!("Publishing proving request...");
+    debug!("Publishing proving request...");
     let event_id = client.publish_text_note(request_json, []).await?;
 
-    println!("Proving request published with event ID: {}", event_id);
+    info!("Proving request published [{}]", event_id.to_string());
 
     // Subscribe to proving responses
     let proving_resp_sub_id = SubscriptionId::new(settings.proving_resp_sub_id);
@@ -60,7 +65,8 @@ async fn main() -> Result<()> {
 
     client
         .subscribe_with_id(proving_resp_sub_id.clone(), vec![filter], None)
-        .await;
+        .await
+        .expect("Failed to subscribe to proving responses");
 
     // Handle subscription notifications
     client
@@ -72,7 +78,7 @@ async fn main() -> Result<()> {
             } = notification
             {
                 if subscription_id == proving_resp_sub_id {
-                    println!("Proving response received: {:?}", event);
+                    info!("Proving response received [{}]", event.id.to_string());
 
                     // Deserialize the response
                     if let Ok(response) =
@@ -80,10 +86,10 @@ async fn main() -> Result<()> {
                     {
                         // Verify the proof
                         let verifier_service: VerifierService = Default::default();
-                        println!("Verifying proof...");
+                        info!("Verifying proof...");
                         match verifier_service.verify_proof(response) {
-                            Ok(_) => println!("Proof successfully verified"),
-                            Err(e) => println!("Proof verification failed: {}", e),
+                            Ok(_) => info!("Proof successfully verified"),
+                            Err(e) => error!("Proof verification failed: {}", e),
                         }
                         // Stop listening after receiving and verifying the response
                         return Ok(true);

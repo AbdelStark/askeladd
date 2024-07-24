@@ -1,11 +1,16 @@
-use askeladd_core::config::Settings;
-use askeladd_core::prover_service::ProverService;
-use askeladd_core::types::FibonnacciProvingRequest;
+use askeladd::config::Settings;
+use askeladd::prover_service::ProverService;
+use askeladd::types::FibonnacciProvingRequest;
 use dotenv::dotenv;
 use nostr_sdk::prelude::*;
+extern crate pretty_env_logger;
+#[macro_use]
+extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    pretty_env_logger::init();
+
     // Load configuration from .env file
     dotenv().ok();
     let settings = Settings::new().expect("Failed to load settings");
@@ -24,18 +29,19 @@ async fn main() -> Result<()> {
     }
 
     client.connect().await;
-    println!("Client connected to relays.");
+    debug!("Nostr client connected to relays.");
 
     let proving_req_sub_id = SubscriptionId::new(settings.proving_req_sub_id);
     let filter = Filter::new().kind(Kind::TextNote).author(user_public_key);
 
     client
         .subscribe_with_id(proving_req_sub_id.clone(), vec![filter], None)
-        .await;
+        .await
+        .expect("Failed to subscribe to proving requests");
 
     let proving_service: ProverService = Default::default();
 
-    println!("Subscribed to proving requests, waiting for requests...");
+    info!("Subscribed to proving requests, waiting for requests...");
     client
         .handle_notifications(|notification| async {
             if let RelayPoolNotification::Event {
@@ -45,7 +51,7 @@ async fn main() -> Result<()> {
             } = notification
             {
                 if subscription_id == proving_req_sub_id {
-                    println!("Proving request received: {:?}", event);
+                    info!("Proving request received [{}]", event.id.to_string());
 
                     // Deserialize the request
                     if let Ok(request) =
@@ -61,9 +67,9 @@ async fn main() -> Result<()> {
                                 let tags = vec![];
                                 let event_id =
                                     client.publish_text_note(response_json, tags).await?;
-                                println!("Proving response published with event ID: {}", event_id);
+                                info!("Proving response published [{}]", event_id.to_string());
                             }
-                            Err(e) => println!("Proof generation failed: {}", e),
+                            Err(e) => error!("Proof generation failed: {}", e),
                         }
                     }
                 }

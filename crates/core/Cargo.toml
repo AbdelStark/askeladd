@@ -1,5 +1,5 @@
 [package]
-name = "askeladd-core"
+name = "askeladd"
 version.workspace = true
 edition.workspace = true
 
