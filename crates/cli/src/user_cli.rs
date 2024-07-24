@@ -5,7 +5,6 @@ use dotenv::dotenv;
 use nostr_sdk::prelude::*;
 use tokio::time::{sleep, Duration};
 use uuid::Uuid;
-extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 

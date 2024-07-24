@@ -3,7 +3,7 @@ use askeladd::prover_service::ProverService;
 use askeladd::types::FibonnacciProvingRequest;
 use dotenv::dotenv;
 use nostr_sdk::prelude::*;
-extern crate pretty_env_logger;
+
 #[macro_use]
 extern crate log;
 
