@@ -10,10 +10,13 @@ extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    pretty_env_logger::init();
+    // Initialize logger and set default level to info
+    pretty_env_logger::formatted_builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
 
-    println!("User agent starting...");
-    println!("Waiting 5 seconds before submitting proving request...");
+    info!("User agent starting...");
+    info!("Waiting 5 seconds before submitting proving request...");
     // Add a delay before connecting
     sleep(Duration::from_secs(5)).await;
 

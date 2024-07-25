@@ -9,9 +9,12 @@ extern crate log;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    pretty_env_logger::init();
+    // Initialize logger and set default level to info
+    pretty_env_logger::formatted_builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
 
-    // Load configuration from .env file
+    // Load configuration from .env filed
     dotenv().ok();
     let settings = Settings::new().expect("Failed to load settings");
 
