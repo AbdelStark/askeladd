@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>Askeladd</h1>
+    <img src="docs/img/askeladd-text.png" alt="Askeladd" height="100">
     <h2>Censorship-resistant global proving network.</h2>
 
 <a href="https://github.com/AbdelStark/askeladd/actions/workflows/ci.yaml"><img alt="GitHub Workflow Status (with event)" src="https://img.shields.io/github/actions/workflow/status/AbdelStark/askeladd/ci.yaml?style=for-the-badge" height=30></a>
