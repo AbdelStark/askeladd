@@ -1,6 +1,7 @@
 use askeladd::config::Settings;
+use askeladd::db::{Database, RequestStatus};
 use askeladd::prover_service::ProverService;
-use askeladd::types::FibonnacciProvingRequest;
+use askeladd::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
 use dotenv::dotenv;
 use nostr_sdk::prelude::*;
 
@@ -42,6 +43,9 @@ async fn main() -> Result<()> {
         .await
         .expect("Failed to subscribe to proving requests");
 
+    let db =
+        Database::new(settings.db_path.to_str().unwrap()).expect("Failed to initialize database");
+
     let proving_service: ProverService = Default::default();
 
     info!("Subscribed to proving requests, waiting for requests...");
@@ -60,8 +64,37 @@ async fn main() -> Result<()> {
                     if let Ok(request) =
                         serde_json::from_str::<FibonnacciProvingRequest>(&event.content)
                     {
+                        // Check if request has already been processed
+                        if let Ok(Some(status)) = db.get_request_status(&request.request_id) {
+                            match status {
+                                RequestStatus::Completed => {
+                                    info!(
+                                        "Request {} already processed, skipping",
+                                        request.request_id
+                                    );
+                                    return Ok(false);
+                                }
+                                RequestStatus::Failed => {
+                                    info!("Request {} failed before, retrying", request.request_id);
+                                }
+                                RequestStatus::Pending => {
+                                    info!(
+                                        "Request {} is already pending, skipping",
+                                        request.request_id
+                                    );
+                                    return Ok(false);
+                                }
+                            }
+                        } else {
+                            // New request, insert into database
+                            if let Err(e) = db.insert_request(&request) {
+                                error!("Failed to insert request into database: {}", e);
+                                return Ok(false);
+                            }
+                        }
+
                         // Generate the proof
-                        match proving_service.generate_proof(request) {
+                        match proving_service.generate_proof(request.clone()) {
                             Ok(response) => {
                                 // Serialize the response to JSON
                                 let response_json = serde_json::to_string(&response)?;
@@ -71,8 +104,27 @@ async fn main() -> Result<()> {
                                 let event_id =
                                     client.publish_text_note(response_json, tags).await?;
                                 info!("Proving response published [{}]", event_id.to_string());
+
+                                // Update database
+                                if let Err(e) = db.update_request(
+                                    &response.request_id,
+                                    &response,
+                                    RequestStatus::Completed,
+                                ) {
+                                    error!("Failed to update request in database: {}", e);
+                                }
                             }
-                            Err(e) => error!("Proof generation failed: {}", e),
+                            Err(e) => {
+                                error!("Proof generation failed: {}", e);
+                                // Update database with failed status
+                                if let Err(db_err) = db.update_request(
+                                    &request.request_id,
+                                    &FibonnacciProvingResponse::default(),
+                                    RequestStatus::Failed,
+                                ) {
+                                    error!("Failed to update request in database: {}", db_err);
+                                }
+                            }
                         }
                     }
                 }

@@ -1,4 +1,5 @@
 use std::env;
+use std::path::PathBuf;
 
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
@@ -18,6 +19,8 @@ pub struct Settings {
     pub proving_resp_sub_id: String,
     pub user_bech32_sk: String,
     pub prover_agent_sk: String,
+    #[serde(default = "default_db_path")]
+    pub db_path: PathBuf,
 }
 
 fn deserialize_subscribed_relays<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>
@@ -31,26 +34,33 @@ where
     })
 }
 
+fn default_db_path() -> PathBuf {
+    let home = env::var("HOME").expect("HOME environment variable not set");
+    PathBuf::from(home)
+        .join(".askeladd")
+        .join("prover_agent.db")
+}
+
 impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let run_mode = env::var("RUN_MODE").unwrap_or_else(|_| "development".into());
 
         let s = Config::builder()
-            // Start off by merging in the "default" configuration file
             .add_source(File::with_name("config/default"))
-            // Add in the current environment file
-            // Default to 'development' env
-            // Note that this file is _optional_
             .add_source(File::with_name(&format!("config/{}", run_mode)).required(false))
-            // Add in a local configuration file
-            // This file shouldn't be checked in to git
             .add_source(File::with_name("config/local").required(false))
-            // Add in settings from the environment (with a prefix of APP)
-            // Eg.. `APP_DEBUG=1 ./target/app` would set the `debug` key
             .add_source(Environment::with_prefix("APP"))
             .build()?;
 
-        // You can deserialize (and thus freeze) the entire configuration as
-        s.try_deserialize()
+        let settings: Settings = s.try_deserialize()?;
+
+        // Ensure the directory for the database exists
+        if let Some(parent) = settings.db_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| {
+                ConfigError::Message(format!("Failed to create directory for database: {}", e))
+            })?;
+        }
+
+        Ok(settings)
     }
 }

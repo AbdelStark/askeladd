@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::prover::StarkProof;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FibonnacciProvingRequest {
     pub request_id: String,
     pub log_size: u32,
     pub claim: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct FibonnacciProvingResponse {
     pub request_id: String,
     pub log_size: u32,
     pub claim: u32,
-    pub proof: StarkProof,
+    pub proof: Option<StarkProof>,
 }
 
 impl FibonnacciProvingResponse {
@@ -22,7 +22,7 @@ impl FibonnacciProvingResponse {
             request_id,
             log_size,
             claim,
-            proof,
+            proof: Some(proof),
         }
     }
 }
