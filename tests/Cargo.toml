@@ -5,5 +5,9 @@ edition = "2018"
 
 [dependencies]
 askeladd = { path = "../crates/core" }
-nostr-sdk = "0.32.0"
+nostr-sdk = "0.33.0"
 tokio = { version = "1", default-features = false }
+
+[[test]]
+name = "e2e_test"
+path = "tests/src/e2e_test.rs"

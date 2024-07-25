@@ -1,12 +1,12 @@
 
 #[cfg(test)]
-mod tests {
+mod e2e_test {
     use askeladd::config::Settings;
     use askeladd::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
     use nostr_sdk::prelude::*;
     use std::time::Duration;
     #[tokio::test]
-    async fn test_e2e_flow() {
+    async fn e2e_test() {
         let settings = Settings::new().expect("Failed to load settings");
 
         let secret_key = SecretKey::from_bech32(&settings.user_bech32_sk).unwrap();
