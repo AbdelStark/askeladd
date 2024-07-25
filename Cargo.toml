@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/cli", "crates/core"]
+members = ["crates/cli", "crates/core", "tests"]
 resolver = "2"
 
 [workspace.package]
@@ -12,9 +12,8 @@ license = "MIT"
 
 
 [workspace.dependencies]
-#stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
+stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
 # Temporary fork for serde compatibility of StarkProof
-stwo-prover = { git = "https://github.com/MSghais/stwo.git", rev = "8401c93" }
 tokio = { version = "1", default-features = false }
 tracing = { version = "0.1", default-features = false }
 tracing-subscriber = "0.3"

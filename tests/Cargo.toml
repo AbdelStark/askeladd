@@ -1,0 +1,9 @@
+[package]
+name = "tests"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+askeladd = { path = "../crates/core" }
+nostr-sdk = "0.32.0"
+tokio = { version = "1", default-features = false }
