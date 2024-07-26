@@ -20,6 +20,8 @@ use crate::prover_service::ProverService;
 pub struct ServiceProvider {
     /// Application settings
     settings: Settings,
+    /// Prover Agent Nostr keys
+    prover_agent_keys: Keys,
     /// Service for generating proofs
     proving_service: ProverService,
     /// Nostr client for communication
@@ -67,6 +69,7 @@ impl ServiceProvider {
 
         Ok(Self {
             settings,
+            prover_agent_keys,
             proving_service: Default::default(),
             nostr_client: client,
             db,
@@ -177,11 +180,15 @@ impl ServiceProvider {
                     job_id: job_id.clone(),
                     response,
                 };
-                let response_json = serde_json::to_string(&job_result)?;
-                let event_id = self
-                    .nostr_client
-                    .publish_text_note(response_json, vec![])
-                    .await?;
+                let _response_json = serde_json::to_string(&job_result)?;
+
+                let job_result_event: Event = EventBuilder::job_result(*event, 0, None)
+                    .unwrap()
+                    .to_event(&self.prover_agent_keys)
+                    .unwrap();
+
+                println!("Job result event: {:?}", job_result_event);
+                let event_id = self.nostr_client.send_event(job_result_event).await?;
                 info!("Proving response published [{}]", event_id.to_string());
 
                 self.db.update_request(
