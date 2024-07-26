@@ -7,8 +7,8 @@ pub mod constants {
     pub const DVM_DESCRIPTION: &str = "Censorship-resistant global proving network.";
     pub const SERVICE_NAME: &str = "generate-zk-proof";
     pub const VERSION: &str = "0.1.0";
-    pub const JOB_REQUEST_KIND: u64 = 5600;
-    pub const JOB_RESULT_KIND: u64 = 6600;
+    pub const JOB_REQUEST_KIND: u16 = 5600;
+    pub const JOB_RESULT_KIND: u16 = 6600;
 }
 
 pub mod types {

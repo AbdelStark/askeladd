@@ -6,6 +6,7 @@ use thiserror::Error;
 use tokio::time::timeout;
 
 use crate::config::Settings;
+use crate::dvm::constants::*;
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult};
 use crate::verifier_service::VerifierService;
 
@@ -16,6 +17,8 @@ use crate::verifier_service::VerifierService;
 pub struct Customer {
     /// Application settings
     settings: Settings,
+    /// User keys
+    user_keys: Keys,
     /// Nostr client for network communication
     nostr_client: Client,
     /// Service for verifying proofs
@@ -50,6 +53,7 @@ impl Customer {
 
         Ok(Self {
             settings,
+            user_keys,
             nostr_client: client,
             verifier_service: Default::default(),
         })
@@ -70,12 +74,25 @@ impl Customer {
 
     /// Submits a job request to the Nostr network
     pub async fn submit_job(&self, job: GenerateZKPJobRequest) -> Result<(), CustomerError> {
-        let request_json = serde_json::to_string(&job)?;
         debug!("Publishing proving request...");
-        let event_id = self
-            .nostr_client
-            .publish_text_note(request_json, [])
-            .await?;
+
+        let tags = vec![
+            Tag::parse(&[
+                "param",
+                "log_size",
+                job.request.log_size.to_string().as_str(),
+            ])
+            .unwrap(),
+            Tag::parse(&["param", "claim", job.request.claim.to_string().as_str()]).unwrap(),
+            Tag::parse(&["output", "text/json"]).unwrap(),
+        ];
+        let event: Event = EventBuilder::job_request(Kind::Custom(JOB_REQUEST_KIND), tags)
+            .unwrap()
+            .to_event(&self.user_keys)
+            .unwrap();
+
+        let event_id = self.nostr_client.send_event(event).await?;
+
         info!("Proving request published [{}]", event_id.to_string());
         Ok(())
     }
@@ -182,5 +199,42 @@ impl Customer {
             .verify_proof(job_result.response.clone())
             .map(|_| true)
             .map_err(|e| CustomerError::VerificationError(e.to_string()))
+    }
+}
+#[cfg(test)]
+mod tests {
+
+    use nostr_sdk::prelude::*;
+
+    use crate::nostr_utils::extract_params_from_tags;
+
+    #[test]
+    fn test_submit_job() {
+        let tags = vec![
+            Tag::parse(&["param", "log_size", "5"]).unwrap(),
+            Tag::parse(&["param", "claim", "443693538"]).unwrap(),
+            Tag::parse(&["output", "text/json"]).unwrap(),
+        ];
+        let params = extract_params_from_tags(&tags);
+
+        assert_eq!(params.get("log_size"), Some(&"5".to_string()));
+        assert_eq!(params.get("claim"), Some(&"443693538".to_string()));
+        assert_eq!(params.get("output"), Some(&"text/json".to_string()));
+
+        // Convert and check numeric parameters
+        let log_size = params
+            .get("log_size")
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap();
+        let claim = params
+            .get("claim")
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap();
+
+        assert_eq!(log_size, 5);
+        assert_eq!(claim, 443693538);
+
+        // Print extracted parameters for debugging
+        println!("Extracted parameters: {:?}", params);
     }
 }
