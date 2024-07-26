@@ -9,12 +9,20 @@ use crate::config::Settings;
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult};
 use crate::verifier_service::VerifierService;
 
+/// Represents a customer in the Askeladd system.
+///
+/// The `Customer` struct is responsible for interacting with the Nostr network,
+/// submitting job requests, waiting for job results, and verifying proofs.
 pub struct Customer {
+    /// Application settings
     settings: Settings,
+    /// Nostr client for network communication
     nostr_client: Client,
+    /// Service for verifying proofs
     verifier_service: VerifierService,
 }
 
+/// Errors that can occur during Customer operations
 #[derive(Error, Debug)]
 pub enum CustomerError {
     #[error("Failed to connect to Nostr relay: {0}")]
@@ -34,6 +42,7 @@ pub enum CustomerError {
 }
 
 impl Customer {
+    /// Creates a new Customer instance
     pub fn new(settings: Settings) -> Result<Self, CustomerError> {
         let user_keys = Keys::new(SecretKey::from_bech32(&settings.user_bech32_sk).unwrap());
         let opts = Options::new().wait_for_send(false);
@@ -46,6 +55,7 @@ impl Customer {
         })
     }
 
+    /// Initializes the Customer by connecting to Nostr relays
     pub async fn init(&mut self) -> Result<(), CustomerError> {
         for relay in &self.settings.subscribed_relays {
             self.nostr_client
@@ -58,6 +68,7 @@ impl Customer {
         Ok(())
     }
 
+    /// Submits a job request to the Nostr network
     pub async fn submit_job(&self, job: GenerateZKPJobRequest) -> Result<(), CustomerError> {
         let request_json = serde_json::to_string(&job)?;
         debug!("Publishing proving request...");
@@ -69,6 +80,7 @@ impl Customer {
         Ok(())
     }
 
+    /// Waits for a job result from the Nostr network
     pub async fn wait_for_job_result(
         &self,
         job_id: &str,
@@ -77,16 +89,20 @@ impl Customer {
         let proving_resp_sub_id = SubscriptionId::new(&self.settings.proving_resp_sub_id);
         let prover_agent_public_key = PublicKey::from_bech32(&self.settings.prover_agent_pk)
             .map_err(|e| CustomerError::Unknown(format!("Failed to parse public key: {}", e)))?;
+
+        // Set up a filter for the job result events
         let filter = Filter::new()
             .kind(Kind::TextNote)
             .author(prover_agent_public_key)
-            .since(Timestamp::now() - Duration::from_secs(10));
+            .since(Timestamp::now() - Duration::from_secs(60));
 
+        // Subscribe to the Nostr events
         self.nostr_client
             .subscribe_with_id(proving_resp_sub_id.clone(), vec![filter], None)
             .await
             .map_err(|e| CustomerError::NostrSubscriptionError(e.to_string()))?;
 
+        // Wait for the job result with a timeout
         let timeout_duration = Duration::from_secs(timeout_secs);
         timeout(
             timeout_duration,
@@ -96,6 +112,7 @@ impl Customer {
         .map_err(|_| CustomerError::JobTimeout(job_id.to_string()))?
     }
 
+    /// Listens for a specific job result from the Nostr network
     async fn listen_for_job_result(
         &self,
         job_id: &str,
@@ -104,6 +121,7 @@ impl Customer {
         let job_id = job_id.to_string();
         let subscription_id = subscription_id.clone();
 
+        // Handle incoming Nostr notifications
         self.nostr_client
             .handle_notifications(|notification| {
                 let job_id = job_id.clone();
@@ -121,19 +139,18 @@ impl Customer {
                             {
                                 if result.job_id == job_id {
                                     info!("Job result found for job_id: {}", job_id);
-                                    return Ok(true); // Signal that we've found the result
+                                    return Ok(true);
                                 }
                             }
                         }
                     }
-                    Ok(false) // Continue listening
+                    Ok(false)
                 }
             })
             .await
             .map_err(CustomerError::NostrClientError)?;
 
-        // If we've found the result, parse it again
-        // This is not ideal, but it works around the limitations of handle_notifications
+        // Fetch recent events to find the job result
         let events = self
             .nostr_client
             .get_events_of(
@@ -146,6 +163,7 @@ impl Customer {
             .await
             .map_err(CustomerError::NostrClientError)?;
 
+        // Find and return the matching job result
         for event in events {
             if let Ok(job_result) = serde_json::from_str::<GenerateZKPJobResult>(&event.content) {
                 if job_result.job_id == job_id {
@@ -157,6 +175,7 @@ impl Customer {
         Err(CustomerError::Unknown("Job result not found".to_string()))
     }
 
+    /// Verifies the proof in a job result
     pub fn verify_proof(&self, job_result: &GenerateZKPJobResult) -> Result<bool, CustomerError> {
         info!("Verifying proof...");
         self.verifier_service
