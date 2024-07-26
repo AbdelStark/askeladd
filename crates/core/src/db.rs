@@ -36,15 +36,11 @@ impl Database {
         Ok(())
     }
 
-    pub fn insert_request(&self, request: &FibonnacciProvingRequest) -> Result<()> {
+    pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
         self.conn.execute(
             "INSERT INTO requests (id, request_json, status) VALUES (?1, ?2, ?3)",
-            params![
-                request.request_id,
-                request_json,
-                RequestStatus::Pending.to_string()
-            ],
+            params![job_id, request_json, RequestStatus::Pending.to_string()],
         )?;
         Ok(())
     }
@@ -52,10 +48,13 @@ impl Database {
     pub fn update_request(
         &self,
         request_id: &str,
-        response: &FibonnacciProvingResponse,
+        response: Option<&FibonnacciProvingResponse>,
         status: RequestStatus,
     ) -> Result<()> {
-        let response_json = serde_json::to_string(response).unwrap();
+        let response_json = match response {
+            Some(response) => serde_json::to_string(response).unwrap(),
+            None => "".to_string(),
+        };
         self.conn.execute(
             "UPDATE requests SET response_json = ?1, status = ?2, updated_at = CURRENT_TIMESTAMP WHERE id = ?3",
             params![response_json, status.to_string(), request_id],

@@ -13,6 +13,6 @@ impl VerifierService {
         response: FibonnacciProvingResponse,
     ) -> Result<(), VerificationError> {
         let fib = Fibonacci::new(response.log_size, BaseField::from(response.claim));
-        fib.verify(response.proof.unwrap())
+        fib.verify(response.proof)
     }
 }

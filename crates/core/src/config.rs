@@ -19,6 +19,7 @@ pub struct Settings {
     pub proving_resp_sub_id: String,
     pub user_bech32_sk: String,
     pub prover_agent_sk: String,
+    pub prover_agent_pk: String,
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
 }
@@ -62,5 +63,11 @@ impl Settings {
         }
 
         Ok(settings)
+    }
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self::new().expect("Failed to load settings")
     }
 }

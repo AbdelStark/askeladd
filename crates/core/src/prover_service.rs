@@ -15,7 +15,6 @@ impl ProverService {
         let fib = Fibonacci::new(request.log_size, BaseField::from(request.claim));
         match fib.prove() {
             Ok(proof) => Ok(FibonnacciProvingResponse::new(
-                request.request_id,
                 request.log_size,
                 request.claim,
                 proof,
