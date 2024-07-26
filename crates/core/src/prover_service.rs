@@ -2,7 +2,7 @@ use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::ProvingError;
 use stwo_prover::examples::fibonacci::Fibonacci;
 
-use crate::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
+use crate::dvm::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
 
 #[derive(Debug, Default)]
 pub struct ProverService {}

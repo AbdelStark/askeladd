@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-use crate::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
+use crate::dvm::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
 
 pub struct Database {
     conn: Connection,

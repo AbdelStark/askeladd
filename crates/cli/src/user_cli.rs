@@ -1,7 +1,6 @@
 use askeladd::config::Settings;
 use askeladd::dvm::customer::Customer;
-use askeladd::dvm::types::GenerateZKPJobRequest;
-use askeladd::types::FibonnacciProvingRequest;
+use askeladd::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobRequest};
 use dotenv::dotenv;
 use log::info;
 
