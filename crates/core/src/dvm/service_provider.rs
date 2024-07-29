@@ -6,7 +6,9 @@ use thiserror::Error;
 
 use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
-use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult};
+use crate::dvm::constants::JOB_REQUEST_KIND;
+use crate::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobResult};
+use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 
 /// ServiceProvider is the main component of the Askeladd prover agent.
@@ -18,6 +20,8 @@ use crate::prover_service::ProverService;
 pub struct ServiceProvider {
     /// Application settings
     settings: Settings,
+    /// Prover Agent Nostr keys
+    prover_agent_keys: Keys,
     /// Service for generating proofs
     proving_service: ProverService,
     /// Nostr client for communication
@@ -65,6 +69,7 @@ impl ServiceProvider {
 
         Ok(Self {
             settings,
+            prover_agent_keys,
             proving_service: Default::default(),
             nostr_client: client,
             db,
@@ -90,7 +95,9 @@ impl ServiceProvider {
     /// This method subscribes to Nostr events and handles incoming proving requests
     pub async fn run(&self) -> Result<(), ServiceProviderError> {
         let proving_req_sub_id = SubscriptionId::new(&self.settings.proving_req_sub_id);
-        let filter = Filter::new().kind(Kind::TextNote).since(Timestamp::now());
+        let filter = Filter::new()
+            .kind(Kind::Custom(JOB_REQUEST_KIND))
+            .since(Timestamp::now());
 
         // Subscribe to Nostr events
         self.nostr_client
@@ -133,59 +140,68 @@ impl ServiceProvider {
 
     /// Handles a single proving request event
     async fn handle_event(&self, event: Box<Event>) -> Result<(), ServiceProviderError> {
-        debug!("Event received [{}]", event.id);
-        if let Ok(job_request) = serde_json::from_str::<GenerateZKPJobRequest>(&event.content) {
-            info!("Proving request received [{}]", event.id);
-            let request = job_request.request;
+        info!("Proving request received [{}]", event.id);
 
-            if let Some(status) = self.db.get_request_status(&job_request.job_id)? {
-                match status {
-                    RequestStatus::Completed => {
-                        info!("Request {} already processed, skipping", job_request.job_id);
-                        return Ok(());
-                    }
-                    RequestStatus::Failed => {
-                        info!("Request {} failed before, retrying", job_request.job_id);
-                    }
-                    RequestStatus::Pending => {
-                        info!(
-                            "Request {} is already pending, skipping",
-                            job_request.job_id
-                        );
-                        return Ok(());
-                    }
+        let job_id = event.id.to_string();
+        let tags = &event.tags;
+        let params = extract_params_from_tags(tags);
+        let log_size = params
+            .get("log_size")
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap();
+        let claim = params
+            .get("claim")
+            .and_then(|s| s.parse::<u32>().ok())
+            .unwrap();
+
+        let request = FibonnacciProvingRequest { log_size, claim };
+
+        if let Some(status) = self.db.get_request_status(&job_id)? {
+            match status {
+                RequestStatus::Completed => {
+                    info!("Request {} already processed, skipping", &job_id);
+                    return Ok(());
                 }
-            } else {
-                self.db.insert_request(&job_request.job_id, &request)?;
-            }
-
-            match self.proving_service.generate_proof(request) {
-                Ok(response) => {
-                    let job_result = GenerateZKPJobResult {
-                        job_id: job_request.job_id.clone(),
-                        response,
-                    };
-                    let response_json = serde_json::to_string(&job_result)?;
-                    let event_id = self
-                        .nostr_client
-                        .publish_text_note(response_json, vec![])
-                        .await?;
-                    info!("Proving response published [{}]", event_id.to_string());
-
-                    self.db.update_request(
-                        &job_request.job_id,
-                        Some(&job_result.response),
-                        RequestStatus::Completed,
-                    )?;
+                RequestStatus::Failed => {
+                    info!("Request {} failed before, retrying", &job_id);
                 }
-                Err(e) => {
-                    error!("Proof generation failed: {}", e);
-                    self.db
-                        .update_request(&job_request.job_id, None, RequestStatus::Failed)?;
+                RequestStatus::Pending => {
+                    info!("Request {} is already pending, skipping", &job_id);
+                    return Ok(());
                 }
             }
         } else {
-            debug!("Received non-request event, ignoring");
+            self.db.insert_request(&job_id, &request)?;
+        }
+
+        match self.proving_service.generate_proof(request) {
+            Ok(response) => {
+                let job_result = GenerateZKPJobResult {
+                    job_id: job_id.clone(),
+                    response,
+                };
+                let response_json = serde_json::to_string(&job_result)?;
+
+                let job_result_event: Event =
+                    EventBuilder::job_result(*event, Some(response_json), 0, None)
+                        .unwrap()
+                        .to_event(&self.prover_agent_keys)
+                        .unwrap();
+
+                let event_id = self.nostr_client.send_event(job_result_event).await?;
+                info!("Proving response published [{}]", event_id.to_string());
+
+                self.db.update_request(
+                    &job_id,
+                    Some(&job_result.response),
+                    RequestStatus::Completed,
+                )?;
+            }
+            Err(e) => {
+                error!("Proof generation failed: {}", e);
+                self.db
+                    .update_request(&job_id, None, RequestStatus::Failed)?;
+            }
         }
 
         Ok(())
