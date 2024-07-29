@@ -180,14 +180,14 @@ impl ServiceProvider {
                     job_id: job_id.clone(),
                     response,
                 };
-                let _response_json = serde_json::to_string(&job_result)?;
+                let response_json = serde_json::to_string(&job_result)?;
 
-                let job_result_event: Event = EventBuilder::job_result(*event, 0, None)
-                    .unwrap()
-                    .to_event(&self.prover_agent_keys)
-                    .unwrap();
+                let job_result_event: Event =
+                    EventBuilder::job_result(*event, Some(response_json), 0, None)
+                        .unwrap()
+                        .to_event(&self.prover_agent_keys)
+                        .unwrap();
 
-                println!("Job result event: {:?}", job_result_event);
                 let event_id = self.nostr_client.send_event(job_result_event).await?;
                 info!("Proving response published [{}]", event_id.to_string());
 

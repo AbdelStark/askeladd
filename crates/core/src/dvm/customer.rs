@@ -73,7 +73,7 @@ impl Customer {
     }
 
     /// Submits a job request to the Nostr network
-    pub async fn submit_job(&self, job: GenerateZKPJobRequest) -> Result<(), CustomerError> {
+    pub async fn submit_job(&self, job: GenerateZKPJobRequest) -> Result<String, CustomerError> {
         debug!("Publishing proving request...");
 
         let tags = vec![
@@ -94,7 +94,7 @@ impl Customer {
         let event_id = self.nostr_client.send_event(event).await?;
 
         info!("Proving request published [{}]", event_id.to_string());
-        Ok(())
+        Ok(event_id.to_string())
     }
 
     /// Waits for a job result from the Nostr network
@@ -109,7 +109,7 @@ impl Customer {
 
         // Set up a filter for the job result events
         let filter = Filter::new()
-            .kind(Kind::TextNote)
+            .kind(Kind::Custom(JOB_RESULT_KIND))
             .author(prover_agent_public_key)
             .since(Timestamp::now() - Duration::from_secs(60));
 
@@ -155,7 +155,6 @@ impl Customer {
                                 serde_json::from_str::<GenerateZKPJobResult>(&event.content)
                             {
                                 if result.job_id == job_id {
-                                    info!("Job result found for job_id: {}", job_id);
                                     return Ok(true);
                                 }
                             }
@@ -167,16 +166,15 @@ impl Customer {
             .await
             .map_err(CustomerError::NostrClientError)?;
 
+        let filter = Filter::new()
+            .kind(Kind::Custom(JOB_RESULT_KIND))
+            .author(PublicKey::from_bech32(&self.settings.prover_agent_pk).unwrap())
+            .since(Timestamp::now() - Duration::from_secs(60));
+
         // Fetch recent events to find the job result
         let events = self
             .nostr_client
-            .get_events_of(
-                vec![Filter::new()
-                    .kind(Kind::TextNote)
-                    .author(PublicKey::from_bech32(&self.settings.prover_agent_pk).unwrap())
-                    .since(Timestamp::now() - Duration::from_secs(60))],
-                None,
-            )
+            .get_events_of(vec![filter], None)
             .await
             .map_err(CustomerError::NostrClientError)?;
 

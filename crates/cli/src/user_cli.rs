@@ -24,10 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ******************************************************
     // ****************** PREPARE JOB ***********************
     // ******************************************************
-    let job_id = GenerateZKPJobRequest::new_job_id();
-
     let job_request = GenerateZKPJobRequest {
-        job_id,
         request: FibonnacciProvingRequest {
             log_size: 5,
             claim: 443693538,
@@ -37,21 +34,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ******************************************************
     // ****************** SUBMIT JOB ************************
     // ******************************************************
-    info!("Submitting job with id: {}", job_request.job_id);
-    customer.submit_job(job_request.clone()).await?;
+    info!("Submitting job");
+    let job_id = customer.submit_job(job_request.clone()).await?;
+    info!("Job submitted with id: {}", job_id);
 
     // ******************************************************
     // ****************** WAIT FOR JOB RESULT ***************
     // ******************************************************
-    info!("Waiting for job result with id: {}", job_request.job_id);
-    let job_result = customer
-        .wait_for_job_result(&job_request.job_id, 60)
-        .await?;
+    info!("Waiting for job result with id: {}", job_id);
+    let job_result = customer.wait_for_job_result(&job_id, 60).await?;
 
     // ******************************************************
     // ****************** VERIFY PROOF **********************
     // ******************************************************
-    info!("Verifying proof with id: {}", job_request.job_id);
+    info!("Verifying proof with id: {}", job_id);
     let is_valid = customer.verify_proof(&job_result)?;
     info!("Proof is valid: {}", is_valid);
 

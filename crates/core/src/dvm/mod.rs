@@ -14,24 +14,15 @@ pub mod constants {
 pub mod types {
     use serde::{Deserialize, Serialize};
     use stwo_prover::core::prover::StarkProof;
-    use uuid::Uuid;
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct GenerateZKPJobRequest {
-        pub job_id: String,
         pub request: FibonnacciProvingRequest,
     }
 
     impl GenerateZKPJobRequest {
         pub fn new(request: FibonnacciProvingRequest) -> Self {
-            Self {
-                job_id: Self::new_job_id(),
-                request,
-            }
-        }
-
-        pub fn new_job_id() -> String {
-            Uuid::new_v4().to_string()
+            Self { request }
         }
     }
 
