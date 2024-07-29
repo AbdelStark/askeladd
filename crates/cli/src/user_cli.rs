@@ -2,6 +2,7 @@ use askeladd::config::Settings;
 use askeladd::dvm::customer::Customer;
 use askeladd::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobRequest};
 use dotenv::dotenv;
+use env_logger::Env;
 use log::info;
 
 #[tokio::main]
@@ -9,10 +10,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ******************************************************
     // ****************** SETUP *****************************
     // ******************************************************
-    pretty_env_logger::formatted_builder()
-        .filter_level(log::LevelFilter::Info)
-        .init();
     dotenv().ok();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info"))
+        .format_timestamp_millis()
+        .init();
+
     let settings = Settings::new().expect("Failed to load settings");
 
     // ******************************************************

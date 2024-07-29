@@ -193,6 +193,10 @@ impl Customer {
     /// Verifies the proof in a job result
     pub fn verify_proof(&self, job_result: &GenerateZKPJobResult) -> Result<bool, CustomerError> {
         info!("Verifying proof...");
+        info!(
+            "Proof: {}",
+            serde_json::to_string(&job_result.response.proof).unwrap()
+        );
         self.verifier_service
             .verify_proof(job_result.response.clone())
             .map(|_| true)
