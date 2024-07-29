@@ -8,7 +8,19 @@ const nextConfig = {
         net: false,
         tls: false,
       };
+      config.resolve.extensions.push(".wasm");
+      config.experiments = {
+        asyncWebAssembly: true,
+        syncWebAssembly: true,
+        layers: true // for using `import { ... } from 'rust-nostr/nostr-sdk'` syntax
+      };
     }
+    config.resolve.extensions.push(".wasm");
+    config.experiments = {
+      asyncWebAssembly: true,
+      syncWebAssembly: true,
+      layers: true // for using `import { ... } from 'rust-nostr/nostr-sdk'` syntax
+    };
     return config;
   },
   async rewrites() {
