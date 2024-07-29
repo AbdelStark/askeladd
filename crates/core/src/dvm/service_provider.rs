@@ -1,5 +1,6 @@
 use std::error::Error;
 
+use colored::*;
 use log::{debug, error, info};
 use nostr_sdk::prelude::*;
 use thiserror::Error;
@@ -94,6 +95,7 @@ impl ServiceProvider {
     ///
     /// This method subscribes to Nostr events and handles incoming proving requests
     pub async fn run(&self) -> Result<(), ServiceProviderError> {
+        print_banner();
         let proving_req_sub_id = SubscriptionId::new(&self.settings.proving_req_sub_id);
         let filter = Filter::new()
             .kind(Kind::Custom(JOB_REQUEST_KIND))
@@ -206,4 +208,16 @@ impl ServiceProvider {
 
         Ok(())
     }
+}
+
+fn print_banner() {
+    let askeladd = text_to_ascii_art::to_art("Askeladd".to_string(), "standard", 0, 0, 0).unwrap();
+    let zk_proof = text_to_ascii_art::to_art("ZK proof DVM".to_string(), "small", 0, 0, 0).unwrap();
+
+    println!("{}", "*".repeat(80).green());
+    println!("\n{}", askeladd.green());
+    println!("{}", zk_proof.green());
+    println!("{}", "Censorship global proving network".green());
+    println!("{}", "Powered by Nostr and Circle STARKs.".green());
+    println!("{}", "*".repeat(80).green());
 }

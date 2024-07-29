@@ -15,3 +15,5 @@ rusqlite = { version = "0.32.0", features = ["bundled"] }
 nostr-sdk = { git = "https://github.com/AbdelStark/nostr", rev = "95b5f63" }
 log = "0.4.22"
 tokio = { version = "1", default-features = false }
+text-to-ascii-art = "0.1.10"
+colored = "2.0.0"
