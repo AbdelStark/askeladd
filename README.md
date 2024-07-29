@@ -16,7 +16,13 @@
 Askeladd is a censorship-resistant global proving network, for anyone to be able to generate validity proofs, using [STWO](https://github.com/starkware-libs/stwo) prover, and verify them. It enables to submit proving request to the network and retrieve the generated proof for any given request.
 Askeladd leverages [Nostr](https://github.com/nostr-protocol/nostr) for the communication layer, to gossip the proving requests and generated proofs.
 
-As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there will be a need for decentralised infrastructure to be able to generate and verify proofs in a censorship-resistant way. Not everythng has to live on blockchain, and Askeladd is here to help, leveraging the simplicity of Nostr.
+As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there will be a need for decentralised infrastructure to be able to generate and verify proofs in a censorship-resistant way. Not everything has to live on blockchain, and Askeladd is here to help, leveraging the simplicity of Nostr.
+
+Specifically, Askeladd uses [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
+
+For the purpose of this demo, we're using a local Nostr relay to handle the communication between the prover agents and the users.
+
+We defined Job request kind to `5600` and Job response kind to `6600`.
 
 > **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
 
@@ -30,16 +36,14 @@ Check out this video demonstration of Askeladd in action:
 
 Typical flow:
 
-1. User submits a proving request to the network
-2. An Askeladd prover agent generates a proof for the request
-3. The proof is published to the Nostr network
-4. The user can verify the proof using the Askeladd verifier agent
+1. User submits a proving request to the network.
+2. An Askeladd prover agent generates a proof for the request.
+3. The proof is published to the Nostr network.
+4. The user can verify the proof using the Askeladd verifier agent.
 
-## Open questions / TODOs
+## TODOs
 
-- [ ] Use [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
-  - Check <https://vendata.io/dvms> mechanism to see how it works.
-  - Check <https://www.data-vending-machines.org/> for more information.
+- [X] Use [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
 - [ ] Use [NIP-89 -Recommended Application Handlers](https://nips.nostr.com/89) for prover agents to advertise their support for certain types of proving requests, their pricing model, etc.
 - [ ] Use [NIP-57 - Lightning Zaps](https://nips.nostr.com/57) to handle the payment for the proofs.
 - [ ] Use [NIP-13 - Proof of Work](https://nips.nostr.com/13) for spam protection.
@@ -97,3 +101,6 @@ This demo is powered by the amazing [STWO Prover](https://github.com/starkware-l
 
 - [Nostr Rust relay](https://github.com/scsibug/nostr-rs-relay/)
 - [Nostr web tooling](https://nostrtool.com/)
+- [NIP-90 - Data Vending Machine](https://nips.nostr.com/90)
+- [Vendata.io](https://vendata.io/dvms)
+- [Data Vending Machines](https://www.data-vending-machines.org/)
