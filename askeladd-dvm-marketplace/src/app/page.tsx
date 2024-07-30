@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
+import { NDKEvent} from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
 import { JobResultProver, StarkProof } from "@/types";
 import init, { run_fibonacci_example, run_fibonacci_verify_exemple } from "../pkg/program_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
-
+import { ASKELADD_RELAY } from "@/constants/relay";
+import { Relay } from 'nostr-tools/relay'
+import { verifyEvent, finalizeEvent, Event as EventNostr } from "nostr-tools";
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
@@ -15,7 +17,6 @@ export default function Home() {
   const [error, setError] = useState<string | undefined>()
   const [starkProof, setStarkProof] = useState<any | undefined>()
   // const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
-
   const [events, setEvents] = useState<NDKEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<NDKEvent | undefined>()
   const [proofStatus, setProofStatus] = useState<
@@ -29,7 +30,7 @@ export default function Home() {
 
   const { ndk } = useNostrContext()
   const { fetchEvents } = useFetchEvents()
-  const { sendNote } = useSendNote()
+  const { sendNote, publishNote } = useSendNote()
   useEffect(() => {
     init()
       .then(() => setIsInitialized(true))
@@ -73,24 +74,46 @@ export default function Home() {
     /** Use Nostr extension to send event */
     if (typeof window !== "undefined" && window.nostr) {
       const pubkey = await window.nostr.getPublicKey();
-      const event = await window.nostr.signEvent({ pubkey: pubkey, created_at: new Date().getTime(), kind: 5600, tags: tags, content: content }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+      let created_at = new Date().getTime();
+      const event = await window.nostr.signEvent({
+        pubkey: pubkey,
+        created_at: created_at,
+        kind: 5600,
+        tags: tags,
+        content: content
+      }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
       if (event?.sig) {
         setJobId(event?.sig);
       }
+      const relay = await Relay.connect(ASKELADD_RELAY[0])
+      let eventID = await relay.publish(event as EventNostr)
+      console.log("eventID published", eventID)
+      if (eventID) {
+        setJobId(eventID);
+      }
+
+      /** check if events is sent */
+      const { events } = await fetchEvents(5600);
+      console.log("events job request", events);
+
+
     }
+    // let { result, event } = await sendNote({ content, tags, kind: 5600 })
+    // console.log("event", event)
+    // if (event?.sig) {
+    //   setJobId(event?.sig);
+    // }
     /** NDK event
      * Generate or import private key after
      */
-    let { result, event } = await sendNote({ content, tags, kind: 5600 })
-    console.log("event", event)
-    if (event?.sig) {
-      setJobId(event?.sig);
-    }
 
   };
 
+  /** TODO fetch subscribed event */
   // Fetch Job result from the Prover
   const fetchEventsProof = async () => {
+
+    // ndk.subscribe({ kinds: [0], authors: ["pubkey-2"] });
 
     setIsFetchJob(false)
 
@@ -105,7 +128,7 @@ export default function Home() {
      */
     let lastEvent = events[events?.length - 1]
     // let lastEvent= events.find((e) => e?.id == "48b273cee7d08538604f1797c92685a4638d53a8fea56ff9fe48a436ad4a2e73")
-    if(!lastEvent) return;
+    if (!lastEvent) return;
     setSelectedEvent(lastEvent)
     setProof(lastEvent?.content)
 
