@@ -1,2 +1,2 @@
 #!/bin/bash
-./target/release/prover_agent
+./target/release/dvm_service_provider

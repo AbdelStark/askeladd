@@ -1,2 +1,2 @@
 #!/bin/bash
-./target/release/user_cli
+./target/release/dvm_customer

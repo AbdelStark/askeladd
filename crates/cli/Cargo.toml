@@ -20,14 +20,17 @@ log = "0.4.22"
 pretty_env_logger = "0.5.0"
 env_logger = "0.11.5"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
+colored = "2.0.0"
+chrono = "0.4.38"
+text-to-ascii-art = "0.1.10"
 
 [[bin]]
-name = "user_cli"
-path = "src/user_cli.rs"
+name = "dvm_customer"
+path = "src/dvm_customer.rs"
 
 [[bin]]
-name = "prover_agent"
-path = "src/prover_agent.rs"
+name = "dvm_service_provider"
+path = "src/dvm_service_provider.rs"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros"] }

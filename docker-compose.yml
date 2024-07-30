@@ -6,11 +6,11 @@ services:
     ports:
       - "8080:8080"
 
-  prover-agent:
+  dvm-service-provider:
     build:
       context: .
       dockerfile: Dockerfile
-    command: prover_agent
+    command: dvm_service_provider
     env_file: .env
     volumes:
       - ./config:/usr/src/askeladd/config
@@ -20,18 +20,18 @@ services:
     environment:
       - APP_SUBSCRIBED_RELAYS=ws://nostr-relay:8080
 
-  user-cli:
+  dvm-customer:
     build:
       context: .
       dockerfile: Dockerfile
-    command: user_cli
+    command: dvm_customer
     env_file: .env
     volumes:
       - ./config:/usr/src/askeladd/config
     depends_on:
       nostr-relay:
         condition: service_started
-      prover-agent:
+      dvm-service-provider:
         condition: service_started
     environment:
       - APP_SUBSCRIBED_RELAYS=ws://nostr-relay:8080

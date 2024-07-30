@@ -11,14 +11,6 @@ const nextConfig = {
     }
     return config;
   },
-  async rewrites() {
-    return [
-      {
-        source: '/pitchdeck',
-        destination: '/pitchdeck/index.html',
-      },
-    ]
-  },
 };
 
 export default nextConfig;

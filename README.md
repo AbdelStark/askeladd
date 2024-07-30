@@ -20,15 +20,13 @@ As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there
 
 Specifically, Askeladd uses [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
 
-For the purpose of this demo, we're using a local Nostr relay to handle the communication between the prover agents and the users.
-
 We defined Job request kind to `5600` and Job response kind to `6600`.
 
 > **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
 
 Check out this video demonstration of Askeladd in action:
 
-[![asciicast](https://asciinema.org/a/668441.png)](https://asciinema.org/a/668441)
+[![asciicast](https://asciinema.org/a/670103.png)](https://asciinema.org/a/670103)
 
 ## Architecture
 
@@ -36,18 +34,10 @@ Check out this video demonstration of Askeladd in action:
 
 Typical flow:
 
-1. User submits a proving request to the network.
-2. An Askeladd prover agent generates a proof for the request.
-3. The proof is published to the Nostr network.
-4. The user can verify the proof using the Askeladd verifier agent.
-
-## TODOs
-
-- [X] Use [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
-- [ ] Use [NIP-89 -Recommended Application Handlers](https://nips.nostr.com/89) for prover agents to advertise their support for certain types of proving requests, their pricing model, etc.
-- [ ] Use [NIP-57 - Lightning Zaps](https://nips.nostr.com/57) to handle the payment for the proofs.
-- [ ] Use [NIP-13 - Proof of Work](https://nips.nostr.com/13) for spam protection.
-- [ ] Use [NIP-94 - File Metadata](https://nips.nostr.com/94) and/or [NIP-96 - HTTP File Storage Integration](https://nips.nostr.com/96) to handle transport of the proofs and metadata over the network.
+1. User submits a proving request to the network (DVM Job Kind `5600`)
+2. An Askeladd DVM Service Provider generates a proof for the request using the STWO prover.
+3. The proof is published to the Nostr network (DVM Job Result Kind `6600`).
+4. The DVM Customer can verify the proof using the STWO verifier.
 
 ## Running the demo
 
@@ -65,22 +55,22 @@ Create a `.env` file, you can use the `.env.example` file as a reference.
 cp .env.example .env
 ```
 
-In terminal 1, run the nostr relay:
+(Optional) In a terminal, run the nostr relay (you can use any nostr relay):
 
 ```bash
 docker run -p 8080:8080 scsibug/nostr-rs-relay
 ```
 
-In terminal 2, run the prover agent:
+In a terminal, run the prover agent:
 
 ```bash
-cargo run --bin prover_agent
+cargo run --bin dvm_service_provider
 ```
 
-In terminal 3, run the user CLI:
+In a terminal, run the user CLI:
 
 ```bash
-cargo run --bin user_cli
+cargo run --bin dvm_customer
 ```
 
 The user CLI binary will submit a proving request to the Nostr network. The prover agent will generate a proof for the request and publish it to the Nostr network. The user CLI binary will be able to verify the proof.
