@@ -20,5 +20,17 @@ export const useSendNote = () => {
       }
     }
   }
-  return { sendNote }
+  const publishNote = async (event:NDKEvent) => {
+    try {
+      if (!ndk?.signer) return { result: undefined, event: undefined };
+      let result = await event.publish();
+      return { result: result, event };
+    } catch (e) {
+      return {
+        result: undefined,
+        event: undefined
+      }
+    }
+  }
+  return { sendNote, publishNote }
 };
