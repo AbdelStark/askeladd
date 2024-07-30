@@ -3,13 +3,12 @@ import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 
 export const useFetchEvents = () => {
   const { ndk } = useNostrContext();
-  const fetchEvents = async (kind?: NDKKind | number) => {
+  const fetchEvents = async (kind?: NDKKind | number, limit?:number) => {
     try {
       if (!ndk?.signer) return { result: undefined, events: undefined };
       let eventsResult = await ndk.fetchEvents({
-        // since: new Date().getTime()-60*1000,
         kinds: [kind ?? 6600 as NDKKind],
-        limit: 300,
+        limit: limit ?? 50,
       });
       const events = Array.from(eventsResult?.values())
       console.log("events", events);
