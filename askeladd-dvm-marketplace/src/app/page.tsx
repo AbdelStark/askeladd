@@ -1,25 +1,50 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { verifyProof } from "../lib/stwo";
+import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
+import { useNostrContext } from "@/context/NostrContext";
+import { useSendNote } from "@/hooks/useSendNote";
+import { JobResultProver, StarkProof } from "@/types";
+import init, { run_fibonacci_example, run_fibonacci_verify_exemple } from "../pkg/program_wasm";
+import { useFetchEvents } from "@/hooks/useFetchEvents";
 
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>()
+  const [starkProof, setStarkProof] = useState<any | undefined>()
+  // const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
+
+  const [events, setEvents] = useState<NDKEvent[]>([])
+  const [selectedEvent, setSelectedEvent] = useState<NDKEvent | undefined>()
   const [proofStatus, setProofStatus] = useState<
     "idle" | "pending" | "received" | "verified"
   >("idle");
   const [proof, setProof] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isFetchJob, setIsFetchJob] = useState(false);
+  const [timestampJob, setTimestampJob] = useState<number | undefined>();
+
+  const { ndk } = useNostrContext()
+  const { fetchEvents } = useFetchEvents()
+  const { sendNote } = useSendNote()
+  useEffect(() => {
+    init()
+      .then(() => setIsInitialized(true))
+      .catch((error) => {
+        console.error("Failed to initialize WASM module:", error);
+
+      });
+  }, []);
 
   useEffect(() => {
-    const initNostr = async () => {
-      // TODO: load the wasm module
-      //await (window as any).loadWasmAsync();
-    };
-    initNostr();
-  }, []);
+
+    if (jobId && !isFetchJob) {
+      waitingForJobResult()
+    }
+  }, [jobId, isFetchJob])
 
   const submitJob = async () => {
     setIsLoading(true);
@@ -29,24 +54,120 @@ export default function Home() {
     const eventId = Math.random().toString(36).substring(7);
     setJobId(eventId);
 
-    // Simulate waiting for job result
-    setTimeout(() => {
-      const mockProof = {
-        proof: "mocked_proof_data",
-        public_inputs: [logSize, claim],
-      };
-      setProof(JSON.stringify(mockProof));
-      setProofStatus("received");
-      setIsLoading(false);
-    }, 5000);
+    const tags = [
+      ['param', 'log_size', logSize.toString()],
+      ['param', 'claim', claim.toString()],
+      ['output', 'text/json']
+    ];
+
+    const content = JSON.stringify({
+      request: {
+        log_size: logSize.toString(),
+        claim: claim.toString()
+      }
+
+    })
+
+    // Define the timestamp before which you want to fetch events
+    setTimestampJob(new Date().getTime())
+    /** Use Nostr extension to send event */
+    if (typeof window !== "undefined" && window.nostr) {
+      const pubkey = await window.nostr.getPublicKey();
+      const event = await window.nostr.signEvent({ pubkey: pubkey, created_at: new Date().getTime(), kind: 5600, tags: tags, content: content }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+      if (event?.sig) {
+        setJobId(event?.sig);
+      }
+    }
+    /** NDK event
+     * Generate or import private key after
+     */
+    let { result, event } = await sendNote({ content, tags, kind: 5600 })
+    console.log("event", event)
+    if (event?.sig) {
+      setJobId(event?.sig);
+    }
+
   };
 
-  const verifyProofHandler = async () => {
-    if (proof) {
-      setIsLoading(true);
-      const isValid = await verifyProof(proof);
-      setProofStatus(isValid ? "verified" : "idle");
+  // Fetch Job result from the Prover
+  const fetchEventsProof = async () => {
+
+    setIsFetchJob(false)
+
+    const { events } = await fetchEvents()
+    if (!events) return;
+    console.log("events", events);
+    setEvents(events)
+    /** @TODO fetch the correct event
+     * - Tags: By reply of the event_id of the job request?
+     * - By author
+     * - Timestamp since/until (doesn't work as expected for me)
+     */
+    let lastEvent = events[events?.length - 1]
+    // let lastEvent= events.find((e) => e?.id == "48b273cee7d08538604f1797c92685a4638d53a8fea56ff9fe48a436ad4a2e73")
+    if(!lastEvent) return;
+    setSelectedEvent(lastEvent)
+    setProof(lastEvent?.content)
+
+    const jobProofSerialize: JobResultProver = JSON.parse(lastEvent?.content)
+    console.log('jobProofSerialize serialize', jobProofSerialize);
+
+    const proofSerialize = jobProofSerialize?.response?.proof;
+    console.log('proof serialize', proofSerialize);
+    setStarkProof(proofSerialize);
+    setProofStatus("received");
+  }
+
+  const waitingForJobResult = async () => {
+    setTimeout(() => {
+      console.log("waiting timeout")
+      fetchEventsProof()
       setIsLoading(false);
+
+    }, 5000);
+  }
+
+  const verifyProofHandler = async () => {
+    try {
+      if (proof) {
+        setIsLoading(true);
+        const prove_result = run_fibonacci_example(logSize, claim);
+        console.log("prove_result", prove_result);
+        const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+        console.log("verify result", verify_result);
+        console.log("verify message", verify_result.message);
+        console.log("verify success", verify_result.success);
+
+        if (verify_result?.success) {
+          console.log("is success verify result")
+          setProofStatus("verified");
+        } else {
+          setError(verify_result?.message)
+        }
+
+        /** @TODO fix ERROR verify loop between all stark proof*/
+        for (let event of events) {
+          const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
+          const proofSerialize = jobProofSerialize?.response?.proof;
+          const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
+          console.log("loop verify result", verify_result.message);
+          console.log("loop verify success", verify_result.success);
+          if (verify_result?.success) {
+            console.log("is success verify result")
+            setProofStatus("verified");
+          } else {
+            setError(verify_result?.message)
+          }
+        }
+        setIsLoading(false);
+        setIsFetchJob(true)
+      }
+    } catch (e) {
+      console.log("Verify error", e);
+    } finally {
+      setIsLoading(false);
+      setIsFetchJob(true)
+
     }
   };
 
@@ -80,9 +201,8 @@ export default function Home() {
         <button
           onClick={submitJob}
           disabled={isLoading}
-          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ${
-            isLoading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
         >
           {isLoading ? "Processing..." : "Submit Job"}
         </button>
@@ -93,18 +213,26 @@ export default function Home() {
           <p>Job ID: {jobId}</p>
           <p>Status: {proofStatus}</p>
           {isLoading && <div className="spinner mt-4 mx-auto"></div>}
+
+          {error && <p>Error: {error}</p>}
           {proof && (
             <div>
               <p className="mt-4">Proof received:</p>
               <pre className="bg-gray-800 p-4 rounded mt-2 overflow-x-auto">
                 {proof}
               </pre>
+              {starkProof &&
+
+                <>
+                  <p>Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}</p>
+                </>
+
+              }
               <button
                 onClick={verifyProofHandler}
                 disabled={isLoading}
-                className={`mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+                className={`mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 {isLoading ? "Verifying..." : "Verify Proof"}
               </button>
