@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Thorfinn Nostr Signer",
+  "version": "0.0.1",
+  "description": "A Nostr signer extension compatible with NIP-07",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Thorfinn Nostr Signer",
+    "default_popup": "popup.html"
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
