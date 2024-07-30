@@ -1,5 +1,5 @@
 [package]
-name = "stwo-wasm-demo"
+name = "program_wasm"
 version = "0.1.0"
 edition = "2021"
 

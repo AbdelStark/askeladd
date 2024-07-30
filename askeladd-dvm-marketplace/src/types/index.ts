@@ -4,7 +4,8 @@ export interface JobResultProver {
         // params in a JSON object
          
         // proof
-        proof:StarkProof
+        proof:any
+        // proof:StarkProof
     }
 }
 
