@@ -185,7 +185,7 @@ impl ServiceProvider {
                 let response_json = serde_json::to_string(&job_result)?;
 
                 let job_result_event: Event =
-                    EventBuilder::job_result(*event, Some(response_json), 0, None)
+                    EventBuilder::job_result(*event, response_json, 0, None)
                         .unwrap()
                         .to_event(&self.prover_agent_keys)
                         .unwrap();
