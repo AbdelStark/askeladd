@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
+import { NDKEvent} from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
 import { JobResultProver, StarkProof } from "@/types";
@@ -10,7 +10,6 @@ import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { ASKELADD_RELAY } from "@/constants/relay";
 import { Relay } from 'nostr-tools/relay'
 import { verifyEvent, finalizeEvent, Event as EventNostr } from "nostr-tools";
-verifyEvent
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
@@ -18,7 +17,6 @@ export default function Home() {
   const [error, setError] = useState<string | undefined>()
   const [starkProof, setStarkProof] = useState<any | undefined>()
   // const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
-
   const [events, setEvents] = useState<NDKEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<NDKEvent | undefined>()
   const [proofStatus, setProofStatus] = useState<
