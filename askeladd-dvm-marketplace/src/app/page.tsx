@@ -6,6 +6,7 @@ import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
 import { JobResultProver, StarkProof } from "@/types";
+import init, { run_fibonacci_example, run_verify_exemple} from "../pkg/stwo_wasm_demo";
 
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
@@ -116,6 +117,8 @@ export default function Home() {
     if (proof) {
       setIsLoading(true);
 
+      const verify_result= run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+      console.log("verify result",verify_result);
       const isValid = await verifyProof(proof);
       setProofStatus(isValid ? "verified" : "idle");
       setIsLoading(false);
