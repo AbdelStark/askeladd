@@ -49,11 +49,12 @@ pub fn run_fibonacci_example(log_size: u32, claim: u32) -> FibonacciResult {
 pub fn run_fibonacci_verify_exemple(
     log_size: u32,
     claim: u32,
-    stark_proof_str: &str,
+    // stark_proof_str: &str,
+    stark_proof_str: String,
 ) -> FibonacciResult {
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
 
-    let stark_proof: StarkProof = serde_json::from_str(stark_proof_str).unwrap();
+    let stark_proof: StarkProof = serde_json::from_str(&stark_proof_str.to_owned()).unwrap();
 
     match fib.verify(stark_proof) {
         Ok(()) => FibonacciResult {
@@ -64,5 +65,22 @@ pub fn run_fibonacci_verify_exemple(
             success: false,
             message: format!("Proof generation failed: {:?}", e),
         },
+    }
+}
+
+#[test]
+fn test_proof_and_verify() {
+    let log_size = 5;
+    let claim = 443693538;
+    let fib = Fibonacci::new(log_size, BaseField::from(claim));
+    match fib.prove() {
+        Ok(proof) => {
+            let str_proof: String = serde_json::to_string(&proof).unwrap();
+            let result = run_fibonacci_verify_exemple(log_size, claim, str_proof);
+            assert_eq!(result.success, true);
+        }
+        Err(e) => {
+            println!("Error proving {:?}", e.to_owned());
+        }
     }
 }
