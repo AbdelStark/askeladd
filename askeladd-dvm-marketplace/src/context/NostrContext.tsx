@@ -18,7 +18,6 @@ export const NostrProvider: React.FC<React.PropsWithChildren> = ({children}) => 
   const [ndk, setNdk] = useState<NDK>(
     new NDK({
       explicitRelayUrls: ASKELADD_RELAY,
-      signer:new NDKPrivateKeySigner(process.env.DEFAULT_NOSTR_USER_SK  ?? privateKey)
     }),
   );
 

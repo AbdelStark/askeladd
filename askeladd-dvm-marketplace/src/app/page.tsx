@@ -28,7 +28,7 @@ export default function Home() {
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
 
   const { ndk } = useNostrContext()
-  const {fetchEvents} = useFetchEvents()
+  const { fetchEvents } = useFetchEvents()
   const { sendNote } = useSendNote()
   useEffect(() => {
     init()
@@ -67,27 +67,37 @@ export default function Home() {
 
     // Define the timestamp before which you want to fetch events
     setTimestampJob(new Date().getTime())
-    // if(typeof window != "undefined") {
-    //   window.nostr.signEvent(event: { created_at: number, kind: number, tags: string[][], content: string }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
-    // }
-    let { result, event } = await sendNote({ content, tags, kind: 5600 })
-    console.log("event", event)
-
-    if (event?.id) {
-      setJobId(event?.id);
+    /** Use Nostr extension to send event */
+    if (typeof window !== "undefined" && window.nostr) {
+      const pubkey = await window.nostr.getPublicKey();
+      const event = await window.nostr.signEvent({ pubkey: pubkey, created_at: new Date().getTime(), kind: 5600, tags: tags, content: content }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+      if (event?.sig) {
+        setJobId(event?.sig);
+      }
     }
-
+    /** NDK event
+     * Generate or import private key after
+     */
+    // let { result, event } = await sendNote({ content, tags, kind: 5600 })
+    // console.log("event", event)
+    // if (event?.sig) {
+    //   setJobId(event?.sig);
+    // }
 
   };
 
   // Fetch Job result from the Prover
   const fetchEventsProof = async () => {
 
-    const {events}= await fetchEvents()
-    if(!events) return;
+    const { events } = await fetchEvents()
+    if (!events) return;
     console.log("events", events);
     setEvents(events)
-    /** TODO fetch the correct event */
+    /** @TODO fetch the correct event
+     * - Tags: By reply of the event_id of the job request?
+     * - By author
+     * - Timestamp since/until (doesn't work as expected for me)
+     */
     let lastEvent = events[events?.length - 1]
     setSelectedEvent(lastEvent)
     setProof(lastEvent?.content)
@@ -99,16 +109,11 @@ export default function Home() {
     console.log('proof serialize', proofSerialize);
     setStarkProof(proofSerialize);
     setProofStatus("received");
-
-
   }
 
   const waitingForJobResult = async () => {
-
     setTimeout(() => {
       console.log("waiting timeout")
-     
-
       fetchEventsProof()
       setIsLoading(false);
 
@@ -116,44 +121,44 @@ export default function Home() {
   }
 
   const verifyProofHandler = async () => {
-    if (proof) {
-      setIsLoading(true);
-
-      const prove_result = run_fibonacci_example(logSize, claim);
-      console.log("prove_result", prove_result);
-
-      const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
-
-      console.log("verify result", verify_result);
-      console.log("verify result", verify_result.message);
-      console.log("verify success", verify_result.success);
-
-      if (verify_result?.success) {
-        console.log("is success verify result")
-        setProofStatus("verified");
-      } else {
-        setError(verify_result?.message)
-      }
-
-      /** ERROR verify loop between all stark proof */
-      for (let event of events) {
-        const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
-        console.log('jobProofSerialize serialize', jobProofSerialize);
-
-        const proofSerialize = jobProofSerialize?.response?.proof;
-        console.log('proof serialize', proofSerialize);
-        const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
-        console.log("verify result", verify_result.message);
+    try {
+      if (proof) {
+        setIsLoading(true);
+        const prove_result = run_fibonacci_example(logSize, claim);
+        console.log("prove_result", prove_result);
+        const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+        console.log("verify result", verify_result);
+        console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
+
         if (verify_result?.success) {
- 
           console.log("is success verify result")
           setProofStatus("verified");
         } else {
           setError(verify_result?.message)
         }
+
+        /** @TODO fix ERROR verify loop between all stark proof*/
+        for (let event of events) {
+          const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
+          const proofSerialize = jobProofSerialize?.response?.proof;
+          const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
+          console.log("loop verify result", verify_result.message);
+          console.log("loop verify success", verify_result.success);
+          if (verify_result?.success) {
+            console.log("is success verify result")
+            setProofStatus("verified");
+          } else {
+            setError(verify_result?.message)
+          }
+        }
+        setIsLoading(false);
       }
+    } catch (e) {
+      console.log("Verify error", e);
+    } finally {
       setIsLoading(false);
+
     }
   };
 
