@@ -14,7 +14,8 @@
     "dotenv": "^16.4.5",
     "next": "14.2.5",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "wasm-loader":"1.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.13",

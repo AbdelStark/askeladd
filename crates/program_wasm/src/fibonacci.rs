@@ -1,8 +1,8 @@
+use serde_json;
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::StarkProof;
 use stwo_prover::examples::fibonacci::Fibonacci;
 use wasm_bindgen::prelude::*;
-use serde_json;
 
 #[wasm_bindgen]
 pub struct FibonacciResult {
@@ -45,16 +45,14 @@ pub fn run_fibonacci_example(log_size: u32, claim: u32) -> FibonacciResult {
     }
 }
 
-
 #[wasm_bindgen]
-pub fn run_verify_exemple(log_size: u32, claim: u32, stark_proof_str:&str) -> FibonacciResult {
+pub fn run_verify_exemple(log_size: u32, claim: u32, stark_proof_str: &str) -> FibonacciResult {
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
 
-    let stark_proof=serde_json::from_str(stark_proof_str).unwrap();
+    let stark_proof: StarkProof = serde_json::from_str(stark_proof_str).unwrap();
 
     match fib.verify(stark_proof) {
-        
-        Ok(proof) => FibonacciResult {
+        Ok(()) => FibonacciResult {
             success: true,
             message: "Proof generated and verified successfully".to_string(),
         },
@@ -64,4 +62,3 @@ pub fn run_verify_exemple(log_size: u32, claim: u32, stark_proof_str:&str) -> Fi
         },
     }
 }
-
