@@ -83,10 +83,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     println!("\n");
 
-    let banner =
-        text_to_ascii_art::to_art("Proof Verification".to_string(), "standard", 0, 0, 0).unwrap();
-    println!("{}", banner.cyan());
-
     let is_valid = customer.verify_proof(&job_result)?;
 
     if is_valid {
