@@ -14,13 +14,7 @@
 ## About
 
 Askeladd is a censorship-resistant global proving network, for anyone to be able to generate validity proofs, using [STWO](https://github.com/starkware-libs/stwo) prover, and verify them. It enables to submit proving request to the network and retrieve the generated proof for any given request.
-Askeladd leverages [Nostr](https://github.com/nostr-protocol/nostr) for the communication layer, to gossip the proving requests and generated proofs.
-
-As Zero-Knowledge-Proof technology keeps evolving rapidly, it's clear that there will be a need for decentralised infrastructure to be able to generate and verify proofs in a censorship-resistant way. Not everything has to live on blockchain, and Askeladd is here to help, leveraging the simplicity of Nostr.
-
-Specifically, Askeladd uses [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) to define interaction between Service Providers (prover agents) and customers (users needing to generate proofs).
-
-We defined Job request kind to `5600` and Job response kind to `6600`.
+Askeladd leverages [Nostr](https://github.com/nostr-protocol/nostr) for the communication layer, to gossip the proving requests and generated proofs, following the [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) specification.
 
 > **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
 
@@ -30,12 +24,38 @@ Check out this video demonstration of Askeladd in action:
 
 ## Architecture
 
-![Askeladd Architecture](./docs/img/askeladd-architecture.png)
+```mermaid
+graph LR
+    Customer((DVM Customer))
+    SP[DVM Service Provider]
+    Nostr[Nostr Network]
+    STWO_P[STWO Prover]
+    STWO_V[STWO Verifier]
+
+    Customer -->|1. Submit Proving Request<br>Kind: 5600| Nostr
+    Nostr -->|2. Fetch Request| SP
+    SP -->|3. Generate Proof| STWO_P
+    SP -->|4. Publish Proof<br>Kind: 6600| Nostr
+    Nostr -->|5. Fetch Proof| Customer
+    Customer -->|6. Verify Proof| STWO_V
+
+    classDef customer fill:#f9d71c,stroke:#333,stroke-width:2px;
+    classDef provider fill:#66b3ff,stroke:#333,stroke-width:2px;
+    classDef network fill:#333,stroke:#333,stroke-width:2px,color:#fff;
+    classDef prover fill:#ff9999,stroke:#333,stroke-width:2px;
+    classDef verifier fill:#b19cd9,stroke:#333,stroke-width:2px;
+
+    class Customer customer;
+    class SP provider;
+    class Nostr network;
+    class STWO_P prover;
+    class STWO_V verifier;
+```
 
 Typical flow:
 
 1. User submits a proving request to the network (DVM Job Kind `5600`)
-2. An Askeladd DVM Service Provider generates a proof for the request using the STWO prover.
+2. A DVM Service Provider picks the request and generates a proof using the STWO prover.
 3. The proof is published to the Nostr network (DVM Job Result Kind `6600`).
 4. The DVM Customer can verify the proof using the STWO verifier.
 
@@ -44,7 +64,7 @@ Typical flow:
 ### Using docker-compose
 
 ```bash
-./run_demo.sh
+./scripts/demo_docker_compose_local_relayer.sh
 ```
 
 ### Manually
@@ -53,9 +73,17 @@ Create a `.env` file, you can use the `.env.example` file as a reference.
 
 ```bash
 cp .env.example .env
+
+# Set the relay URL in the .env file
+
+# Using a local relay
+APP_SUBSCRIBED_RELAYS=ws://localhost:8080
+
+# Or a public relay
+APP_SUBSCRIBED_RELAYS=wss://relay.nostr.net
 ```
 
-(Optional) In a terminal, run the nostr relay (you can use any nostr relay):
+(Optional, if you want to run a local nostr relay) In a terminal, run the local nostr relay:
 
 ```bash
 docker run -p 8080:8080 scsibug/nostr-rs-relay
