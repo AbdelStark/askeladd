@@ -12,7 +12,7 @@ export function run_fibonacci_example(log_size: number, claim: number): Fibonacc
 * @param {string} stark_proof_str
 * @returns {FibonacciResult}
 */
-export function run_verify_exemple(log_size: number, claim: number, stark_proof_str: string): FibonacciResult;
+export function run_fibonacci_verify_exemple(log_size: number, claim: number, stark_proof_str: string): FibonacciResult;
 /**
 */
 export class FibonacciResult {
@@ -33,7 +33,7 @@ export interface InitOutput {
   readonly fibonacciresult_success: (a: number) => number;
   readonly fibonacciresult_message: (a: number, b: number) => void;
   readonly run_fibonacci_example: (a: number, b: number) => number;
-  readonly run_verify_exemple: (a: number, b: number, c: number, d: number) => number;
+  readonly run_fibonacci_verify_exemple: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;

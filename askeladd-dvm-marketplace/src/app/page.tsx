@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { verifyProof } from "../lib/stwo";
 import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
 import { JobResultProver, StarkProof } from "@/types";
-import init, { run_fibonacci_example, run_verify_exemple } from "../pkg/stwo_wasm_demo";
+import init, { run_fibonacci_example, run_fibonacci_verify_exemple } from "../pkg/program_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 
 export default function Home() {
@@ -134,7 +133,7 @@ export default function Home() {
         setIsLoading(true);
         const prove_result = run_fibonacci_example(logSize, claim);
         console.log("prove_result", prove_result);
-        const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+        const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(starkProof));
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
@@ -150,7 +149,7 @@ export default function Home() {
         for (let event of events) {
           const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
           const proofSerialize = jobProofSerialize?.response?.proof;
-          const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
+          const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
           console.log("loop verify result", verify_result.message);
           console.log("loop verify success", verify_result.success);
           if (verify_result?.success) {

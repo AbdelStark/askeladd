@@ -1,14 +1,14 @@
 {
-  "name": "stwo-wasm-demo",
+  "name": "program_wasm",
   "type": "module",
   "version": "0.1.0",
   "files": [
-    "stwo_wasm_demo_bg.wasm",
-    "stwo_wasm_demo.js",
-    "stwo_wasm_demo.d.ts"
+    "program_wasm_bg.wasm",
+    "program_wasm.js",
+    "program_wasm.d.ts"
   ],
-  "main": "stwo_wasm_demo.js",
-  "types": "stwo_wasm_demo.d.ts",
+  "main": "program_wasm.js",
+  "types": "program_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
   ]

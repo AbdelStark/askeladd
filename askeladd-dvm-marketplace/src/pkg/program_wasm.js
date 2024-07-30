@@ -97,10 +97,10 @@ function passStringToWasm0(arg, malloc, realloc) {
 * @param {string} stark_proof_str
 * @returns {FibonacciResult}
 */
-export function run_verify_exemple(log_size, claim, stark_proof_str) {
+export function run_fibonacci_verify_exemple(log_size, claim, stark_proof_str) {
     const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.run_verify_exemple(log_size, claim, ptr0, len0);
+    const ret = wasm.run_fibonacci_verify_exemple(log_size, claim, ptr0, len0);
     return FibonacciResult.__wrap(ret);
 }
 
@@ -233,7 +233,7 @@ async function __wbg_init(input) {
     if (wasm !== undefined) return wasm;
 
     if (typeof input === 'undefined') {
-        input = new URL('stwo_wasm_demo_bg.wasm', import.meta.url);
+        input = new URL('program_wasm_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 

@@ -46,7 +46,7 @@ pub fn run_fibonacci_example(log_size: u32, claim: u32) -> FibonacciResult {
 }
 
 #[wasm_bindgen]
-pub fn run_verify_exemple(log_size: u32, claim: u32, stark_proof_str: &str) -> FibonacciResult {
+pub fn run_fibonacci_verify_exemple(log_size: u32, claim: u32, stark_proof_str: &str) -> FibonacciResult {
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
 
     let stark_proof: StarkProof = serde_json::from_str(stark_proof_str).unwrap();
