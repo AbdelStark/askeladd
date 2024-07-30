@@ -77,7 +77,7 @@ fn test_proof_and_verify() {
         Ok(proof) => {
             let str_proof: String = serde_json::to_string(&proof).unwrap();
             let result = run_fibonacci_verify_exemple(log_size, claim, str_proof);
-            assert_eq!(result.success, true);
+            assert!(result.success);
         }
         Err(e) => {
             println!("Error proving {:?}", e.to_owned());
