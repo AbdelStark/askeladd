@@ -40,20 +40,6 @@ const nextConfig = {
     };
     return config;
   },
-  eslint: {
-    configure: (eslintConfig) => {
-      eslintConfig.ignorePatterns = ["src/pkg/**/*"];
-      return eslintConfig;
-    },
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/pitchdeck',
-        destination: '/pitchdeck/index.html',
-      },
-    ]
-  },
 };
 
 export default nextConfig;
