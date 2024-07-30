@@ -25,6 +25,7 @@ export default function Home() {
   const [proof, setProof] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isFetchJob, setIsFetchJob] = useState(false);
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
 
   const { ndk } = useNostrContext()
@@ -41,10 +42,10 @@ export default function Home() {
 
   useEffect(() => {
 
-    if (jobId) {
+    if (jobId && !isFetchJob) {
       waitingForJobResult()
     }
-  }, [jobId])
+  }, [jobId, isFetchJob])
 
   const submitJob = async () => {
     setIsLoading(true);
@@ -61,8 +62,11 @@ export default function Home() {
     ];
 
     const content = JSON.stringify({
-      log_size: logSize.toString(),
-      claim: claim.toString()
+      request: {
+        log_size: logSize.toString(),
+        claim: claim.toString()
+      }
+
     })
 
     // Define the timestamp before which you want to fetch events
@@ -78,16 +82,18 @@ export default function Home() {
     /** NDK event
      * Generate or import private key after
      */
-    // let { result, event } = await sendNote({ content, tags, kind: 5600 })
-    // console.log("event", event)
-    // if (event?.sig) {
-    //   setJobId(event?.sig);
-    // }
+    let { result, event } = await sendNote({ content, tags, kind: 5600 })
+    console.log("event", event)
+    if (event?.sig) {
+      setJobId(event?.sig);
+    }
 
   };
 
   // Fetch Job result from the Prover
   const fetchEventsProof = async () => {
+
+    setIsFetchJob(false)
 
     const { events } = await fetchEvents()
     if (!events) return;
@@ -99,6 +105,8 @@ export default function Home() {
      * - Timestamp since/until (doesn't work as expected for me)
      */
     let lastEvent = events[events?.length - 1]
+    // let lastEvent= events.find((e) => e?.id == "48b273cee7d08538604f1797c92685a4638d53a8fea56ff9fe48a436ad4a2e73")
+    if(!lastEvent) return;
     setSelectedEvent(lastEvent)
     setProof(lastEvent?.content)
 
@@ -153,11 +161,13 @@ export default function Home() {
           }
         }
         setIsLoading(false);
+        setIsFetchJob(true)
       }
     } catch (e) {
       console.log("Verify error", e);
     } finally {
       setIsLoading(false);
+      setIsFetchJob(true)
 
     }
   };
