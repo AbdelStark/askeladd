@@ -40,6 +40,12 @@ const nextConfig = {
     };
     return config;
   },
+  eslint: {
+    configure: (eslintConfig) => {
+      eslintConfig.ignorePatterns = ["src/pkg/**/*"];
+      return eslintConfig;
+    },
+  },
   async rewrites() {
     return [
       {

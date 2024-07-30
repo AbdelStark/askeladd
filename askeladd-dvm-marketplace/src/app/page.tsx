@@ -6,13 +6,13 @@ import { NDKEvent, NDKKind, NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
 import { JobResultProver, StarkProof } from "@/types";
-import init, { run_fibonacci_example, run_verify_exemple} from "../pkg/stwo_wasm_demo";
+import init, { run_fibonacci_example, run_verify_exemple } from "../pkg/stwo_wasm_demo";
 
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
   const [jobId, setJobId] = useState<string | null>(null);
-  const [privateKey, setPrivateKey] = useState<string | undefined>()
+  const [error, setError] = useState<string | undefined>()
   const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
 
   const [events, setEvents] = useState<NDKEvent[]>([])
@@ -27,6 +27,21 @@ export default function Home() {
 
   const { ndk } = useNostrContext()
   const { sendNote } = useSendNote()
+  useEffect(() => {
+    init()
+      .then(() => setIsInitialized(true))
+      .catch((error) => {
+        console.error("Failed to initialize WASM module:", error);
+
+      });
+  }, []);
+
+  useEffect(() => {
+
+    if (jobId) {
+      waitingForJobResult()
+    }
+  }, [jobId])
 
   const submitJob = async () => {
     setIsLoading(true);
@@ -68,7 +83,7 @@ export default function Home() {
     let eventsResult = await ndk.fetchEvents({
       until: timestampJob,
       kinds: [6600 as NDKKind],
-      limit: 20,
+      limit: 300,
     });
     const events = Array.from(eventsResult?.values())
     console.log("events", events);
@@ -88,9 +103,7 @@ export default function Home() {
 
   }
 
-
   const waitingForJobResult = async () => {
-
 
     setTimeout(() => {
       console.log("waiting timeout")
@@ -106,21 +119,25 @@ export default function Home() {
     }, 5000);
   }
 
-
-  useEffect(() => {
-
-    if (jobId) {
-      waitingForJobResult()
-    }
-  }, [jobId])
   const verifyProofHandler = async () => {
     if (proof) {
       setIsLoading(true);
 
-      const verify_result= run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
-      console.log("verify result",verify_result);
-      const isValid = await verifyProof(proof);
-      setProofStatus(isValid ? "verified" : "idle");
+      const prove_result = run_fibonacci_example(logSize, claim);
+      console.log("prove_result", prove_result);
+
+      const verify_result = run_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+
+      console.log("verify result", verify_result);
+      console.log("verify result", verify_result.message);
+      console.log("verify success", verify_result.success);
+
+      if (verify_result?.success) {
+        console.log("is success verify result")
+        setProofStatus("verified");
+      } else {
+        setError(verify_result?.message)
+      }
       setIsLoading(false);
     }
   };
@@ -167,6 +184,8 @@ export default function Home() {
           <p>Job ID: {jobId}</p>
           <p>Status: {proofStatus}</p>
           {isLoading && <div className="spinner mt-4 mx-auto"></div>}
+
+          {error && <p>Error: {error}</p>}
           {proof && (
             <div>
               <p className="mt-4">Proof received:</p>
