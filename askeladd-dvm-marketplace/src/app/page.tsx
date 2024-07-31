@@ -123,42 +123,42 @@ export default function Home() {
   */
   const submitJob = async () => {
     try {
-    setIsLoading(true);
+      setIsLoading(true);
       setIsFetchJob(false);
       setJobId(undefined)
-    setProofStatus("pending");
+      setProofStatus("pending");
       setProof(null);
       setJobEventResult(undefined);
       setError(undefined);
-    const tags = [
-      ['param', 'log_size', logSize.toString()],
-      ['param', 'claim', claim.toString()],
-      ['output', 'text/json']
-    ];
-    const content = JSON.stringify({
-      request: {
-        log_size: logSize.toString(),
-        claim: claim.toString()
-      }
-    })
-    // Define the timestamp before which you want to fetch events
+      const tags = [
+        ['param', 'log_size', logSize.toString()],
+        ['param', 'claim', claim.toString()],
+        ['output', 'text/json']
+      ];
+      const content = JSON.stringify({
+        request: {
+          log_size: logSize.toString(),
+          claim: claim.toString()
+        }
+      })
+      // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
-    setTimestampJob(new Date().getTime())
-    /** Use Nostr extension to send event */
+      setTimestampJob(new Date().getTime())
+      /** Use Nostr extension to send event */
       const pool = new SimplePool();
       const poolJob = new SimplePool();
       const relay = await Relay.connect(ASKELADD_RELAY[0])
-    if (typeof window !== "undefined" && window.nostr) {
-      const pubkey = await window.nostr.getPublicKey();
-      let created_at = new Date().getTime();
+      if (typeof window !== "undefined" && window.nostr) {
+        const pubkey = await window.nostr.getPublicKey();
+        let created_at = new Date().getTime();
         setPublicKey(pubkey)
-      const event = await window.nostr.signEvent({
-        pubkey: pubkey,
-        created_at: created_at,
-        kind: 5600,
-        tags: tags,
-        content: content
-      }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+        const event = await window.nostr.signEvent({
+          pubkey: pubkey,
+          created_at: created_at,
+          kind: 5600,
+          tags: tags,
+          content: content
+        }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // Setup job request to fetch job id
 
         /** @TODO why the event id is not return?
@@ -176,15 +176,15 @@ export default function Home() {
       } else {
 
         /** @TODO flow is user doesn't have NIP-07 extension */
-    // let { result, event } = await sendNote({ content, tags, kind: 5600 })
-    // console.log("event", event)
-    // if (event?.sig) {
-    //   setJobId(event?.sig);
-    // }
+        // let { result, event } = await sendNote({ content, tags, kind: 5600 })
+        // console.log("event", event)
+        // if (event?.sig) {
+        //   setJobId(event?.sig);
+        // }
         // setIsWaitingJob(true)
-    /** NDK event
-     * Generate or import private key after
-     */
+        /** NDK event
+         * Generate or import private key after
+         */
       }
     } catch (e) {
     } finally {
@@ -279,7 +279,7 @@ export default function Home() {
         setIsLoading(true);
         const prove_result = prove_and_verify(logSize, claim);
         console.log("prove_result", prove_result);
-        const serialised_proof_from_nostr_event =  JSON.stringify(starkProof);
+        const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
         console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
         const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
         console.log("verify result", verify_result);
@@ -351,19 +351,18 @@ export default function Home() {
             <button
               onClick={submitJob}
               disabled={isLoading}
-              className={`w-full bg-neon-blue hover:bg-neon-pink text-black font-bold py-2 px-4 rounded ${
-                isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
-              }`}
+              className={`submit-job-button ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
             >
               {isLoading ? "PROCESSING..." : "SUBMIT JOB"}
             </button>
           </div>
+          {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
 
           {jobId && (
             <div className="mt-8 text-center">
               <p className="text-neon-orange">Job ID: <span className="break-all">{jobId}</span></p>
               <p className="text-neon-yellow">Status: {proofStatus}</p>
-              {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
 
               {error && <p className="text-neon-red blink">Error: {error}</p>}
               {proof && (
@@ -380,9 +379,8 @@ export default function Home() {
                   <button
                     onClick={verifyProofHandler}
                     disabled={isLoading}
-                    className={`mt-4 bg-neon-green hover:bg-neon-yellow text-black font-bold py-2 px-4 rounded ${
-                      isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
-                    }`}
+                    className={`verify-proof-button mt-4 ${isLoading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                   >
                     {isLoading ? "VERIFYING..." : "VERIFY PROOF"}
                   </button>
