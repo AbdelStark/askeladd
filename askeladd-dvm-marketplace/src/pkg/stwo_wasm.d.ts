@@ -3,19 +3,19 @@
 /**
 * @param {number} log_size
 * @param {number} claim
-* @returns {FibonacciResult}
+* @returns {StwoResult}
 */
-export function run_fibonacci_example(log_size: number, claim: number): FibonacciResult;
+export function prove_and_verify(log_size: number, claim: number): StwoResult;
 /**
 * @param {number} log_size
 * @param {number} claim
 * @param {string} stark_proof_str
-* @returns {FibonacciResult}
+* @returns {StwoResult}
 */
-export function run_fibonacci_verify_exemple(log_size: number, claim: number, stark_proof_str: string): FibonacciResult;
+export function verify_stark_proof(log_size: number, claim: number, stark_proof_str: string): StwoResult;
 /**
 */
-export class FibonacciResult {
+export class StwoResult {
   free(): void;
 /**
 */
@@ -29,11 +29,11 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly __wbg_fibonacciresult_free: (a: number) => void;
-  readonly fibonacciresult_success: (a: number) => number;
-  readonly fibonacciresult_message: (a: number, b: number) => void;
-  readonly run_fibonacci_example: (a: number, b: number) => number;
-  readonly run_fibonacci_verify_exemple: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbg_stworesult_free: (a: number) => void;
+  readonly stworesult_success: (a: number) => number;
+  readonly stworesult_message: (a: number, b: number) => void;
+  readonly prove_and_verify: (a: number, b: number) => number;
+  readonly verify_stark_proof: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;

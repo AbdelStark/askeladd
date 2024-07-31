@@ -105,6 +105,16 @@ cargo run --bin dvm_customer
 
 The user CLI binary will submit a proving request to the Nostr network. The prover agent will generate a proof for the request and publish it to the Nostr network. The user CLI binary will be able to verify the proof.
 
+## Askeladd DVM Marketplace
+
+See the [Askeladd DVM Marketplace](https://github.com/AbdelStark/askeladd-dvm-marketplace) for more information.
+
+This requires to build the STWO WASM bindings and to copy the generated artifacts.
+
+Go to [crates/stwo_wasm](crates/stwo_wasm) and run `wasm-pack build --target web` to build the STWO WASM bindings.
+
+Then copy the generated `pkg` directory to [askeladd-dvm-marketplace/src/](askeladd-dvm-marketplace/src/).
+
 ## 🤝 Contributing
 
 We love contributions! If you have ideas for improvements or find any issues, please open an issue or submit a pull request.

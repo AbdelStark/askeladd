@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { NDKEvent, NDKKind, NostrEvent } from '@nostr-dev-kit/ndk';
+import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
-import { JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, StarkProof } from "@/types";
-import init, { run_fibonacci_example, run_fibonacci_verify_exemple } from "../pkg/program_wasm";
+import { JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT } from "@/types";
+import init, { verify_stark_proof, prove_and_verify } from "../pkg/stwo_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { ASKELADD_RELAY } from "@/constants/relay";
-import { Relay } from 'nostr-tools/relay'
+import { Relay } from 'nostr-tools/relay';
 import { Event as EventNostr, SimplePool } from "nostr-tools";
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
@@ -277,9 +277,11 @@ export default function Home() {
     try {
       if (proof) {
         setIsLoading(true);
-        const prove_result = run_fibonacci_example(logSize, claim);
+        const prove_result = prove_and_verify(logSize, claim);
         console.log("prove_result", prove_result);
-        const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(starkProof));
+        const serialised_proof_from_nostr_event =  JSON.stringify(starkProof);
+        console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+        const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
@@ -294,7 +296,7 @@ export default function Home() {
         for (let event of events) {
           const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
           const proofSerialize = jobProofSerialize?.response?.proof;
-          const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
+          const verify_result = verify_stark_proof(logSize, claim, JSON.stringify(proofSerialize));
           if (verify_result?.success) {
             console.log("loop verify result", verify_result.message);
             console.log("loop verify success", verify_result.success);

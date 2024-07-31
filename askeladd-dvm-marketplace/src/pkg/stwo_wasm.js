@@ -29,11 +29,11 @@ function getInt32Memory0() {
 /**
 * @param {number} log_size
 * @param {number} claim
-* @returns {FibonacciResult}
+* @returns {StwoResult}
 */
-export function run_fibonacci_example(log_size, claim) {
-    const ret = wasm.run_fibonacci_example(log_size, claim);
-    return FibonacciResult.__wrap(ret);
+export function prove_and_verify(log_size, claim) {
+    const ret = wasm.prove_and_verify(log_size, claim);
+    return StwoResult.__wrap(ret);
 }
 
 let WASM_VECTOR_LEN = 0;
@@ -95,46 +95,46 @@ function passStringToWasm0(arg, malloc, realloc) {
 * @param {number} log_size
 * @param {number} claim
 * @param {string} stark_proof_str
-* @returns {FibonacciResult}
+* @returns {StwoResult}
 */
-export function run_fibonacci_verify_exemple(log_size, claim, stark_proof_str) {
+export function verify_stark_proof(log_size, claim, stark_proof_str) {
     const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.run_fibonacci_verify_exemple(log_size, claim, ptr0, len0);
-    return FibonacciResult.__wrap(ret);
+    const ret = wasm.verify_stark_proof(log_size, claim, ptr0, len0);
+    return StwoResult.__wrap(ret);
 }
 
-const FibonacciResultFinalization = (typeof FinalizationRegistry === 'undefined')
+const StwoResultFinalization = (typeof FinalizationRegistry === 'undefined')
     ? { register: () => {}, unregister: () => {} }
-    : new FinalizationRegistry(ptr => wasm.__wbg_fibonacciresult_free(ptr >>> 0));
+    : new FinalizationRegistry(ptr => wasm.__wbg_stworesult_free(ptr >>> 0));
 /**
 */
-export class FibonacciResult {
+export class StwoResult {
 
     static __wrap(ptr) {
         ptr = ptr >>> 0;
-        const obj = Object.create(FibonacciResult.prototype);
+        const obj = Object.create(StwoResult.prototype);
         obj.__wbg_ptr = ptr;
-        FibonacciResultFinalization.register(obj, obj.__wbg_ptr, obj);
+        StwoResultFinalization.register(obj, obj.__wbg_ptr, obj);
         return obj;
     }
 
     __destroy_into_raw() {
         const ptr = this.__wbg_ptr;
         this.__wbg_ptr = 0;
-        FibonacciResultFinalization.unregister(this);
+        StwoResultFinalization.unregister(this);
         return ptr;
     }
 
     free() {
         const ptr = this.__destroy_into_raw();
-        wasm.__wbg_fibonacciresult_free(ptr);
+        wasm.__wbg_stworesult_free(ptr);
     }
     /**
     * @returns {boolean}
     */
     get success() {
-        const ret = wasm.fibonacciresult_success(this.__wbg_ptr);
+        const ret = wasm.stworesult_success(this.__wbg_ptr);
         return ret !== 0;
     }
     /**
@@ -145,7 +145,7 @@ export class FibonacciResult {
         let deferred1_1;
         try {
             const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-            wasm.fibonacciresult_message(retptr, this.__wbg_ptr);
+            wasm.stworesult_message(retptr, this.__wbg_ptr);
             var r0 = getInt32Memory0()[retptr / 4 + 0];
             var r1 = getInt32Memory0()[retptr / 4 + 1];
             deferred1_0 = r0;
@@ -192,6 +192,9 @@ async function __wbg_load(module, imports) {
 function __wbg_get_imports() {
     const imports = {};
     imports.wbg = {};
+    imports.wbg.__wbg_log_b6f0d1d33b5b64be = function(arg0, arg1) {
+        console.log(getStringFromWasm0(arg0, arg1));
+    };
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
@@ -233,7 +236,7 @@ async function __wbg_init(input) {
     if (wasm !== undefined) return wasm;
 
     if (typeof input === 'undefined') {
-        input = new URL('program_wasm_bg.wasm', import.meta.url);
+        input = new URL('stwo_wasm_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 
