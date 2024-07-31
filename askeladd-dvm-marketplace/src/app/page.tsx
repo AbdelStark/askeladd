@@ -319,7 +319,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-neon-green font-arcade p-4 relative overflow-hidden">
+    <main className="min-h-screen bg-black text-neon-green font-arcade p-4 pb-16 relative overflow-hidden">
       <div className="crt-overlay"></div>
       <div className="scanlines"></div>
       <div className="arcade-cabinet">

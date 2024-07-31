@@ -66,8 +66,8 @@ body {
 
 .arcade-cabinet {
   position: relative;
-  max-width: 800px;
-  margin: 2rem auto;
+  max-width: 740px;
+  margin: 2rem auto 4rem; 
   padding: 2rem;
   background-color: #111;
   border: 8px solid #333;
@@ -162,6 +162,7 @@ body {
   overflow: hidden;
   background: var(--dark-purple);
   padding: 10px 0;
+  z-index: 1000; 
 }
 
 .marquee span {
