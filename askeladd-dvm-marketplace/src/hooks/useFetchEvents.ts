@@ -50,10 +50,10 @@ export const useFetchEvents = () => {
       const kind_search = kind ? [kind] : kinds ?? [KIND_JOB_REQUEST, KIND_JOB_RESULT];
       const events = await pool.querySync(relays, {
         kinds: kind_search,
-        // until,
-        // since,
-        // limit: limit ?? DEFAULT_LIMIT,
-        // search
+        until,
+        since,
+        limit: limit ?? DEFAULT_LIMIT,
+        search
       })
       return {
         result: undefined,
