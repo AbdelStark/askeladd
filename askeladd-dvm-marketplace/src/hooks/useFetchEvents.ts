@@ -17,11 +17,11 @@ interface ISubscriptionData {
 const DEFAULT_LIMIT = 300
 export const useFetchEvents = () => {
   const { ndk } = useNostrContext();
+  // const pool = new SimplePool()
   const [pool, setPool] = useState(new SimplePool())
 
   const fetchEvents = async (data: IEventFilter) => {
     try {
-      if (!ndk?.signer) return { result: undefined, events: undefined };
       const { kind, limit, since, until, kinds, search } = data;
       let eventsResult = await ndk.fetchEvents({
         kinds: kind ? [kind] : kinds ?? [KIND_JOB_RESULT as NDKKind, KIND_JOB_REQUEST],
@@ -44,12 +44,17 @@ export const useFetchEvents = () => {
   }
   const fetchEventsTools = async (data: IEventFilter) => {
     try {
-      if (!ndk?.signer) return { result: undefined, events: undefined };
       const { kind, limit, since, until, kinds, search } = data;
       const pool = new SimplePool()
       let relays = ASKELADD_RELAY;
       const kind_search = kind ? [kind] : kinds ?? [KIND_JOB_REQUEST, KIND_JOB_RESULT];
-      const events = await pool.querySync(relays, { kinds: kind_search, until, since, limit: limit ?? DEFAULT_LIMIT, search })
+      const events = await pool.querySync(relays, {
+        kinds: kind_search,
+        // until,
+        // since,
+        // limit: limit ?? DEFAULT_LIMIT,
+        // search
+      })
       return {
         result: undefined,
         events: events
@@ -90,7 +95,7 @@ export const useFetchEvents = () => {
         }
       }
     )
-    setPool(pool);
+    // setPool(pool);
     return h;
   }
   return { fetchEvents, fetchEventsTools, setupSubscriptionNostr, pool }

@@ -30,7 +30,7 @@ export const NostrProvider: React.FC<React.PropsWithChildren> = ({children}) => 
     newNdk.connect().then(() => {
       setNdk(newNdk);
     });
-  }, [privateKey, process.env.DEFAULT_NOSTR_USER_SK]);
+  }, [privateKey, process.env.NEXT_PUBLIC_DEFAULT_NOSTR_USER_SK]);
 
   return <NostrContext.Provider value={{ndk}}>{children}</NostrContext.Provider>;
 };
