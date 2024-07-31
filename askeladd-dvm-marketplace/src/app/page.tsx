@@ -322,6 +322,7 @@ export default function Home() {
     <main className="min-h-screen bg-black text-neon-green font-arcade p-4 pb-16 relative overflow-hidden">
       <div className="crt-overlay"></div>
       <div className="scanlines"></div>
+      <div className="crt-curve"></div>
       <div className="arcade-cabinet">
         <div className="cabinet-content">
           <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM Marketplace</h1>
