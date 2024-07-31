@@ -8,7 +8,16 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        mono: ["Press Start 2P", "monospace"],
+        arcade: ['"Press Start 2P"', 'cursive'],
+      },
+      colors: {
+        'neon-green': '#00ff00',
+        'neon-pink': '#ff00ff',
+        'neon-blue': '#00ffff',
+        'neon-yellow': '#ffff00',
+        'neon-orange': '#ff8000',
+        'neon-red': '#ff0000',
+        'dark-purple': '#2a0e61',
       },
     },
   },

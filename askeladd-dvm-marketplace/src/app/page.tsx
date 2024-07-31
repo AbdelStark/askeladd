@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { NDKEvent} from '@nostr-dev-kit/ndk';
+import { NDKEvent } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
-import { JobResultProver, StarkProof } from "@/types";
+import { JobResultProver } from "@/types";
 import init, { run_fibonacci_example, run_fibonacci_verify_exemple } from "../pkg/program_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { ASKELADD_RELAY } from "@/constants/relay";
 import { Relay } from 'nostr-tools/relay'
-import { verifyEvent, finalizeEvent, Event as EventNostr } from "nostr-tools";
+import { Event as EventNostr } from "nostr-tools";
+
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
@@ -195,69 +196,69 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-green-400 font-mono p-8">
-      <h1 className="text-4xl mb-8 text-center">Askeladd DVM Marketplace</h1>
-      <p className="text-center">Censorship global proving network</p>
-      <p className="text-center mb-8">Powered by Nostr and Circle STARKs.</p>
+    <main className="min-h-screen bg-black text-neon-green font-arcade p-4">
+      <div className="crt-overlay"></div>
+      <h1 className="text-4xl mb-4 text-center glitch" data-text="Askeladd DVM Arcade">Askeladd DVM Arcade</h1>
+      <p className="text-center blink">Insert your proof. Win the game.</p>
 
-      <div className="max-w-md mx-auto bg-gray-900 p-6 rounded-lg shadow-lg">
+      <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8">
         <div className="mb-4">
-          <label className="block mb-2">Log Size</label>
+          <label className="block mb-2 text-neon-pink">Log Size</label>
           <input
             type="number"
             value={logSize}
             onChange={(e) => setLogSize(Number(e.target.value))}
-            className="w-full bg-gray-800 text-green-400 px-3 py-2 rounded"
+            className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
           />
         </div>
 
         <div className="mb-4">
-          <label className="block mb-2">Claim</label>
+          <label className="block mb-2 text-neon-pink">Claim</label>
           <input
             type="number"
             value={claim}
             onChange={(e) => setClaim(Number(e.target.value))}
-            className="w-full bg-gray-800 text-green-400 px-3 py-2 rounded"
+            className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
           />
         </div>
 
         <button
           onClick={submitJob}
           disabled={isLoading}
-          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+          className={`w-full bg-neon-blue hover:bg-neon-pink text-black font-bold py-2 px-4 rounded ${
+            isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+          }`}
         >
-          {isLoading ? "Processing..." : "Submit Job"}
+          {isLoading ? "PROCESSING..." : "SUBMIT JOB"}
         </button>
       </div>
 
       {jobId && (
         <div className="mt-8 text-center">
-          <p>Job ID: {jobId}</p>
-          <p>Status: {proofStatus}</p>
-          {isLoading && <div className="spinner mt-4 mx-auto"></div>}
+          <p className="text-neon-orange">Job ID: {jobId}</p>
+          <p className="text-neon-yellow">Status: {proofStatus}</p>
+          {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
 
-          {error && <p>Error: {error}</p>}
+          {error && <p className="text-neon-red blink">Error: {error}</p>}
           {proof && (
-            <div>
-              <p className="mt-4">Proof received:</p>
-              <pre className="bg-gray-800 p-4 rounded mt-2 overflow-x-auto">
+            <div className="proof-container">
+              <p className="mt-4 text-neon-pink">Proof received:</p>
+              <pre className="bg-dark-purple p-4 rounded mt-2 overflow-x-auto text-neon-green">
                 {proof}
               </pre>
-              {starkProof &&
-
-                <>
-                  <p>Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}</p>
-                </>
-
-              }
+              {starkProof && (
+                <p className="text-neon-yellow">
+                  Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}
+                </p>
+              )}
               <button
                 onClick={verifyProofHandler}
                 disabled={isLoading}
-                className={`mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
+                className={`mt-4 bg-neon-green hover:bg-neon-yellow text-black font-bold py-2 px-4 rounded ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+                }`}
               >
-                {isLoading ? "Verifying..." : "Verify Proof"}
+                {isLoading ? "VERIFYING..." : "VERIFY PROOF"}
               </button>
             </div>
           )}
