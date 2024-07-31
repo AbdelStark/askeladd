@@ -47,25 +47,6 @@ body {
   pointer-events: none;
 }
 
-.floating-icons {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  background-image: 
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="%2300ff00" opacity="0.2"/></svg>'),
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 15 15"><rect width="13" height="13" x="1" y="1" fill="%23ff00ff" opacity="0.2"/></svg>');
-  background-repeat: repeat;
-  animation: floatIcons 120s linear infinite;
-}
-
-@keyframes floatIcons {
-  from { background-position: 0 0, 0 0; }
-  to { background-position: 1000px 1000px, -1000px -1000px; }
-}
-
 .arcade-cabinet {
   position: relative;
   max-width: 800px;

@@ -123,42 +123,42 @@ export default function Home() {
   */
   const submitJob = async () => {
     try {
-      setIsLoading(true);
+    setIsLoading(true);
       setIsFetchJob(false);
       setJobId(undefined)
-      setProofStatus("pending");
+    setProofStatus("pending");
       setProof(null);
       setJobEventResult(undefined);
       setError(undefined);
-      const tags = [
-        ['param', 'log_size', logSize.toString()],
-        ['param', 'claim', claim.toString()],
-        ['output', 'text/json']
-      ];
-      const content = JSON.stringify({
-        request: {
-          log_size: logSize.toString(),
-          claim: claim.toString()
-        }
-      })
-      // Define the timestamp before which you want to fetch events
+    const tags = [
+      ['param', 'log_size', logSize.toString()],
+      ['param', 'claim', claim.toString()],
+      ['output', 'text/json']
+    ];
+    const content = JSON.stringify({
+      request: {
+        log_size: logSize.toString(),
+        claim: claim.toString()
+      }
+    })
+    // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
-      setTimestampJob(new Date().getTime())
-      /** Use Nostr extension to send event */
+    setTimestampJob(new Date().getTime())
+    /** Use Nostr extension to send event */
       const pool = new SimplePool();
       const poolJob = new SimplePool();
       const relay = await Relay.connect(ASKELADD_RELAY[0])
-      if (typeof window !== "undefined" && window.nostr) {
-        const pubkey = await window.nostr.getPublicKey();
-        let created_at = new Date().getTime();
+    if (typeof window !== "undefined" && window.nostr) {
+      const pubkey = await window.nostr.getPublicKey();
+      let created_at = new Date().getTime();
         setPublicKey(pubkey)
-        const event = await window.nostr.signEvent({
-          pubkey: pubkey,
-          created_at: created_at,
-          kind: 5600,
-          tags: tags,
-          content: content
-        }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+      const event = await window.nostr.signEvent({
+        pubkey: pubkey,
+        created_at: created_at,
+        kind: 5600,
+        tags: tags,
+        content: content
+      }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // Setup job request to fetch job id
 
         /** @TODO why the event id is not return?
@@ -176,15 +176,15 @@ export default function Home() {
       } else {
 
         /** @TODO flow is user doesn't have NIP-07 extension */
-        // let { result, event } = await sendNote({ content, tags, kind: 5600 })
-        // console.log("event", event)
-        // if (event?.sig) {
-        //   setJobId(event?.sig);
-        // }
+    // let { result, event } = await sendNote({ content, tags, kind: 5600 })
+    // console.log("event", event)
+    // if (event?.sig) {
+    //   setJobId(event?.sig);
+    // }
         // setIsWaitingJob(true)
-        /** NDK event
-         * Generate or import private key after
-         */
+    /** NDK event
+     * Generate or import private key after
+     */
       }
     } catch (e) {
     } finally {
@@ -226,10 +226,10 @@ export default function Home() {
   /** TODO fetch subscribed event
     * fix search jobId => check if relayer support NIP-50 
     * Fetch Job result from the Prover
-    * - Tags: By reply of the event_id of the job request?
-    * - By author
-    * - Timestamp since/until (doesn't work as expected for me)
-  */
+     * - Tags: By reply of the event_id of the job request?
+     * - By author
+     * - Timestamp since/until (doesn't work as expected for me)
+     */
   const fetchEventsProof = async () => {
     console.log("fetch events job result proof")
     // if(jobEventResult && jobId)return;
@@ -319,76 +319,82 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-green-400 font-mono p-8">
-      <h1 className="text-4xl mb-8 text-center">Askeladd DVM Marketplace</h1>
-      <p className="text-center">Censorship global proving network</p>
-      <p className="text-center mb-8">Powered by Nostr and Circle STARKs.</p>
+    <main className="min-h-screen bg-black text-neon-green font-arcade p-4 relative overflow-hidden">
+      <div className="crt-overlay"></div>
+      <div className="scanlines"></div>
+      <div className="arcade-cabinet">
+        <div className="cabinet-content">
+          <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM Marketplace</h1>
+          <p className="text-center blink neon-text-sm">Censorship global proving network</p>
+          <p className="text-center blink neon-text-sm">Powered by Nostr and Circle STARKs.</p>
+          <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
+            <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Log Size</label>
+              <input
+                type="number"
+                value={logSize}
+                onChange={(e) => setLogSize(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
 
-      <div className="max-w-md mx-auto bg-gray-900 p-6 rounded-lg shadow-lg">
-        <div className="mb-4">
-          <label className="block mb-2">Log Size</label>
-          <input
-            type="number"
-            value={logSize}
-            onChange={(e) => setLogSize(Number(e.target.value))}
-            className="w-full bg-gray-800 text-green-400 px-3 py-2 rounded"
-          />
-        </div>
+            <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Claim</label>
+              <input
+                type="number"
+                value={claim}
+                onChange={(e) => setClaim(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
 
-        <div className="mb-4">
-          <label className="block mb-2">Claim</label>
-          <input
-            type="number"
-            value={claim}
-            onChange={(e) => setClaim(Number(e.target.value))}
-            className="w-full bg-gray-800 text-green-400 px-3 py-2 rounded"
-          />
-        </div>
+            <button
+              onClick={submitJob}
+              disabled={isLoading}
+              className={`w-full bg-neon-blue hover:bg-neon-pink text-black font-bold py-2 px-4 rounded ${
+                isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+              }`}
+            >
+              {isLoading ? "PROCESSING..." : "SUBMIT JOB"}
+            </button>
+          </div>
 
-        <button
-          onClick={submitJob}
-          disabled={isLoading}
-          className={`w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-        >
-          {isLoading ? "Processing..." : "Submit Job"}
-        </button>
-      </div>
+          {jobId && (
+            <div className="mt-8 text-center">
+              <p className="text-neon-orange">Job ID: <span className="break-all">{jobId}</span></p>
+              <p className="text-neon-yellow">Status: {proofStatus}</p>
+              {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
 
-      {isWaitingJob && <div className="spinner mt-4 mx-auto"></div>}
-
-      {jobId && (
-        <div className="mt-8 text-center">
-          <p >Job ID: {jobId}</p>
-          <p>Status: {proofStatus}</p>
-          {isLoading && <div className="spinner mt-4 mx-auto"></div>}
-
-          {error && <p>Error: {error}</p>}
-          {proof && (
-            <div>
-              <p className="mt-4">Proof received:</p>
-              <pre className="bg-gray-800 p-4 rounded mt-2 overflow-x-auto">
-                {proof}
-              </pre>
-              {starkProof &&
-
-                <>
-                  <p>Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}</p>
-                </>
-
-              }
-              <button
-                onClick={verifyProofHandler}
-                disabled={isLoading}
-                className={`mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${isLoading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-              >
-                {isLoading ? "Verifying..." : "Verify Proof"}
-              </button>
+              {error && <p className="text-neon-red blink">Error: {error}</p>}
+              {proof && (
+                <div className="proof-container">
+                  <p className="mt-4 text-neon-pink">Proof received:</p>
+                  <pre className="bg-dark-purple p-4 rounded mt-2 overflow-x-auto text-neon-green text-xs">
+                    {proof}
+                  </pre>
+                  {starkProof && (
+                    <p className="text-neon-yellow">
+                      Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}
+                    </p>
+                  )}
+                  <button
+                    onClick={verifyProofHandler}
+                    disabled={isLoading}
+                    className={`mt-4 bg-neon-green hover:bg-neon-yellow text-black font-bold py-2 px-4 rounded ${
+                      isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+                    }`}
+                  >
+                    {isLoading ? "VERIFYING..." : "VERIFY PROOF"}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
-      )}
+      </div>
+      <div className="marquee">
+        <span>Welcome to Askeladd DVM Marketplace! Prove your claims and conquer the blockchain realm!</span>
+      </div>
     </main>
   );
 }
