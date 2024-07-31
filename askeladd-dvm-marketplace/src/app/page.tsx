@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NDKEvent, NDKKind, NostrEvent } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
@@ -13,9 +13,14 @@ import { Event as EventNostr, SimplePool } from "nostr-tools";
 export default function Home() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
-  const [jobId, setJobId] = useState<string | undefined>(undefined);
+  const [publicKey, setPublicKey] = useState<string | undefined>();
+  const [jobId, setJobId] = useState<string | undefined>();
+  // const [jobId, setJobId] = useState<string | undefined>("78e3026c35d08ab8345b4efa49e0fe27c74f3849589720e01286cda69c36cc39");
+  // Event ID test : "f708c6ba3c078a364ef7d5222310c14288841a63956b10186959b48e3284c4bb"
+  // 191ade3aa99bdbb7d6781e1149cf0ec4205db1ac097df9f83a6d7a10d88712c0
   const [error, setError] = useState<string | undefined>()
   const [starkProof, setStarkProof] = useState<any | undefined>()
+  const [jobEventResult, setJobEventResult] = useState<EventNostr | undefined | NDKEvent>()
   // const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
   const [events, setEvents] = useState<EventNostr[] | NDKEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<EventNostr | undefined | NDKEvent>()
@@ -26,10 +31,14 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFetchJob, setIsFetchJob] = useState(false);
+  const [isLoadingJobResult, setIsLoadingJobResult] = useState(false);
   const [isWaitingJob, setIsWaitingJob] = useState(false);
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
 
-  const { ndk } = useNostrContext()
+  let eventIdRequest = useMemo(() => {
+    return jobId
+  }, [jobId])
+  const { ndk, pool } = useNostrContext()
   const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
   const { sendNote, publishNote } = useSendNote()
 
@@ -45,23 +54,67 @@ export default function Home() {
 
   /** Effect to fetch the job result when a job request is sent */
   const waitingForJobResult = async () => {
-    if (isFetchJob && jobId) return;
+    if (jobEventResult && jobId) return;
     fetchEventsProof()
     setIsLoading(false);
     setIsWaitingJob(false)
   }
   const timeoutWaitingForJobResult = async () => {
-    console.log("waiting timeout")
+    console.log("waiting timeout job result")
     setTimeout(() => {
       waitingForJobResult()
     }, 5000);
   }
 
   useEffect(() => {
-    if (jobId && !isFetchJob) {
+    if (jobId && !jobEventResult) {
       waitingForJobResult()
     }
-  }, [jobId, isFetchJob, isWaitingJob])
+  }, [jobId, isFetchJob, jobEventResult])
+
+  const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
+    let poolRequest = pool.subscribeMany(
+      ASKELADD_RELAY,
+      [
+        {
+          kinds: [KIND_JOB_REQUEST as NDKKind],
+          // since:timestampJob
+          // authors: pubkey ? [pubkey] : []
+        },
+        {
+          kinds: [KIND_JOB_RESULT as NDKKind],
+          // since:timestampJob
+        },
+      ],
+      {
+        onevent(event) {
+          if (event?.kind == KIND_JOB_REQUEST) {
+            console.log("Event job request received: ", event?.id);
+            if (!jobId) return;
+            if (pubkey && event?.pubkey == pubkey) {
+              setJobId(event?.id)
+            }
+            poolRequest.close();
+
+          }
+          if (event?.kind == KIND_JOB_RESULT) {
+            console.log("Event job request received: ", event?.id);
+            if (!jobId) return;
+            if (pubkey && event?.pubkey == pubkey) {
+              setJobId(event?.id)
+            }
+            poolRequest.close();
+          }
+        },
+        onclose: () => {
+          poolRequest.close()
+        },
+        oneose() {
+          poolRequest.close()
+        }
+      }
+    )
+  }
 
   /** Submit job with JOB_REQUEST 5600
    * - Use extension NIP-7
@@ -72,7 +125,11 @@ export default function Home() {
     try {
       setIsLoading(true);
       setIsFetchJob(false);
+      setJobId(undefined)
       setProofStatus("pending");
+      setProof(null);
+      setJobEventResult(undefined);
+      setError(undefined);
       const tags = [
         ['param', 'log_size', logSize.toString()],
         ['param', 'claim', claim.toString()],
@@ -85,11 +142,16 @@ export default function Home() {
         }
       })
       // Define the timestamp before which you want to fetch events
-      setTimestampJob(new Date().getTime() - 1000)
+      // setTimestampJob(new Date().getTime() / 1000)
+      setTimestampJob(new Date().getTime())
       /** Use Nostr extension to send event */
+      const pool = new SimplePool();
+      const poolJob = new SimplePool();
+      const relay = await Relay.connect(ASKELADD_RELAY[0])
       if (typeof window !== "undefined" && window.nostr) {
         const pubkey = await window.nostr.getPublicKey();
         let created_at = new Date().getTime();
+        setPublicKey(pubkey)
         const event = await window.nostr.signEvent({
           pubkey: pubkey,
           created_at: created_at,
@@ -97,84 +159,20 @@ export default function Home() {
           tags: tags,
           content: content
         }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
-        const pool = new SimplePool()
         // Setup job request to fetch job id
-        // const poolRequest = await setupSubscriptionNostr({
-        //   pubkey,
-        //   filter: {
-        //     authors: [pubkey],
-        //     since: timestampJob,
-        //   },
-        //   onEventCallback: (event) => {
-        //     console.log("Event job request received: ", event)
-        //     setJobId(event?.id);
-        //     setIsWaitingJob(true);
-        //     if (jobId && event?.content?.includes(jobId)) {
-        //       getDataOfEvent(event)
-        //     }
-        //   }
-        // })
 
         /** @TODO why the event id is not return?
          * - get the last event and fetch job_id event
          * - check if events is sent with subscription
          * 
         */
-        // const relay = await Relay.connect(ASKELADD_RELAY[0])
         // let eventID = await relay.publish(event as EventNostr);
         const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
-        const { events } = await fetchEventsTools({
-          kind: KIND_JOB_REQUEST,
-          since: timestampJob
-        });
-        console.log("events job request", events);
-        if (events) {
-          const lastEvent = events[events?.length - 1]
-          const lastEventId = lastEvent?.id;
-          setJobId(lastEventId);
-        }
-        /** @TODO Subscribed to Job Result**/
-        /** Wait job result */
-        // let h = pool.subscribeMany(
-        //   ASKELADD_RELAY,
-        //   [
-        //     {
-        //       // since: timestampJob,
-        //       kinds: [KIND_JOB_RESULT as NDKKind]
-        //     },
-        //   ],
-        //   {
-        //     onevent(event) {
-        //       console.log("Event job result received: ", event?.id);
-        //       console.log("jobID to find", jobId)
-        //       if (jobId && event?.content?.includes(jobId)) {
-        //         console.log("Event content include job id needed")
-        //         getDataOfEvent(event)
-        //       }
-        //       // h.close();
-        //     },
-        //     onclose: () => {
-        //     },
-        //     oneose() {
-        //       h.close()
-        //     }
-        //   }
-        // )
-        // const poolResult = await setupSubscriptionNostr({
-        //   pubkey,
-        //   filter: {
-        //     // since: timestampJob,
-        //     kinds: [KIND_JOB_RESULT as NDKKind]
-        //   },
-        //   onEventCallback: (event) => {
-        //     console.log("Event job result received: ", event)
-        //     if (jobId && event?.content?.includes(jobId)) {
-        //       console.log("Event content include job id needed");
-        //       getDataOfEvent(event)
-        //     }
-        //   }
-        // })
-        setIsWaitingJob(true)
+        console.log("eventID", eventID[0])
+        await fetchJobRequest(pubkey)
+        setIsWaitingJob(true);
+        await timeoutWaitingForJobResult()
+
       } else {
 
         /** @TODO flow is user doesn't have NIP-07 extension */
@@ -196,6 +194,36 @@ export default function Home() {
   };
 
   /** TODO fetch subscribed event
+ * fix search jobId => check if relayer support NIP-50 
+ * Fetch Job result from the Prover
+ * - Tags: By reply of the event_id of the job request?
+ * - By author
+ * - Timestamp since/until (doesn't work as expected for me)
+*/
+  const fetchJobRequest = async (pubkey?: string) => {
+
+    const { events } = await fetchEventsTools({
+      kind: KIND_JOB_REQUEST,
+      since: timestampJob,
+      // authors: pubkey ? [pubkey] : []
+    });
+    console.log("events job request", events);
+    if (!events) return;
+    // const lastEvent = events[events?.length - 1]
+    const lastEvent = events[0]
+    if (!lastEvent?.id) return;
+    const lastEventId = lastEvent?.id;
+    if (pubkey && pubkey == lastEvent?.pubkey) {
+      console.log("lastEventId", lastEventId)
+      setJobId(lastEventId);
+      eventIdRequest = lastEventId;
+      setIsWaitingJob(true)
+    }
+
+  }
+
+
+  /** TODO fetch subscribed event
     * fix search jobId => check if relayer support NIP-50 
     * Fetch Job result from the Prover
     * - Tags: By reply of the event_id of the job request?
@@ -203,32 +231,40 @@ export default function Home() {
     * - Timestamp since/until (doesn't work as expected for me)
   */
   const fetchEventsProof = async () => {
-    setIsFetchJob(false)
-    //   const { events } = await fetchEventsTools({ until: timestampJob, kind: KIND_JOB_RESULT, 
-    //     // search:`${jobId}`,
-    //  })
+    console.log("fetch events job result proof")
+    // if(jobEventResult && jobId)return;
+    setIsFetchJob(false);
+    setIsLoadingJobResult(true);
     const { events } = await fetchEventsTools({
       kind: KIND_JOB_RESULT,
       // since: timestampJob,
-      // search:`${jobId}`,
+      // search: jobId
+      // search: `#${jobId}`,
     })
     console.log("events job result", events);
     if (!events) return;
-    // setEvents(events)
-    /** @TODO fetch the correct event
-   
-     */
     let lastEvent = events[events?.length - 1]
     if (!lastEvent) return;
-    getDataOfEvent(lastEvent);
-
+    let id = jobId ?? eventIdRequest;
+    if (jobEventResult && jobEventResult?.id == id && proof && proofStatus != "pending") return;
+    if (id && !jobEventResult) {
+      let jobEventResultFind = events?.find((e) => e?.content?.includes(id))
+      console.log("jobEventResultFind", jobEventResultFind);
+      let filterJob = events?.filter((e) => e?.id?.includes(id))
+      console.log("filterJob", filterJob);
+      if (jobEventResultFind?.id) {
+        console.log("Event JOB_RESULT find", jobEventResultFind);
+        getDataOfEvent(jobEventResultFind);
+        setJobEventResult(jobEventResultFind)
+      }
+    }
   }
 
   const getDataOfEvent = (lastEvent?: NDKEvent | EventNostr) => {
-    setSelectedEvent(lastEvent);
     if (!lastEvent || !lastEvent?.content) return;
+    setSelectedEvent(lastEvent);
     setProof(lastEvent?.content?.toString())
-    const jobProofSerialize: JobResultProver = JSON.parse(lastEvent?.content)
+    const jobProofSerialize: any = JSON.parse(lastEvent?.content)
     console.log('jobProofSerialize serialize', jobProofSerialize);
     const proofSerialize = jobProofSerialize?.response?.proof;
     console.log('proof serialize', proofSerialize);
@@ -247,7 +283,6 @@ export default function Home() {
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
-
         if (verify_result?.success) {
           console.log("is success verify result")
           setProofStatus("verified");
@@ -256,19 +291,19 @@ export default function Home() {
         }
 
         /** @TODO fix ERROR verify loop between all stark proof*/
-        // for (let event of events) {
-        //   const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
-        //   const proofSerialize = jobProofSerialize?.response?.proof;
-        //   const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
-        //   console.log("loop verify result", verify_result.message);
-        //   console.log("loop verify success", verify_result.success);
-        //   if (verify_result?.success) {
-        //     console.log("is success verify result")
-        //     setProofStatus("verified");
-        //   } else {
-        //     setError(verify_result?.message)
-        //   }
-        // }
+        for (let event of events) {
+          const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
+          const proofSerialize = jobProofSerialize?.response?.proof;
+          const verify_result = run_fibonacci_verify_exemple(logSize, claim, JSON.stringify(proofSerialize));
+          if (verify_result?.success) {
+            console.log("loop verify result", verify_result.message);
+            console.log("loop verify success", verify_result.success);
+            console.log("is success verify result")
+            setProofStatus("verified");
+          } else {
+            // setError(verify_result?.message)
+          }
+        }
         setIsLoading(false);
         setIsFetchJob(true)
       }

@@ -53,9 +53,7 @@ pub fn run_fibonacci_verify_exemple(
     stark_proof_str: String,
 ) -> FibonacciResult {
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
-
     let stark_proof: StarkProof = serde_json::from_str(&stark_proof_str.to_owned()).unwrap();
-
     match fib.verify(stark_proof) {
         Ok(()) => FibonacciResult {
             success: true,
@@ -76,6 +74,11 @@ fn test_proof_and_verify() {
     match fib.prove() {
         Ok(proof) => {
             let str_proof: String = serde_json::to_string(&proof).unwrap();
+            println!("stark_proof_str {:?}", str_proof);
+            let stark_proof: StarkProof = serde_json::from_str(&str_proof.to_owned()).unwrap();
+            let reserialize = serde_json::to_string(&stark_proof).unwrap();
+            println!("stark_proof_str reserialize {:?}", reserialize);
+            assert_eq!(str_proof, reserialize);
             let result = run_fibonacci_verify_exemple(log_size, claim, str_proof);
             assert!(result.success);
         }

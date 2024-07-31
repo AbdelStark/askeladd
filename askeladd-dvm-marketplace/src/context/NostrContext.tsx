@@ -1,19 +1,22 @@
 "use client";
 
 import { ASKELADD_RELAY } from '@/constants/relay';
-import NDK, {NDKPrivateKeySigner} from '@nostr-dev-kit/ndk';
-import {createContext, useContext, useEffect, useState} from 'react';
+import NDK, { NDKPrivateKeySigner } from '@nostr-dev-kit/ndk';
+import { createContext, useContext, useEffect, useState } from 'react';
 import dotenv from "dotenv";
+import { SimplePool } from 'nostr-tools';
 dotenv.config();
 
 export type NostrContextType = {
   ndk: NDK;
+  pool: SimplePool
 };
 
 export const NostrContext = createContext<NostrContextType | null>(null);
 
-export const NostrProvider: React.FC<React.PropsWithChildren> = ({children}) => {
-  const [privateKey, setPrivateKey] = useState<string|undefined>(process.env.NEXT_PUBLIC_DEFAULT_NOSTR_USER_SK)
+export const NostrProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+  const [privateKey, setPrivateKey] = useState<string | undefined>(process.env.NEXT_PUBLIC_DEFAULT_NOSTR_USER_SK)
+  const pool = new SimplePool();
 
   const [ndk, setNdk] = useState<NDK>(
     new NDK({
@@ -32,7 +35,7 @@ export const NostrProvider: React.FC<React.PropsWithChildren> = ({children}) => 
     });
   }, [privateKey, process.env.NEXT_PUBLIC_DEFAULT_NOSTR_USER_SK]);
 
-  return <NostrContext.Provider value={{ndk}}>{children}</NostrContext.Provider>;
+  return <NostrContext.Provider value={{ ndk, pool }} >{children}</NostrContext.Provider>;
 };
 
 export const useNostrContext = () => {
