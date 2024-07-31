@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use log::{debug, error, info};
 use nostr_sdk::prelude::*;
 use thiserror::Error;
+use tokio::sync::Mutex;
 use tokio::time::timeout;
 
 use crate::config::Settings;
@@ -138,11 +140,15 @@ impl Customer {
         let job_id = job_id.to_string();
         let subscription_id = subscription_id.clone();
 
+        let result = Arc::new(Mutex::new(None));
+        let result_clone = Arc::clone(&result);
+
         // Handle incoming Nostr notifications
         self.nostr_client
-            .handle_notifications(|notification| {
+            .handle_notifications(move |notification| {
                 let job_id = job_id.clone();
                 let subscription_id = subscription_id.clone();
+                let result = Arc::clone(&result_clone);
                 async move {
                     if let RelayPoolNotification::Event {
                         subscription_id: sub_id,
@@ -151,10 +157,12 @@ impl Customer {
                     } = notification
                     {
                         if sub_id == subscription_id {
-                            if let Ok(result) =
+                            if let Ok(job_result) =
                                 serde_json::from_str::<GenerateZKPJobResult>(&event.content)
                             {
-                                if result.job_id == job_id {
+                                if job_result.job_id == job_id {
+                                    let mut result_guard = result.lock().await;
+                                    *result_guard = Some(event.content.clone());
                                     return Ok(true);
                                 }
                             }
@@ -166,28 +174,14 @@ impl Customer {
             .await
             .map_err(CustomerError::NostrClientError)?;
 
-        let filter = Filter::new()
-            .kind(Kind::Custom(JOB_RESULT_KIND))
-            .author(PublicKey::from_bech32(&self.settings.prover_agent_pk).unwrap())
-            .since(Timestamp::now() - Duration::from_secs(60));
-
-        // Fetch recent events to find the job result
-        let events = self
-            .nostr_client
-            .get_events_of(vec![filter], None)
-            .await
-            .map_err(CustomerError::NostrClientError)?;
-
-        // Find and return the matching job result
-        for event in events {
-            if let Ok(job_result) = serde_json::from_str::<GenerateZKPJobResult>(&event.content) {
-                if job_result.job_id == job_id {
-                    return Ok(job_result);
-                }
-            }
+        // Check if we found a result
+        let result_guard = result.lock().await;
+        if let Some(job_result) = result_guard.clone() {
+            // Convert the string to a GenerateZKPJobResult
+            Ok(serde_json::from_str(&job_result).unwrap())
+        } else {
+            Err(CustomerError::Unknown("Job result not found".to_string()))
         }
-
-        Err(CustomerError::Unknown("Job result not found".to_string()))
     }
 
     /// Verifies the proof in a job result

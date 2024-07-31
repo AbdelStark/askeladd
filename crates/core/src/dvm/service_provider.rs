@@ -178,11 +178,16 @@ impl ServiceProvider {
 
         match self.proving_service.generate_proof(request) {
             Ok(response) => {
+                let serialized_proof = serde_json::to_string(&response.proof)?;
+                println!("Generated proof: {:?}", serialized_proof);
+
                 let job_result = GenerateZKPJobResult {
                     job_id: job_id.clone(),
                     response,
                 };
+
                 let response_json = serde_json::to_string(&job_result)?;
+                println!("Response JSON: {:?}", response_json);
 
                 let job_result_event: Event =
                     EventBuilder::job_result(*event, response_json, 0, None)
