@@ -18,6 +18,7 @@ body {
   background-color: #000;
   color: var(--neon-green);
   font-family: 'Press Start 2P', cursive;
+  overflow-x: hidden;
 }
 
 .crt-overlay {
@@ -34,6 +35,113 @@ body {
   pointer-events: none;
 }
 
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,.2) 50%, rgba(0,0,0,.2));
+  background-size: 100% 4px;
+  pointer-events: none;
+}
+
+.floating-icons {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  background-image: 
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="%2300ff00" opacity="0.2"/></svg>'),
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 15 15"><rect width="13" height="13" x="1" y="1" fill="%23ff00ff" opacity="0.2"/></svg>');
+  background-repeat: repeat;
+  animation: floatIcons 120s linear infinite;
+}
+
+@keyframes floatIcons {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 1000px 1000px, -1000px -1000px; }
+}
+
+.arcade-cabinet {
+  position: relative;
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #111;
+  border: 8px solid #333;
+  border-radius: 10px;
+  box-shadow: 
+    0 0 0 4px #555,
+    0 0 0 8px #777,
+    0 0 20px rgba(0,255,0,0.6);
+}
+
+.cabinet-content {
+  background-color: rgba(0,0,0,0.8);
+  padding: 2rem;
+  border-radius: 5px;
+}
+
+.game-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1)), 
+              linear-gradient(45deg, rgba(0,0,0,0.1) 25%, transparent 25%, transparent 75%, rgba(0,0,0,0.1) 75%, rgba(0,0,0,0.1));
+  background-size: 4px 4px;
+  background-position: 0 0, 2px 2px;
+  pointer-events: none;
+}
+
+.neon-text {
+  text-shadow: 
+    0 0 5px var(--neon-green),
+    0 0 10px var(--neon-green),
+    0 0 20px var(--neon-green),
+    0 0 40px var(--neon-green);
+}
+
+.neon-text-sm {
+  text-shadow: 
+    0 0 2px var(--neon-green),
+    0 0 4px var(--neon-green),
+    0 0 8px var(--neon-green);
+}
+
+.marquee {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  background: var(--dark-purple);
+  padding: 10px 0;
+}
+
+.marquee span {
+  display: inline-block;
+  width: max-content;
+  padding-left: 100%;
+  animation: marquee 30s linear infinite;
+  color: var(--neon-yellow);
+}
+
+@keyframes marquee {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-100%, 0); }
+}
 .glitch {
   position: relative;
   color: var(--neon-green);

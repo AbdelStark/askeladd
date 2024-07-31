@@ -196,74 +196,83 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-neon-green font-arcade p-4">
+    <main className="min-h-screen bg-black text-neon-green font-arcade p-4 relative overflow-hidden">
       <div className="crt-overlay"></div>
-      <h1 className="text-4xl mb-4 text-center glitch" data-text="Askeladd DVM Arcade">Askeladd DVM Arcade</h1>
-      <p className="text-center blink">Insert your proof. Win the game.</p>
+      <div className="scanlines"></div>
+      {/* <div className="floating-icons"></div> */}
+      <div className="arcade-cabinet">
+        <div className="cabinet-content">
+          <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM Marketplace</h1>
+          <p className="text-center blink neon-text-sm">Censorship global proving network</p>
+          <p className="text-center blink neon-text-sm">Powered by Nostr and Circle STARKs.</p>
+          <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
+            <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Log Size</label>
+              <input
+                type="number"
+                value={logSize}
+                onChange={(e) => setLogSize(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
 
-      <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8">
-        <div className="mb-4">
-          <label className="block mb-2 text-neon-pink">Log Size</label>
-          <input
-            type="number"
-            value={logSize}
-            onChange={(e) => setLogSize(Number(e.target.value))}
-            className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-          />
-        </div>
+            <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Claim</label>
+              <input
+                type="number"
+                value={claim}
+                onChange={(e) => setClaim(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 text-neon-pink">Claim</label>
-          <input
-            type="number"
-            value={claim}
-            onChange={(e) => setClaim(Number(e.target.value))}
-            className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-          />
-        </div>
+            <button
+              onClick={submitJob}
+              disabled={isLoading}
+              className={`w-full bg-neon-blue hover:bg-neon-pink text-black font-bold py-2 px-4 rounded ${
+                isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+              }`}
+            >
+              {isLoading ? "PROCESSING..." : "SUBMIT JOB"}
+            </button>
+          </div>
 
-        <button
-          onClick={submitJob}
-          disabled={isLoading}
-          className={`w-full bg-neon-blue hover:bg-neon-pink text-black font-bold py-2 px-4 rounded ${
-            isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
-          }`}
-        >
-          {isLoading ? "PROCESSING..." : "SUBMIT JOB"}
-        </button>
-      </div>
+          {jobId && (
+            <div className="mt-8 text-center">
+              <p className="text-neon-orange">Job ID: <span className="break-all">{jobId}</span></p>
+              <p className="text-neon-yellow">Status: {proofStatus}</p>
+              {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
 
-      {jobId && (
-        <div className="mt-8 text-center">
-          <p className="text-neon-orange">Job ID: {jobId}</p>
-          <p className="text-neon-yellow">Status: {proofStatus}</p>
-          {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
-
-          {error && <p className="text-neon-red blink">Error: {error}</p>}
-          {proof && (
-            <div className="proof-container">
-              <p className="mt-4 text-neon-pink">Proof received:</p>
-              <pre className="bg-dark-purple p-4 rounded mt-2 overflow-x-auto text-neon-green">
-                {proof}
-              </pre>
-              {starkProof && (
-                <p className="text-neon-yellow">
-                  Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}
-                </p>
+              {error && <p className="text-neon-red blink">Error: {error}</p>}
+              {proof && (
+                <div className="proof-container">
+                  <p className="mt-4 text-neon-pink">Proof received:</p>
+                  <pre className="bg-dark-purple p-4 rounded mt-2 overflow-x-auto text-neon-green text-xs">
+                    {proof}
+                  </pre>
+                  {starkProof && (
+                    <p className="text-neon-yellow">
+                      Proof of work nonce: {starkProof?.commitment_scheme_proof?.proof_of_work?.nonce}
+                    </p>
+                  )}
+                  <button
+                    onClick={verifyProofHandler}
+                    disabled={isLoading}
+                    className={`mt-4 bg-neon-green hover:bg-neon-yellow text-black font-bold py-2 px-4 rounded ${
+                      isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
+                    }`}
+                  >
+                    {isLoading ? "VERIFYING..." : "VERIFY PROOF"}
+                  </button>
+                </div>
               )}
-              <button
-                onClick={verifyProofHandler}
-                disabled={isLoading}
-                className={`mt-4 bg-neon-green hover:bg-neon-yellow text-black font-bold py-2 px-4 rounded ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : "button-3d"
-                }`}
-              >
-                {isLoading ? "VERIFYING..." : "VERIFY PROOF"}
-              </button>
             </div>
           )}
         </div>
-      )}
+      </div>
+      <div className="marquee">
+        <span>Welcome to Askeladd DVM Marketplace! Prove your claims and conquer the blockchain realm!</span>
+      </div>
     </main>
   );
 }
