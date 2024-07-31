@@ -123,7 +123,7 @@ export default function Home() {
         // const relay = await Relay.connect(ASKELADD_RELAY[0])
         // let eventID = await relay.publish(event as EventNostr);
         const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
-        const { events } = await fetchEvents({
+        const { events } = await fetchEventsTools({
           kind: KIND_JOB_REQUEST,
           since: timestampJob
         });
@@ -176,6 +176,8 @@ export default function Home() {
         // })
         setIsWaitingJob(true)
       } else {
+
+        /** @TODO flow is user doesn't have NIP-07 extension */
         // let { result, event } = await sendNote({ content, tags, kind: 5600 })
         // console.log("event", event)
         // if (event?.sig) {
@@ -205,7 +207,7 @@ export default function Home() {
     //   const { events } = await fetchEventsTools({ until: timestampJob, kind: KIND_JOB_RESULT, 
     //     // search:`${jobId}`,
     //  })
-    const { events } = await fetchEvents({
+    const { events } = await fetchEventsTools({
       kind: KIND_JOB_RESULT,
       // since: timestampJob,
       // search:`${jobId}`,
