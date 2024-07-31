@@ -1,14 +1,20 @@
 {
-  "name": "program_wasm",
+  "name": "stwo_wasm",
   "type": "module",
+  "description": "Stwo wasm bindings",
   "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbdelStark/askeladd"
+  },
   "files": [
-    "program_wasm_bg.wasm",
-    "program_wasm.js",
-    "program_wasm.d.ts"
+    "stwo_wasm_bg.wasm",
+    "stwo_wasm.js",
+    "stwo_wasm.d.ts"
   ],
-  "main": "program_wasm.js",
-  "types": "program_wasm.d.ts",
+  "main": "stwo_wasm.js",
+  "types": "stwo_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
   ]
