@@ -4,3 +4,6 @@ export const ASKELADD_RELAY= [
     // "wss://relay.nostr.net",
     process.env.NEXT_PUBLIC_DEFAULT_RELAYER ?? 'wss://nostr-relay-nestjs-production.up.railway.app',// AFK relayer
 ]
+
+
+export const APPLICATION_PUBKEY_DVM= process.env.NEXT_PUBLIC_DVM_PUBKEY
