@@ -327,7 +327,7 @@ export default function Home() {
         <div className="cabinet-content">
           <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM Marketplace</h1>
           <p className="text-center blink neon-text-sm">Censorship resistant global proving network</p>
-          <p className="text-center blink neon-text-sm">Powered by Nostr and Circle STARKs.</p>
+          <p className="text-center blink neon-text-sm">Verifiable computation for DVMs</p>
           <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
             <div className="mb-4">
               <label className="block mb-2 text-neon-pink">Log Size</label>
@@ -392,7 +392,7 @@ export default function Home() {
         </div>
       </div>
       <div className="marquee">
-        <span>Welcome to Askeladd DVM Marketplace! Prove your claims and conquer the blockchain realm!</span>
+        <span>Prove your claims and conquer the Nostr realm!</span>
       </div>
     </main>
   );
