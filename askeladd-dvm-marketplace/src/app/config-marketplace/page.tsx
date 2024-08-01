@@ -186,7 +186,7 @@ export default function Home() {
               <div>
                 {publicKey &&
                   <p className="mb-5">Connected: {publicKey}</p>}
-                <p className="mb-5 text-white">You can't config this if you are not an admin of ASKELADD</p>
+                <p className="mb-5 text-white">You can&apos;t config this if you are not an admin of ASKELADD</p>
               </div>
             </div>
           </div>
@@ -266,8 +266,8 @@ export default function Home() {
               <p className="text-white">Request: {JSON.stringify({
                 "claim": "413300",
                 "log_size":"5"
-              })} // The input of the Program</p>
-              <p className="text-white ">Tags: ["param", "input_name", "value"] </p>
+              })} &quot; The input of the Program</p>
+              <p className="text-white ">Tags: {`["param", "input_name", "value"]`} </p>
             </div>
             <button> Close </button>
           </>
