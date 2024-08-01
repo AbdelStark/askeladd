@@ -1,6 +1,7 @@
-import {  NostrProvider } from "@/context/NostrContext";
+import { NostrProvider } from "@/context/NostrContext";
 import "./globals.css";
 import { Inter } from "next/font/google";
+import Navbar from "./components/Navbar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,8 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <NostrProvider>
-        <body className={inter.className}>{children}</body>
-
+        <body className={inter.className}>
+          <Navbar></Navbar>
+          {children}</body>
       </NostrProvider>
     </html>
   );
