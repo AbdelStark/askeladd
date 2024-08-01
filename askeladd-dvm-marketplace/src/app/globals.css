@@ -13,7 +13,6 @@
   --neon-orange: #ffa500;
   --neon-red: #ff4500;
   --dark-purple: #1a0836;
-  --crt-green: #39ff14;
 }
 
 body {
@@ -78,7 +77,6 @@ body {
     0 0 0 8px var(--neon-green),
     0 0 20px rgba(50, 205, 50, 0.4);
   border-radius: 10px;
-  background-color: #111;
   background-image: 
     linear-gradient(45deg, #0a0a0a 25%, transparent 25%), 
     linear-gradient(-45deg, #0a0a0a 25%, transparent 25%),
@@ -95,7 +93,6 @@ body {
   border-radius: 5px;
   position: relative;
   overflow: hidden;
-  background-color: #111;
   background-image: 
     linear-gradient(45deg, #0a0a0a 25%, transparent 25%), 
     linear-gradient(-45deg, #0a0a0a 25%, transparent 25%),
@@ -166,6 +163,8 @@ body {
 }
 
 .neon-text-sm {
+  font-size: 0.8rem;
+  line-height: 1.2;
   text-shadow: 
     0 0 1px var(--neon-green),
     0 0 2px var(--neon-green),
@@ -179,8 +178,7 @@ body {
   width: 100%;
   overflow: hidden;
   background: var(--dark-purple);
-  border-top: 2px solid var(--neon-green);
-  border-bottom: 2px solid var(--neon-green);
+  border: 2px solid var(--neon-green);
   padding: 10px 0;
   z-index: 1000; 
 }
@@ -244,20 +242,6 @@ body {
   to { visibility: hidden; }
 }
 
-.button-3d {
-  position: relative;
-  transition: all 0.1s ease;
-  background: linear-gradient(to bottom, #ff6b6b, #ff4757);
-  border: 3px solid #2f3542;
-  box-shadow: 0 6px 0 #2f3542;
-  text-shadow: 2px 2px #2f3542;
-}
-
-.button-3d:active {
-  top: 4px;
-  box-shadow: 0 2px 0 #2f3542;
-}
-
 .pixel-spinner {
   width: 32px;
   height: 32px;
@@ -281,25 +265,6 @@ body {
 input:focus, button:focus {
   outline: none;
   box-shadow: 0 0 8px var(--neon-blue);
-}
-
-.pixel-joystick {
-  position: absolute;
-  width: 32px;
-  height: 32px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect fill="%23ff4757" x="12" y="0" width="8" height="32"/><rect fill="%23ff4757" x="0" y="12" width="32" height="8"/></svg>');
-}
-
-.pixel-joystick-top-left { top: 16px; left: 16px; }
-.pixel-joystick-top-right { top: 16px; right: 16px; }
-
-.high-score {
-  position: absolute;
-  top: 8px;
-  right: 16px;
-  font-size: 12px;
-  color: var(--neon-yellow);
-  text-shadow: 1px 1px var(--neon-orange);
 }
 
 .submit-job-button,
@@ -334,232 +299,6 @@ input:focus, button:focus {
 .verify-proof-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.pixel-border {
-  image-rendering: pixelated;
-  border-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAySURBVChTY7x69ep/BjTACFIAokEYWRyrICkYQgIwN6CZDFIOYR4CU4gSAwzyUrQwAwCaDy3mP1JQZwAAAABJRU5ErkJggg==') 2 stretch;
-  border-width: 4px;
-  border-style: solid;
-}
-
-/* New retro-inspired additions */
-
-.crt-lines {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0.15) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  pointer-events: none;
-  z-index: 4;
-}
-
-.retro-shadow {
-  text-shadow: 2px 2px 0px #000000, 4px 4px 0px rgba(0, 0, 0, 0.5);
-}
-
-.pixel-text {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 14px;
-  line-height: 1.5;
-  letter-spacing: 1px;
-}
-
-.arcade-btn {
-  padding: 10px 20px;
-  background-color: var(--neon-red);
-  color: #ffffff;
-  border: none;
-  border-radius: 5px;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 12px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 0 #8B0000;
-}
-
-.arcade-btn:hover {
-  background-color: #FF6347;
-}
-
-.arcade-btn:active {
-  transform: translateY(4px);
-  box-shadow: 0 0 0 #8B0000;
-}
-
-.pixel-box {
-  background-color: #000000;
-  border: 4px solid var(--neon-green);
-  box-shadow: 0 0 0 4px #000000, 0 0 0 8px var(--neon-blue);
-  padding: 20px;
-  margin: 20px 0;
-}
-
-.retro-input {
-  background-color: #000000;
-  border: 2px solid var(--neon-green);
-  color: var(--neon-green);
-  font-family: 'Press Start 2P', cursive;
-  font-size: 12px;
-  padding: 10px;
-  width: 100%;
-  margin-bottom: 10px;
-}
-
-.retro-input:focus {
-  outline: none;
-  box-shadow: 0 0 5px var(--neon-green);
-}
-
-.retro-label {
-  font-family: 'Press Start 2P', cursive;
-  font-size: 12px;
-  color: var(--neon-yellow);
-  margin-bottom: 5px;
-  display: block;
-}
-
-.arcade-screen {
-  background-color: #000000;
-  border: 10px solid #333333;
-  border-radius: 10px;
-  box-shadow: inset 0 0 10px var(--crt-green);
-  overflow: hidden;
-  position: relative;
-}
-
-.arcade-screen::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    rgba(18, 16, 16, 0) 50%,
-    rgba(0, 0, 0, 0.25) 50%
-  );
-  background-size: 100% 4px;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.pixel-art {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-}
-
-@keyframes blink-crt {
-  0% { opacity: 1; }
-  50% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-.crt-effect {
-  animation: blink-crt 0.1s infinite;
-}
-
-.retro-grid {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
-}
-
-.neon-border {
-  border: 2px solid var(--neon-pink);
-  box-shadow: 0 0 10px var(--neon-pink), inset 0 0 5px var(--neon-pink);
-}
-
-.pixel-shadow {
-  box-shadow: 
-    5px 5px 0 0 #000000,
-    10px 10px 0 0 #111111;
-}
-
-.retro-gradient {
-  background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink));
-}
-
-.scanline-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.scanline-effect::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    transparent 50%,
-    rgba(0, 0, 0, 0.1) 50%
-  );
-  background-size: 100% 4px;
-  animation: scanline 10s linear infinite;
-}
-
-@keyframes scanline {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(100%); }
-}
-
-.pixel-button {
-  background-color: var(--neon-green);
-  border: none;
-  color: #000000;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 12px;
-  padding: 10px 20px;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.pixel-button:hover {
-  background-color: var(--neon-yellow);
-  transform: scale(1.05);
-}
-
-.pixel-button:active {
-  transform: scale(0.95);
-}
-
-.retro-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: rgba(0, 0, 0, 0.8);
-  border: 4px solid var(--neon-blue);
-  box-shadow: 0 0 20px var(--neon-blue);
-}
-
-.glowing-text {
-  color: var(--neon-green);
-  text-shadow: 
-    0 0 5px var(--neon-green),
-    0 0 10px var(--neon-green),
-    0 0 20px var(--neon-green),
-    0 0 40px var(--neon-green);
-}
-
-.pixelated-image {
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
 }
 
 .crt-curve {
