@@ -1,6 +1,7 @@
 export const KIND_JOB_RESULT = 6600
 export const KIND_JOB_REQUEST = 5600
 
+
 export interface JobResultProver {
     job_id: string;
     response: {
@@ -39,7 +40,32 @@ export interface CommitmentSchemeProof {
     fri_proof: {
         inner_layers: ProofInnerLayer[] | any[];
         last_layer_poly: {
-            coeffs:any[];
+            coeffs: any[];
         }
     };
+}
+
+export enum ASKELADD_KINDS {
+    KIND_JOB_REQUEST = 5600,
+    KIND_JOB_RESULT = 6600,
+    // KIND_SUBMIT_PROGRAM
+}
+
+export enum ASKELADD_KINDS_NAME {
+    KIND_JOB_REQUEST = "Job request",
+    KIND_JOB_RESULT = "Job result",
+    KIND_SUBMIT_PROGRAM = "Submit result",
+}
+// export const ASKELADD_KINDS= {
+//     KIND_JOB_REQUEST,
+//     KIND_JOB_RESULT
+// }
+
+export interface IFormRecommendedApplicationHandlerEvent {
+
+}
+
+export enum ConfigHandle {
+    SPECIFIC_KIND,
+    ALL_KIND
 }
