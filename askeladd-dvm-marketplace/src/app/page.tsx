@@ -362,8 +362,8 @@ export default function Home() {
 
           {jobId && (
             <div className="mt-8 text-center">
-              <p className="text-neon-orange">Job ID: <span className="break-all">{jobId}</span></p>
-              <p className="text-neon-yellow">Status: {proofStatus}</p>
+              <p className="text-neon-orange text-sm sm:text-base">Job ID: <span className="break-all">{jobId}</span></p>
+              <p className="text-neon-yellow text-sm sm:text-base">Status: {proofStatus}</p>
 
               {error && <p className="text-neon-red blink">Error: {error}</p>}
               {proof && (

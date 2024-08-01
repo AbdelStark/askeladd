@@ -68,6 +68,9 @@ body {
 .arcade-cabinet {
   position: relative;
   max-width: 740px;
+  width: 90%; 
+  margin: 2rem auto 4rem;
+  padding: 1rem; 
   margin: 2rem auto 4rem; 
   padding: 2rem;
   background-color: #111;
@@ -89,7 +92,7 @@ body {
 .cabinet-content {
   background-color: rgba(0,0,0,0.8);
   border: 2px solid var(--neon-pink);
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 5px;
   position: relative;
   overflow: hidden;
@@ -181,6 +184,13 @@ body {
   border: 2px solid var(--neon-green);
   padding: 10px 0;
   z-index: 1000; 
+  font-size: 0.8rem; 
+}
+
+@media (max-width: 640px) {
+  .marquee {
+    font-size: 0.6rem;
+  }
 }
 
 .marquee span {
@@ -223,6 +233,44 @@ body {
   left: -2px;
   text-shadow: 1px 0 var(--neon-blue);
   animation: glitch-animation 3s infinite linear alternate-reverse;
+}
+
+@media (max-width: 640px) {
+  .glitch {
+    font-size: 1.4rem;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .neon-text-sm {
+    font-size: 0.7rem;
+  }
+
+  .arcade-cabinet {
+    border-width: 8px;
+  }
+
+  .cabinet-content {
+    padding: 0.5rem; 
+  }
+
+  .game-screen {
+    padding: 1rem; 
+  }
+
+  input[type="number"] {
+    font-size: 0.8rem; 
+  }
+
+  .submit-job-button,
+  .verify-proof-button {
+    font-size: 0.8rem; 
+    padding: 0.4rem 0.8rem; 
+  }
+
+  .proof-container pre {
+    font-size: 0.6rem;
+  }
 }
 
 @keyframes glitch-animation {
@@ -315,4 +363,10 @@ input:focus, button:focus {
       transparent 50%,
       rgba(0, 0, 0, 0.3) 100%
     );
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
