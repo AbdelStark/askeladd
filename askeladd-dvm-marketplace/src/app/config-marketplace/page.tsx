@@ -179,8 +179,7 @@ export default function Home() {
         {isLoading ? "PROCESSING..." : "CONNECT"}
       </button>
 
-      {publicKey && publicKey != APPLICATION_PUBKEY_DVM ?
-        <div>
+      {/* <div>
           <div className="arcade-cabinet">
             <div className="cabinet-content">
               <div>
@@ -190,9 +189,11 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
-        : publicKey && publicKey == APPLICATION_PUBKEY_DVM &&
+      {
+
+        // : publicKey && publicKey == APPLICATION_PUBKEY_DVM &&
         <div className="arcade-cabinet">
           <div className="cabinet-content">
             <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade NIP-89">Askeladd DVM Marketplace</h1>
@@ -218,10 +219,10 @@ export default function Home() {
                   <p>Selected event: {appKind}</p>
                   <div className="mb-4 flex">
                     <button
-                      className={appKind == ASKELADD_KINDS.KIND_JOB_REQUEST && configKind == ConfigHandle.SPECIFIC_KIND ? "bg-green" : "bg"}
+                      className={appKind == ASKELADD_KINDS.KIND_JOB_REQUEST && configKind == ConfigHandle.SPECIFIC_KIND ? "bg-blue-500" : "bg"}
                       onClick={() => handleSetAppKindSpecific(ASKELADD_KINDS.KIND_JOB_REQUEST, ConfigHandle.SPECIFIC_KIND)}>ZK Job request</button>
                     <button
-                      className={appKind == ASKELADD_KINDS.KIND_JOB_RESULT && configKind == ConfigHandle.SPECIFIC_KIND ? "bg-green" : "bg"}
+                      className={appKind == ASKELADD_KINDS.KIND_JOB_RESULT && configKind == ConfigHandle.SPECIFIC_KIND ? "bg-blue-500" : "bg"}
                       onClick={() => handleSetAppKindSpecific(ASKELADD_KINDS.KIND_JOB_RESULT, ConfigHandle.SPECIFIC_KIND)}>ZK Job result</button>
                   </div>
                 </>
@@ -241,16 +242,8 @@ export default function Home() {
         </div>
       }
 
-
-
-      <button
-        className={`block mb-5 font-bold py-2 px-4 rounded bg-blue-500 hover:bg-blue-700 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-        disabled={isLoading}
-        onClick={fetchEventsApp}>{events && events?.length ? "Refresh" : "Load"}</button>
-
-
       <div onClick={() => setOpenHowItWork(!openHowItWork)}
-        className="cursor-pointer my-5 p-5"
+        className="max-w-sm cursor-pointer my-5 p-1  m-1 whitespace-pre-line"
       >
         <p className="text-white">How the ASKELADD DVM ZK works?</p>
         {!openHowItWork &&
@@ -260,22 +253,30 @@ export default function Home() {
           <>
             <div>
               <p>As an User  </p>
-              <p className="text-white">User send a JOB_REQUEST with different params on the Nostr event:</p>
-              <p className="text-white">You need theses params on the Nostr event:</p>
+              <p className="text-white">User send a JOB_REQUEST with different params on the Nostr event.</p>
               <p className="text-white">It can change with all STWO Prover enabled on the Marketplace</p>
+              <p className="text-white mb-5">You need theses params on the Nostr event:</p>
+              <p>Inputs  </p>
+
               <p className="text-white">Request: {JSON.stringify({
                 "claim": "413300",
-                "log_size":"5"
+                "log_size": "5"
               })} &quot; The input of the Program</p>
-              <p className="text-white ">Tags: {`["param", "input_name", "value"]`} </p>
+              <p className="text-white ">Tags: {`[
+                ["param", "input_name", "value"] // The input of the Program
+              ]`} </p>
             </div>
             <button> Close </button>
           </>
         }
       </div>
 
-      <div className="text-left max-w-md">
+      <button
+        className={`block mb-5 font-bold py-2 px-4 rounded bg-blue-500 hover:bg-blue-700 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+        disabled={isLoading}
+        onClick={fetchEventsApp}>{events && events?.length ? "Refresh" : "Load"}</button>
 
+      <div className="text-left max-w-md">
         <p className="text-center mb-5"> Existing Config of DVM</p>
         <p className="text-center text-white mb-1">Last config</p>
         {lastConfig &&
@@ -286,12 +287,9 @@ export default function Home() {
 
         <p className="block mb-1 font-bold py-2 px-4 "> By Event KIND enabled on ASKELADD (WIP)</p>
         <p className="block mb-5 text-md text-white px-4">  (5600, 6600 and more soon)</p>
-
         <p className="block mb-5 font-bold text-white px-4"> Admin config (WIP)</p>
         <p className="block mb-5 text-md text-white px-4">TODO</p>
-
         <p className="block mb-5 font-bold py-2 px-4"> Others config</p>
-
         <div className="grid sm:grid-cols-1 grid-cols-2 md:grid-cols-3 gap-4">{events?.map((event, i) => {
           return (
             <EventCard key={i} event={event}></EventCard>
