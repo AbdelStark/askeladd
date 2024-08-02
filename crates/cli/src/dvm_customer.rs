@@ -120,13 +120,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
 
-    /// Add poseidon
-    let settings = Settings::new().expect("Failed to load settings");
+    // /// Add poseidon
+    // let settings = Settings::new().expect("Failed to load settings");
 
-    let mut customer = Customer::new(settings)?;
-    customer.init().await?;
+    // let mut customer = Customer::new(settings)?;
+    // customer.init().await?;
 
-    poseidon_program(customer).await?;
+    // poseidon_program(customer).await?;
 
     Ok(())
 }

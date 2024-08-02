@@ -3,12 +3,15 @@ use std::error::Error;
 use colored::*;
 use log::{debug, error, info};
 use nostr_sdk::prelude::*;
+use serde_json::{Error as SerdeError, Result as SerdeResult};
 use thiserror::Error;
 
 use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::JOB_REQUEST_KIND;
-use crate::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
+use crate::dvm::types::{
+    FibonnacciProvingRequest, GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams,
+};
 use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 
@@ -134,10 +137,17 @@ impl ServiceProvider {
         } = notification
         {
             if subscription_id == SubscriptionId::new(&self.settings.proving_req_sub_id) {
-                self.handle_event(event).await?;
+                self.handle_event(event).await;
             }
         }
         Ok(false)
+    }
+
+    fn deserialize_zkp_request_data(
+        json_data: &str,
+    ) -> Result<GenerateZKPJobRequest, ServiceProviderError> {
+        let zkp_request: SerdeResult<GenerateZKPJobRequest> = serde_json::from_str(json_data);
+        zkp_request.map_err(|e| ServiceProviderError::SerializationError(e))
     }
 
     /// Handles a single proving request event
@@ -150,19 +160,20 @@ impl ServiceProvider {
 
         println!("event.content.to_owned() {:?}", event.content.to_owned());
 
-        let zkp_request:GenerateZKPJobRequest= serde_json::from_str(&event.content.to_owned()).unwrap();
+        let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // println!("request value {:?}", request_value);
         // println!("zkp_request {:?}", zkp_request);
-        let params_program:Option<ProgramParams>=zkp_request.program.clone();
+        let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
 
+        // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("program_params: {:?}", program_params);
-            params_inputs=program_params.params_map.clone();
+            params_inputs = program_params.params_map.clone();
+            println!("params_inputs {:?}", params_inputs);
         } else {
-            println!("program_params");
+            println!("program_params {:?}", params_program);
         }
-
 
         // for (key, value) in params_inputs.into_iter() {
         //     println!("{} / {}", key, value);
@@ -187,7 +198,6 @@ impl ServiceProvider {
 
         println!("request_str {:?}", request_str);
 
-
         if let Some(status) = self.db.get_request_status(&job_id)? {
             match status {
                 RequestStatus::Completed => {
@@ -206,13 +216,12 @@ impl ServiceProvider {
             self.db.insert_request(&job_id, &request_value)?;
         }
 
-
-       
         // match self.proving_service.generate_proof(request) {
-        match self
-            .proving_service
-            .generate_proof_by_program(request_value, &request_str, params_program)
-        {
+        match self.proving_service.generate_proof_by_program(
+            request_value,
+            &request_str,
+            params_program,
+        ) {
             // match self.proving_service.generate_proof_by_program(&request_str) {
             Ok(response) => {
                 let serialized_proof = serde_json::to_string(&response.proof)?;
