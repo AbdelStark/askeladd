@@ -8,7 +8,7 @@ use thiserror::Error;
 use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::JOB_REQUEST_KIND;
-use crate::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobResult};
+use crate::dvm::types::{FibonnacciProvingRequest, GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
 use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 
@@ -147,16 +147,46 @@ impl ServiceProvider {
         let job_id = event.id.to_string();
         let tags = &event.tags;
         let params = extract_params_from_tags(tags);
-        let log_size = params
-            .get("log_size")
-            .and_then(|s| s.parse::<u32>().ok())
-            .unwrap();
-        let claim = params
-            .get("claim")
-            .and_then(|s| s.parse::<u32>().ok())
-            .unwrap();
 
-        let request = FibonnacciProvingRequest { log_size, claim };
+        println!("event.content.to_owned() {:?}", event.content.to_owned());
+
+        let zkp_request:GenerateZKPJobRequest= serde_json::from_str(&event.content.to_owned()).unwrap();
+        // println!("request value {:?}", request_value);
+        // println!("zkp_request {:?}", zkp_request);
+        let params_program:Option<ProgramParams>=zkp_request.program.clone();
+        let params_inputs;
+
+        if let Some(program_params) = params_program.clone() {
+            println!("program_params: {:?}", program_params);
+            params_inputs=program_params.params_map.clone();
+        } else {
+            println!("program_params");
+        }
+
+
+        // for (key, value) in params_inputs.into_iter() {
+        //     println!("{} / {}", key, value);
+        //     let tag = Tag::parse(&["param", &key.to_owned(), &value.to_owned()]);
+        //     tags.push(tag.unwrap())
+        //     // map.remove(key);
+        // }
+
+        // let log_size = params
+        //     .get("log_size")
+        //     .and_then(|s| s.parse::<u32>().ok())
+        //     .unwrap();
+        // let claim = params
+        //     .get("claim")
+        //     .and_then(|s| s.parse::<u32>().ok())
+        //     .unwrap();
+
+        // let request = FibonnacciProvingRequest { log_size, claim };
+        let request_str = serde_json::to_string(&zkp_request.request).unwrap();
+        // let request_str = serde_json::to_string(&request).unwrap();
+        let request_value = serde_json::from_str(&request_str).unwrap();
+
+        println!("request_str {:?}", request_str);
+
 
         if let Some(status) = self.db.get_request_status(&job_id)? {
             match status {
@@ -173,17 +203,28 @@ impl ServiceProvider {
                 }
             }
         } else {
-            self.db.insert_request(&job_id, &request)?;
+            self.db.insert_request(&job_id, &request_value)?;
         }
 
-        match self.proving_service.generate_proof(request) {
+
+       
+        // match self.proving_service.generate_proof(request) {
+        match self
+            .proving_service
+            .generate_proof_by_program(request_value, &request_str, params_program)
+        {
+            // match self.proving_service.generate_proof_by_program(&request_str) {
             Ok(response) => {
                 let serialized_proof = serde_json::to_string(&response.proof)?;
                 println!("Generated proof: {:?}", serialized_proof);
+                let answer_string = serde_json::to_string(&response).unwrap();
+                let value_answer: Value = serde_json::from_str(&answer_string)?;
 
                 let job_result = GenerateZKPJobResult {
                     job_id: job_id.clone(),
-                    response,
+                    response: value_answer,
+                    // response:serde_json::from_value(response.clone()).unwrap(),
+                    proof: response.proof,
                 };
 
                 let response_json = serde_json::to_string(&job_result)?;

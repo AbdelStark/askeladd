@@ -36,7 +36,9 @@ impl Database {
         Ok(())
     }
 
-    pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()> {
+    // pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()>
+    // {
+    pub fn insert_request(&self, job_id: &str, request: &serde_json::Value) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
         self.conn.execute(
             "INSERT INTO requests (id, request_json, status) VALUES (?1, ?2, ?3)",
@@ -48,7 +50,7 @@ impl Database {
     pub fn update_request(
         &self,
         request_id: &str,
-        response: Option<&FibonnacciProvingResponse>,
+        response: Option<&serde_json::Value>,
         status: RequestStatus,
     ) -> Result<()> {
         let response_json = match response {
