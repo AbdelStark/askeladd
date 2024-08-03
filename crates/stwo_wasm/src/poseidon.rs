@@ -1,10 +1,8 @@
 // lib.rs
-use crate::StwoResult;
-use wasm_bindgen::prelude::*;
 use stwo_prover::constraint_framework::logup::LookupElements;
 use stwo_prover::core::backend::simd::SimdBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
-use stwo_prover::core::fields::m31::{ BaseField};
+use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::fields::IntoSlice;
 use stwo_prover::core::pcs::{CommitmentSchemeProver, CommitmentSchemeVerifier};
 use stwo_prover::core::poly::circle::{CanonicCoset, PolyOps};
@@ -21,10 +19,14 @@ use stwo_prover::examples::poseidon::{
     PoseidonAir,
     PoseidonComponent, //  PoseidonComponent,
 };
+use wasm_bindgen::prelude::*;
+
+use crate::StwoResult;
 
 const N_LOG_INSTANCES_PER_ROW: usize = 3;
 const LOG_N_ROWS: u32 = 8;
 const LOG_EXPAND: u32 = 2;
+pub const LOG_N_LANES: u32 = 4;
 
 #[wasm_bindgen]
 extern "C" {
@@ -43,7 +45,6 @@ macro_rules! console_log {
 pub struct PoseidonStruct {
     pub air: PoseidonAir,
 }
-
 
 impl PoseidonStruct {
     pub fn new(log_n_instances: u32) -> Self {
@@ -70,9 +71,10 @@ impl PoseidonStruct {
         tree_builder.extend_evals(trace);
         tree_builder.commit(channel);
 
-        let (trace0, interaction_data) = gen_trace(LOG_N_ROWS);
-        let (trace1, claimed_sum) =
-            gen_interaction_trace(LOG_N_ROWS, interaction_data, lookup_elements);
+        // let (trace0, interaction_data) = gen_trace(LOG_N_ROWS);
+        // let (trace1, claimed_sum) =
+        //     gen_interaction_trace(LOG_N_ROWS, interaction_data, lookup_elements);
+        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, lookup_elements);
 
         let component = PoseidonComponent {
             log_n_rows,

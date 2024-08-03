@@ -11,6 +11,12 @@ const program_map_wide_fibo= new Map<string,string>()
 
 program_map_wide_fibo.set("0","log_fibonacci_size")
 program_map_wide_fibo.set("1","log_n_instances")
+
+
+
+const program_map_poseidon= new Map<string,string>()
+program_map_poseidon.set("0","log_n_instances")
+
 export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
 
     {
@@ -39,6 +45,21 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             internal_contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
             params_map:program_map_wide_fibo
+        }
+
+    },
+
+
+    {
+        // Poseidon Fibonnaci
+        request: {
+            log_n_instances:0
+        },
+        program_params: {
+            contract_name:ProgramInternalContractName.PoseidonProvingRequest.toString(),
+            internal_contract_name:ProgramInternalContractName.PoseidonProvingRequest,
+            contract_reached:ContractUploadType.InternalAskeladd,
+            params_map:program_map_poseidon
         }
 
     },

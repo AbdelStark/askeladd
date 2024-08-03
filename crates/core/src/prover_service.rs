@@ -8,7 +8,9 @@ use stwo_wasm::poseidon::PoseidonStruct;
 use stwo_wasm::wide_fibonnacci::WideFibStruct;
 
 use crate::dvm::types::{
-    ContractUploadType, FibonnacciProvingRequest, FibonnacciProvingResponse, GenericProvingResponse, MultiFibonnacciProvingRequest, PoseidonProvingRequest, ProgramInternalContractName, ProgramParams, ProgramRequestType, WideFibonnacciProvingRequest
+    ContractUploadType, FibonnacciProvingRequest, FibonnacciProvingResponse,
+    GenericProvingResponse, MultiFibonnacciProvingRequest, PoseidonProvingRequest,
+    ProgramInternalContractName, ProgramParams, ProgramRequestType, WideFibonnacciProvingRequest,
 };
 
 #[derive(Debug, Default)]
@@ -97,8 +99,6 @@ impl ProverService {
                                 ProgramInternalContractName::PoseidonProvingRequest => {
                                     let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
                                         serde_json::from_str(&serialized_request);
-
-                                    // fib_req_res.map_err(|e| e.to_string()).as_ref();
                                     let poseidon_req: PoseidonProvingRequest;
                                     match poseidon_serde_req.as_ref() {
                                         Ok(req) => {
@@ -106,14 +106,13 @@ impl ProverService {
                                         }
                                         Err(e) => return Err(e.to_string()),
                                     }
-                                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_rows);
+                                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
                                     match poseidon.prove() {
                                         Ok(proof) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), proof))
+                                            Ok(GenericProvingResponse::new(request.clone(), proof.1))
                                         }
                                         Err(e) => Err(e.to_string()),
                                     }
-                                    
                                 }
                                 ProgramInternalContractName::WideFibonnaciProvingRequest => {
                                     let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
@@ -155,8 +154,12 @@ impl ProverService {
                                         }
                                         Err(e) => return Err(e.to_string()),
                                     }
-                                    let poseidon = MultiFibonacci::new(mul_fib_req.log_sizes, mul_fib_req.claims);
-                                    match poseidon.prove() {
+                                    let claims: Vec<BaseField> = mul_fib_req.claims
+                                        .into_iter()
+                                        .map(|f| m31::M31::from_u32_unchecked(f))
+                                        .collect();
+                                    let multi_fibo = MultiFibonacci::new(mul_fib_req.log_sizes, claims);
+                                    match multi_fibo.prove() {
                                         Ok(proof) => {
                                             Ok(GenericProvingResponse::new(request.clone(), proof))
                                         }
@@ -174,20 +177,6 @@ impl ProverService {
                             println!("No internal contract name");
                             Err(ProvingError::ConstraintsNotSatisfied.to_string())
 
-                            // let fib_req: FibonnacciProvingRequest =
-                            //     serde_json::from_str(request_str).unwrap();
-                            // let fib =
-                            //     Fibonacci::new(fib_req.log_size, BaseField::from(fib_req.claim));
-                            // match fib.prove() {
-                            //     Ok(proof) => {
-                            //         // let data: ProgramRequestType =
-                            //         // let data:Value =
-                            //         // serde_json::from_str(request)R.unwrap();
-                            //         // Ok(GenericProvingResponse::new(data.clone(), proof))
-                            //         Ok(GenericProvingResponse::new(request.clone(), proof))
-                            //     }
-                            //     Err(e) => Err(e),
-                            // }
                         }
                     }
                 }
