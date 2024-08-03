@@ -82,12 +82,12 @@ impl Customer {
         debug!("Publishing proving request...");
 
         let program = job.clone().program;
-        let mut params_inputs:HashMap<String, String>= HashMap::new();
+        let mut params_inputs: HashMap<String, String> = HashMap::new();
         let mut tags = vec![];
         if let Some(p) = program {
             params_inputs = p.params_map;
         }
-        /* OLD TAGS creation */
+        // OLD TAGS creation
         // let tags = vec![
         //     Tag::parse(&[
         //         "param",
@@ -105,10 +105,9 @@ impl Customer {
             tags.push(tag.unwrap())
         }
 
-        /* Send JSON into the content of the JOB_REQUEST:
-         * Request: Params of the program
-         * Program: Pamaters to select a specific program
-         */
+        // Send JSON into the content of the JOB_REQUEST:
+        // Request: Params of the program
+        // Program: Pamaters to select a specific program
         let content = serde_json::to_string(&job).unwrap();
         let event_builder = EventBuilder::new(Kind::Custom(JOB_REQUEST_KIND), content, tags);
         let event: Event = event_builder.to_event(&self.user_keys).unwrap();

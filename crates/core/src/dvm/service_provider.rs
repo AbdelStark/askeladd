@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::error::Error;
 
 use colored::*;
@@ -165,11 +166,23 @@ impl ServiceProvider {
         // println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
+        let mut successful_parses = HashMap::new();
 
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("program_params: {:?}", program_params);
-            params_inputs = program_params.params_map.clone();
+
+            for (key, value) in params_program.clone().unwrap().params_map.iter() {
+                if let Ok(num) = value.parse::<u32>() {
+                    successful_parses.insert(key.clone(), num);
+                    println!("The value for '{}' is a valid u32: {}", key, num);
+                } else {
+                    println!("The value for '{}' is not a valid u32.", key);
+                }
+            }
+
+            // params_inputs = program_params.params_map.clone();
+            params_inputs = successful_parses.clone();
             println!("params_inputs {:?}", params_inputs);
         } else {
             println!("program_params {:?}", params_program);

@@ -48,6 +48,7 @@ pub mod types {
     pub enum ProgramInternalContractName {
         FibonnacciProvingRequest,
         PoseidonProvingRequest,
+        WideFibonnaciProvingRequest,
         Custom(String),
     }
 
@@ -63,6 +64,7 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct ProgramParams {
         pub event_id: Option<EventId>,
+        pub unique_id: Option<String>,
         // Use a custom deserializer for the potentially problematic field
         // #[serde(deserialize_with = "deserialize_params_map")]
         pub params_map: HashMap<String, String>,
@@ -91,8 +93,8 @@ pub mod types {
         }
     }
 
-    // fn deserialize_params_map<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
-    // where
+    // fn deserialize_params_map<'de, D>(deserializer: D) -> Result<HashMap<String, String>,
+    // D::Error> where
     //     D: Deserializer<'de>,
     // {
     //     let val: Value = Deserialize::deserialize(deserializer)?;
@@ -228,6 +230,19 @@ pub mod types {
                 proof,
             }
         }
+    }
+
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct WideFibonnacciProvingRequest {
+        pub log_fibonacci_size: u32,
+        pub log_n_instances: u32,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct WideFibonnacciProvingResponse {
+        pub log_size: u32,
+        pub claim: u32,
+        pub proof: StarkProof,
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]

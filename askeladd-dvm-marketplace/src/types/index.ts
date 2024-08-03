@@ -1,5 +1,6 @@
 export const KIND_JOB_RESULT = 6600
 export const KIND_JOB_REQUEST = 5600
+export const KIND_JOB_ADD_PROGRAM = 5700 // check if not used
 
 
 export interface JobResultProver {
@@ -68,4 +69,35 @@ export interface IFormRecommendedApplicationHandlerEvent {
 export enum ConfigHandle {
     SPECIFIC_KIND,
     ALL_KIND
+}
+
+export enum ProgramInternalContractName {
+    FibonnacciProvingRequest = "FibonnacciProvingRequest",
+    PoseidonProvingRequest = "PoseidonProvingRequest",
+    WideFibonnaciProvingRequest = "WideFibonnaciProvingRequest",
+    Custom = "Custom"
+}
+
+
+export enum ContractUploadType {
+    InternalAskeladd = "InternalAskeladd",
+}
+
+export interface IProgramParams {
+    // Add to the see user Application profile NIP-0 metadata
+    // Also can be used to do a 1-1 DVM and force it.
+    pubkey_app?: string;
+    // Event id related to the NIP-89 and the JOB_LAUNCH_PROGRAM 5700 or other kind we can discuss
+    event_id?: string;
+
+    unique_id?: string;
+    params_map?: Map<string, string>
+    contract_reached?: ContractUploadType,
+    contract_name?: string;
+    internal_contract_name?: ProgramInternalContractName
+
+}
+export interface IGenerateZKPRequestDVM {
+    request?: any;
+    program_params?: IProgramParams;
 }
