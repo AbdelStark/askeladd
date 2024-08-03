@@ -49,6 +49,7 @@ pub mod types {
         FibonnacciProvingRequest,
         PoseidonProvingRequest,
         WideFibonnaciProvingRequest,
+        MultiFibonnaciProvingRequest,
         Custom(String),
     }
 
@@ -200,6 +201,15 @@ pub mod types {
         pub claim: u32,
     }
 
+
+    #[derive(Debug, Serialize, Deserialize, Clone)]
+    pub struct MultiFibonnacciProvingRequest {
+        pub log_sizes: Vec<u32>,
+        pub claims: Vec<u32>,
+    }
+
+
+
     #[derive(Debug, Serialize, Deserialize)]
     pub struct FibonnacciProvingResponse {
         pub log_size: u32,
@@ -247,9 +257,9 @@ pub mod types {
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct PoseidonProvingRequest {
-        pub log_n_rows: u32,
+        pub log_n_instances: u32,
         // pub lookup_elements: stwo_prover::constraint_framework::logup::LookupElements,
-        pub claimed_sum: stwo_prover::core::fields::qm31::SecureField,
+        // pub claimed_sum: stwo_prover::core::fields::qm31::SecureField,
     }
 
     #[derive(Debug, Serialize, Deserialize)]

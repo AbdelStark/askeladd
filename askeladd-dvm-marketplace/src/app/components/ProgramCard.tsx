@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT } from '@/types';
 import { useFetchEvents } from '@/hooks/useFetchEvents';
 import { ASKELADD_RELAY } from '@/constants/relay';
-import init, { prove_and_verify, verify_stark_proof } from '@/pkg/stwo_wasm';
+import init, {verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo} from "../../pkg"
 // Define the props for the component
 interface TagsCardProps {
     event?: NDKEvent | NostrEvent;  // Array of array of strings
@@ -46,7 +46,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
 
             });
     }, []);
-
 
     const timeoutWaitingForJobResult = async () => {
         console.log("waiting timeout job result")
@@ -183,10 +182,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
             console.log("content", content)
             /** Use Nostr extension to send event */
             const pool = new SimplePool();
-            const poolJob = new SimplePool();
-            const relay = await Relay.connect(ASKELADD_RELAY[0])
             if (typeof window !== "undefined" && window.nostr) {
-
                 const pubkey = await window.nostr.getPublicKey();
                 let created_at = new Date().getTime();
                 setPublicKey(pubkey)
