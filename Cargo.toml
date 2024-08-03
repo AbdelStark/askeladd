@@ -13,6 +13,7 @@ license = "MIT"
 
 [workspace.dependencies]
 stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
+stwo_wasm = { path= "crates/stwo_wasm" }
 tokio = { version = "1", default-features = false }
 tracing = { version = "0.1", default-features = false }
 tracing-subscriber = "0.3"

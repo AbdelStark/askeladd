@@ -1,9 +1,15 @@
 // lib.rs
+pub mod wide_fibonnacci;
+pub mod types;
 
 use serde::{Deserialize, Serialize};
-use stwo_prover::core::fields::m31::BaseField;
+use stwo_prover::core::channel::Blake2sChannel;
+use stwo_prover::core::fields::m31::{self, BaseField};
+use stwo_prover::core::poly::circle::CanonicCoset;
 use stwo_prover::core::prover::StarkProof;
 use stwo_prover::examples::fibonacci::Fibonacci;
+use stwo_prover::examples::poseidon::gen_trace;
+use stwo_prover::examples::wide_fibonacci::component::{Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -123,3 +129,4 @@ pub fn verify_stark_proof(log_size: u32, claim: u32, stark_proof_str: &str) -> S
         }
     }
 }
+

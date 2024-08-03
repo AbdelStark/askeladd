@@ -1,28 +1,9 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
-use std::rc::Rc;
-
-use serde::de::Error;
-use serde::{Deserialize, Serialize};
 use serde_json::{Result as SerdeResult, Value};
-use stwo_prover::core::air::AirProver;
-use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
-use stwo_prover::core::backend::CpuBackend;
-use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::{self, BaseField};
-use stwo_prover::core::fields::IntoSlice;
-use stwo_prover::core::poly::circle::CanonicCoset;
-use stwo_prover::core::prover::{ProvingError, StarkProof};
-use stwo_prover::core::vcs::blake2_hash::Blake2sHasher;
-use stwo_prover::core::vcs::hasher::Hasher;
+use stwo_prover::core::prover::ProvingError;
 use stwo_prover::examples::fibonacci::Fibonacci;
-use stwo_prover::examples::poseidon::{PoseidonAir, PoseidonComponent};
-use stwo_prover::examples::wide_fibonacci::component::{
-    Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS,
-};
-use stwo_prover::examples::wide_fibonacci::constraint_eval::gen_trace;
-// use stwo_prover::examples::wide_fibonacci::simd::gen_trace;
-use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
+use stwo_wasm::wide_fibonnacci::WideFibStruct;
 
 use crate::dvm::types::{
     ContractUploadType, FibonnacciProvingRequest, FibonnacciProvingResponse,
@@ -131,87 +112,16 @@ impl ProverService {
                                     }
 
                                     println!("WideFib create component");
-                                    let component = WideFibComponent {
-                                        log_fibonacci_size: wide_fib_req.clone().log_fibonacci_size
-                                            + LOG_N_COLUMNS as u32,
-                                        log_n_instances: wide_fib_req.log_n_instances,
-                                    };
-                                    println!("WideFib Air");
 
-                                    let wide_fib = WideFibAir {
-                                        component: component.clone(),
-                                    };
-                                    println!("private_input");
-
-                                    let private_input = (0..(1 << wide_fib_req.log_n_instances))
-                                        .map(|i| Input {
-                                            a: m31::M31::from_u32_unchecked(i),
-                                            b: m31::M31::from_u32_unchecked(i),
-                                            // b: m31!(i),
-                                        })
-                                        .collect();
-
-                                    // let trace = wide_fib.get_trace();
-                                    println!("trace");
-
-                                    let trace = gen_trace(&component, private_input);
-                                    println!("trace_domain");
-
-                                    let trace_domain =
-                                        CanonicCoset::new(component.log_column_size());
-                                    println!("trace again");
-
-                                    let trace = trace
-                                        .into_iter()
-                                        .map(|eval| {
-                                            CpuCircleEvaluation::new_canonical_ordered(
-                                                trace_domain,
-                                                eval,
-                                            )
-                                        })
-                                        .collect();
-                                    println!("Create prover channel");
-
-                                    let prover_channel = &mut Blake2sChannel::new(
-                                        Blake2sHasher::hash(BaseField::into_slice(&[])),
-                                    );
-                                    println!("Commit and prove");
-                                    let res_proof = commit_and_prove::<CpuBackend>(
-                                        &wide_fib,
-                                        prover_channel,
-                                        trace,
-                                    );
-
-                                    match res_proof {
-                                        Ok(p) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), p))
+                                    let wide_fib = WideFibStruct::new(wide_fib_req.log_fibonacci_size, wide_fib_req.log_n_instances);
+                                  
+                                    match wide_fib.prove() {
+                                        Ok(proof) => {
+                                            Ok(GenericProvingResponse::new(request.clone(), proof))
                                         }
                                         Err(e) => Err(e.to_string()),
                                     }
 
-                                    // if let Some(p) = res_proof.unwrap() {
-                                    //     // let cloned = Rc::clone(&p);
-                                    //     let verifier_channel = &mut Blake2sChannel::new(
-                                    //         Blake2sHasher::hash(BaseField::into_slice(&[])),
-                                    //     );
-                                    //     commit_and_verify(p, &wide_fib,
-                                    // verifier_channel).unwrap();
-
-                                    //     Ok(GenericProvingResponse::new(request.clone(), p))
-
-                                    // } else {
-                                    //     Err(ProvingError::ConstraintsNotSatisfied.to_string())
-
-                                    // }
-
-                                    // match wide_fib.prover_components() {
-                                    //     Ok(proof) => {
-                                    //         Ok(GenericProvingResponse::new(request.clone(),
-                                    // proof))     }
-                                    //     Err(e) => Err(e.to_string()),
-                                    // }
-
-                                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
                                 }
                                 ProgramInternalContractName::Custom(s) => {
                                     println!("Custom internal contract");

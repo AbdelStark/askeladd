@@ -7,7 +7,7 @@ repository = "https://github.com/AbdelStark/askeladd"
 license = "MIT"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
