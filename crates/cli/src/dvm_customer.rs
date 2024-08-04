@@ -138,6 +138,7 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
     let mut map_inputs = HashMap::<String, String>::new();
 
     let log_n_rows = 5;
+    let log_n_instances = 5;
     let claimed_sum = QM31::from_u32_unchecked(10, 10, 10, 10);
 
     map_inputs.insert("log_n_rows".to_owned(), log_n_rows.to_string());
