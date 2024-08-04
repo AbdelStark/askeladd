@@ -23,7 +23,6 @@ rusqlite = { version = "0.32.0", features = ["bundled"] }
 colored = "2.0.0"
 chrono = "0.4.38"
 text-to-ascii-art = "0.1.10"
-stwo-prover.workspace = true
 
 [[bin]]
 name = "dvm_customer"

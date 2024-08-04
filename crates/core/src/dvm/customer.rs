@@ -4,7 +4,6 @@ use std::time::Duration;
 
 use log::{debug, error, info};
 use nostr_sdk::prelude::*;
-use serde::Deserialize;
 use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio::time::timeout;

@@ -13,7 +13,6 @@ use colored::*;
 use dotenv::dotenv;
 use env_logger::Env;
 use log::info;
-use stwo_prover::core::fields::qm31::QM31;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -137,12 +136,8 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
     println!("poseidon program");
     let mut map_inputs = HashMap::<String, String>::new();
 
-    let log_n_rows = 5;
     let log_n_instances = 5;
-    let claimed_sum = QM31::from_u32_unchecked(10, 10, 10, 10);
-
-    map_inputs.insert("log_n_rows".to_owned(), log_n_rows.to_string());
-    map_inputs.insert("claimed_sum".to_owned(), claimed_sum.to_string());
+    map_inputs.insert("log_n_instances".to_owned(), log_n_instances.to_string());
     map_inputs.insert("output".to_owned(), "text/json".to_owned());
 
     let req_value = serde_json::to_value(PoseidonProvingRequest { log_n_instances }).unwrap();

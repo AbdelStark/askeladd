@@ -77,9 +77,10 @@ impl PoseidonStruct {
         let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, lookup_elements);
 
         let component = PoseidonComponent {
-            log_n_rows,
+            log_n_rows:log_n_rows,
             lookup_elements,
-            claimed_sum,
+            claimed_sum
+            // claimed_sum,
         };
         let air = PoseidonAir { component };
 

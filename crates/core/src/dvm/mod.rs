@@ -16,7 +16,7 @@ pub mod types {
     use std::collections::HashMap;
 
     use nostr_sdk::EventId;
-    use serde::{Deserialize, Deserializer, Serialize};
+    use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use stwo_prover::core::prover::StarkProof;
 
