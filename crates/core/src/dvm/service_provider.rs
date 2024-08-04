@@ -4,15 +4,13 @@ use std::error::Error;
 use colored::*;
 use log::{debug, error, info};
 use nostr_sdk::prelude::*;
-use serde_json::{Result as SerdeResult};
+use serde_json::Result as SerdeResult;
 use thiserror::Error;
 
 use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::{JOB_LAUNCH_PROGRAM_KIND, JOB_REQUEST_KIND};
-use crate::dvm::types::{
-     GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams,
-};
+use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
 use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 use crate::utils::convert_inputs_to_run_program;
@@ -192,13 +190,15 @@ impl ServiceProvider {
 
         let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // println!("request value {:?}", request_value);
-        // println!("zkp_request {:?}", zkp_request);
+        println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
         let mut successful_parses = HashMap::new();
 
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
+            println!("params_program {:?}", params_program);
+
             successful_parses = convert_inputs_to_run_program(program_params.inputs);
             // params_inputs = program_params.inputs.clone();
             params_inputs = successful_parses.clone();
@@ -294,7 +294,7 @@ impl ServiceProvider {
         Ok(())
     }
 
-    /* @TODO finish implement launch program with NIP-78, 94 and 96 */
+    // @TODO finish implement launch program with NIP-78, 94 and 96
     async fn handle_event_launch_program(
         &self,
         event: Box<Event>,

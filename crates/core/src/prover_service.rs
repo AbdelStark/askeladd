@@ -2,10 +2,12 @@ use std::collections::HashMap;
 use std::fmt;
 
 use serde_json::{Result as SerdeResult, Value};
+use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
+use stwo_prover::core::circle::M31_CIRCLE_LOG_ORDER;
 use stwo_prover::core::fields::m31::{self, BaseField};
 use stwo_prover::core::prover::ProvingError;
 use stwo_prover::examples::fibonacci::{Fibonacci, MultiFibonacci};
-use stwo_wasm::poseidon::PoseidonStruct;
+use stwo_wasm::poseidon::{PoseidonStruct, LOG_N_LANES, N_LOG_INSTANCES_PER_ROW};
 use stwo_wasm::wide_fibonnacci::WideFibStruct;
 use thiserror::Error;
 
@@ -121,7 +123,6 @@ impl ProverService {
                         Err(e) => Err(e.to_string()),
                     }
                 }
-
                 ProgramInternalContractName::MultiFibonnaciProvingRequest => {
                     let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
                         serde_json::from_str(&serialized_request);
@@ -158,11 +159,61 @@ impl ProverService {
                         }
                         Err(e) => return Err(e.to_string()),
                     }
-                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
-                    match poseidon.prove() {
-                        Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof.1)),
-                        Err(e) => Err(e.to_string()),
+                    // TODO
+                    //  add requirements in inputs_requirements
+                    if poseidon_req.log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
+                        return Err("OVERFLOW".to_string());
                     }
+
+                    assert!(poseidon_req.log_n_instances >= N_LOG_INSTANCES_PER_ROW as u32);
+                    let log_n_rows = poseidon_req.log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
+
+                    println!(
+                        "log_n_rows {} >= LOG_N_LANES {} == {}",
+                        log_n_rows,
+                        LOG_N_LANES,
+                        log_n_rows >= LOG_N_LANES,
+                    );
+                    println!("log_n_rows {}", log_n_rows);
+                    if log_n_rows < LOG_N_LANES {
+                        println!(
+                            "failed log_n_rows >= LOG_N_LANES  {}",
+                            log_n_rows >= LOG_N_LANES
+                        );
+                        return Err("log_size >= LOG_N_LANES".to_string());
+                    }
+                    println!("MIN_FFT_LOG_SIZE as usize {}", MIN_FFT_LOG_SIZE);
+
+                    println!(
+                        "poseidon_req.log_n_instances  as usize {}",
+                        poseidon_req.log_n_instances
+                    );
+
+                    if log_n_rows <= MIN_FFT_LOG_SIZE as u32
+                        || poseidon_req.log_n_instances <= MIN_FFT_LOG_SIZE as u32
+                    {
+                        println!(
+                            "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
+                            log_n_rows >= LOG_N_LANES
+                        );
+                        return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
+                    }
+
+                    if poseidon_req.log_n_instances >= M31_CIRCLE_LOG_ORDER {
+                        return Err("log_n_instances >= M31_CIRCLE_LOG_ORDER as usize".to_string());
+                    }
+
+                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
+
+                    // TODO fix prove poseidon with inputs_requirements
+                    // match poseidon {
+                    //     Ok(poseidon) => match poseidon.prove() {
+                    //         Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
+                    //         Err(e) => Err(e.to_string()),
+                    //     },
+                    //     Err(e) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
+                    // }
+                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }
                 ProgramInternalContractName::WideFibonnaciProvingRequest => {
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())

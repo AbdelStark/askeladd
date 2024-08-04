@@ -87,10 +87,14 @@ impl Database {
         }
     }
 
-
     // Program function
 
-    pub fn insert_program_launched(&self, job_id: &str, request: &serde_json::Value, program:&serde_json::Value) -> Result<()> {
+    pub fn insert_program_launched(
+        &self,
+        job_id: &str,
+        request: &serde_json::Value,
+        program: &serde_json::Value,
+    ) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
         self.conn.execute(
             "INSERT INTO stwo_prover_launched (id, request_json, status) VALUES (?1, ?2, ?3)",

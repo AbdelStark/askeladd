@@ -324,7 +324,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                     }
                     )
                 }
-
                 if (program?.program_params?.internal_contract_name == ProgramInternalContractName.FibonnacciProvingRequest) {
                     const prove_result = prove_and_verify(logSize, claim);
                     console.log("prove_result", prove_result);
@@ -340,12 +339,33 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                     } else {
                         setError(verify_result?.message)
                     }
-                } else if (program?.program_params?.internal_contract_name == ProgramInternalContractName?.PoseidonProvingRequest) {
+                }
+
+                else if (program?.program_params?.internal_contract_name == ProgramInternalContractName.WideFibonnaciProvingRequest) {
+                    let log_n_instances = inputs.get("log_n_instances");
+                    let log_fibonacci_size = inputs.get("log_fibonacci_size");
+                    if (!log_n_instances && !log_fibonacci_size) return;
+                    const prove_result = stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances));
+                    console.log("wide fibo prove_result", prove_result);
+                    const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+                    console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+                    const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
+                    console.log("verify result", verify_result);
+                    console.log("verify message", verify_result.message);
+                    console.log("verify success", verify_result.success);
+                    if (verify_result?.success) {
+                        console.log("is success verify result")
+                        setProofStatus("verified");
+                    } else {
+                        setError(verify_result?.message)
+                    }
+                }
+                else if (program?.program_params?.internal_contract_name == ProgramInternalContractName?.PoseidonProvingRequest) {
 
                     let log_n_instances = inputs.get("log_n_instances");
                     if (!log_n_instances) return;
                     const prove_result = prove_stark_proof_poseidon(Number(log_n_instances));
-                    console.log("prove_result", prove_result);
+                    console.log("poseidon prove_result", prove_result);
                     const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
                     console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
                     const verify_result = verify_stark_proof_poseidon(Number(log_n_instances), serialised_proof_from_nostr_event);
@@ -394,7 +414,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                 <p>Event id: {program?.program_params?.event_id}</p>
             }
             <p className='break-words whitespace-pre-line'>{program?.program_params?.contract_name?.toString()}</p>
-            {/* <p>{p.program_params?.internal_contract_name}</p> */}
             <p className='break-words whitespace-pre-line'>Deployed: {program?.program_params?.contract_reached == ContractUploadType.InternalAskeladd && "Internal Program"}</p>
             {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
             <button

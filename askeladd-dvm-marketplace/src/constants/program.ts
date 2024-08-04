@@ -1,5 +1,6 @@
 import { ContractUploadType, IGenerateZKPRequestDVM, ProgramInternalContractName } from "@/types";
 
+/** TODO can be used as an event after a JOB REQUEST LAUNCH PROGRAM */
 
 const program_map_fibo= new Map<string,string>()
 
@@ -16,6 +17,13 @@ program_map_wide_fibo.set("1","log_n_instances")
 
 const program_map_poseidon= new Map<string,string>()
 program_map_poseidon.set("0","log_n_instances")
+
+
+
+
+const program_map_multi_fibo= new Map<string,string>()
+program_map_multi_fibo.set("0","log_sizes");
+program_map_multi_fibo.set("1","claims");
 
 export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
 
@@ -51,7 +59,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
 
 
     {
-        // Poseidon Fibonnaci
+        // Poseidon
         request: {
             log_n_instances:0
         },
@@ -60,6 +68,21 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             internal_contract_name:ProgramInternalContractName.PoseidonProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
             inputs:program_map_poseidon
+        }
+
+    },
+
+    {
+        // Multi Fibonnaci
+        request: {
+            log_sizes:0,
+            claims:0
+        },
+        program_params: {
+            contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest.toString(),
+            internal_contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest,
+            contract_reached:ContractUploadType.InternalAskeladd,
+            inputs:program_map_multi_fibo
         }
 
     },

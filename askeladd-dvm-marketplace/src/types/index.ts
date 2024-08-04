@@ -75,6 +75,7 @@ export enum ProgramInternalContractName {
     FibonnacciProvingRequest = "FibonnacciProvingRequest",
     PoseidonProvingRequest = "PoseidonProvingRequest",
     WideFibonnaciProvingRequest = "WideFibonnaciProvingRequest",
+    MultiFibonnacciProvingRequest = "MultiFibonnacciProvingRequest",
     Custom = "Custom"
 }
 
