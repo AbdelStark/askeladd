@@ -5,8 +5,8 @@ use serde_json::{Result as SerdeResult, Value};
 use stwo_prover::core::fields::m31::{self, BaseField};
 use stwo_prover::core::prover::ProvingError;
 use stwo_prover::examples::fibonacci::{Fibonacci, MultiFibonacci};
-// use stwo_wasm::poseidon::PoseidonStruct;
-// use stwo_wasm::wide_fibonnacci::WideFibStruct;
+use stwo_wasm::poseidon::PoseidonStruct;
+use stwo_wasm::wide_fibonnacci::WideFibStruct;
 use thiserror::Error;
 
 use crate::dvm::types::{
@@ -121,7 +121,7 @@ impl ProverService {
                         Err(e) => Err(e.to_string()),
                     }
                 }
-            
+
                 ProgramInternalContractName::MultiFibonnaciProvingRequest => {
                     let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
                         serde_json::from_str(&serialized_request);
@@ -148,42 +148,42 @@ impl ProverService {
                     Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }
                 ProgramInternalContractName::PoseidonProvingRequest => {
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                    // let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
-                    //     serde_json::from_str(&serialized_request);
-                    // let poseidon_req: PoseidonProvingRequest;
-                    // match poseidon_serde_req.as_ref() {
-                    //     Ok(req) => {
-                    //         poseidon_req = req.clone();
-                    //     }
-                    //     Err(e) => return Err(e.to_string()),
-                    // }
-                    // let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
-                    // match poseidon.prove() {
-                    //     Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof.1)),
-                    //     Err(e) => Err(e.to_string()),
-                    // }
+                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
+                    let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
+                        serde_json::from_str(&serialized_request);
+                    let poseidon_req: PoseidonProvingRequest;
+                    match poseidon_serde_req.as_ref() {
+                        Ok(req) => {
+                            poseidon_req = req.clone();
+                        }
+                        Err(e) => return Err(e.to_string()),
+                    }
+                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
+                    match poseidon.prove() {
+                        Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof.1)),
+                        Err(e) => Err(e.to_string()),
+                    }
                 }
                 ProgramInternalContractName::WideFibonnaciProvingRequest => {
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
+                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
 
-                    // let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
-                    //     serde_json::from_str(&serialized_request);
-                    // let wide_fib_req: WideFibonnacciProvingRequest;
-                    // match wide_fib_serde.as_ref() {
-                    //     Ok(req) => {
-                    //         wide_fib_req = req.clone();
-                    //     }
-                    //     Err(e) => return Err(e.to_string()),
-                    // }
-                    // let wide_fib = WideFibStruct::new(
-                    //     wide_fib_req.log_fibonacci_size,
-                    //     wide_fib_req.log_n_instances,
-                    // );
-                    // match wide_fib.prove() {
-                    //     Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                    //     Err(e) => Err(e.to_string()),
-                    // }
+                    let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
+                        serde_json::from_str(&serialized_request);
+                    let wide_fib_req: WideFibonnacciProvingRequest;
+                    match wide_fib_serde.as_ref() {
+                        Ok(req) => {
+                            wide_fib_req = req.clone();
+                        }
+                        Err(e) => return Err(e.to_string()),
+                    }
+                    let wide_fib = WideFibStruct::new(
+                        wide_fib_req.log_fibonacci_size,
+                        wide_fib_req.log_n_instances,
+                    );
+                    match wide_fib.prove() {
+                        Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
+                        Err(e) => Err(e.to_string()),
+                    }
                 }
                 _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
             },

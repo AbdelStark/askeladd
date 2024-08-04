@@ -24,18 +24,19 @@ const Navbar: React.FC = () => {
         </div>
         {/* <div className={`items-center justify-between w-full md:flex md:w-auto md:order-1 ${isOpen ? 'flex' : 'hidden'}`} id="navbar-sticky"> */}
 
-        <div className={`items-center justify-between ${isOpen ? 'flex' : 'hidden'} w-full md:flex md:w-auto md:order-1`} id="navbar-sticky">   <ul className="flex flex-col p-4 md:p-0 mt-4 font-medium border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700">
-        <li>
-            <Link href={"/stwo-program"}
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-white  focus:outline-none font-medium rounded-lg text-sm px-4 py-2 text-center dark:focus:ring-blue-800">STWO Program</Link>
-          </li>
-          <li>
-            <Link href={"/config-marketplace"}
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-white  focus:outline-none font-medium rounded-lg text-sm px-4 py-2 text-center dark:focus:ring-blue-800">DVM ZK Config</Link>
-          </li>
-        </ul>
+        <div className={`gap-5 items-center justify-between ${isOpen ? 'flex' : 'hidden'} w-full md:flex md:w-auto md:order-1`} id="navbar-sticky">
+          <ul className="flex flex-col p-4 md:p-0 mt-4 font-medium rounded-lg md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 dark:border-gray-700">
+            <li className='my-5'>
+              <Link href={"/stwo-program"}
+                onClick={() => setIsOpen(!isOpen)}
+                className="nav-button-link rounded m-5 text-white">STWO Program</Link>
+            </li>
+            <li className='my-5'>
+              <Link href={"/config-marketplace"}
+                onClick={() => setIsOpen(!isOpen)}
+                className="nav-button-link rounded m-5 text-white">DVM ZK Config</Link>
+            </li>
+          </ul>
         </div>
       </div>
     </nav>

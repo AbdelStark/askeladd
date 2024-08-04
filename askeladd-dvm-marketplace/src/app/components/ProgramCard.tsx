@@ -13,7 +13,7 @@ interface TagsCardProps {
 }
 const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
     const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
-  const { ndk, pool } = useNostrContext()
+    const { ndk, pool } = useNostrContext()
 
     const [isOpenForm, setIsOpenForm] = useState(false)
     const [logSize, setLogSize] = useState<number>(5);
@@ -52,7 +52,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
 
     useEffect(() => {
         // const pool = new SimplePool();
-        if(pool) {
+        if (pool) {
             runSubscriptionEvent(pool)
         }
         if (!jobId && !jobEventResult) {
@@ -107,20 +107,18 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
             {
                 onevent(event) {
                     //   if (event?.kind == KIND_JOB_REQUEST) {
-                    //     console.log("Event job request received: ", event?.id);
                     //     if (!jobId) return;
                     //     if (pubkey && event?.pubkey == pubkey) {
                     //       setJobId(event?.id)
                     //     }
                     //     poolSubscription.close();
-
                     //   }
                     if (event?.kind == KIND_JOB_RESULT) {
-                        console.log("Event job result received: ", event?.id);
                         if (!jobId) return;
                         let id = jobId ?? eventIdRequest;
-
                         if (id && !jobEventResult) {
+                            console.log("Event job result received: ", event?.id);
+                            console.log("event job content result include job: ", id);
                             let isIncludedJobId = event?.content?.includes(jobId)
                             let jobEventResultFind = event?.content?.includes(jobId)
                             console.log("isIncludedJobId", isIncludedJobId);
@@ -130,8 +128,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                                 setJobEventResult(event)
                             }
                         }
-
-
                         poolSubscription.close();
                     }
                 },
@@ -393,13 +389,13 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
 
     const program_params = program?.program_params;
     return (
-        <div className="p-5 m-5 text-white mx-auto max-w-lg p-6 bg-white border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
+        <div className="max-w-sm cursor-pointer my-5 p-1  m-1 break-normal p-5 m-5 text-white mx-auto max-w-lg p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
             {program_params?.event_id &&
                 <p>Event id: {program?.program_params?.event_id}</p>
             }
-            <p>{program?.program_params?.contract_name?.toString()}</p>
+            <p className='break-words whitespace-pre-line'>{program?.program_params?.contract_name?.toString()}</p>
             {/* <p>{p.program_params?.internal_contract_name}</p> */}
-            <p>Deployed: {program?.program_params?.contract_reached == ContractUploadType.InternalAskeladd && "Internal Program"}</p>
+            <p className='break-words whitespace-pre-line'>Deployed: {program?.program_params?.contract_reached == ContractUploadType.InternalAskeladd && "Internal Program"}</p>
             {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
             <button
                 className={`mt-4 opacity-50 bg-blue-500 my-5 p-1`}
@@ -416,7 +412,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                             <div
                                 key={i}
                             >
-                                {/* <p> {e?.[0]}</p> */}
                                 <p> {e?.[1]}</p>
                                 <input
 

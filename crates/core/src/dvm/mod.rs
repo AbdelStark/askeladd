@@ -98,45 +98,33 @@ pub mod types {
         }
     }
 
-    /// Generic test with T and not value
-    // Usage in a generic function
-    // #[derive(Debug, Serialize, Deserialize)]
-    // pub struct GenerateZKPJobResult<T>
-    // where
-    //     T: Clone ,
-    // {
-    //     pub job_id: String,
-    //     // pub response: T,
-    //     pub response: Value,
+    /// Generic type for proving response
 
-    //     pub proof: StarkProof,
-    // }
-    // pub struct GenerateZKPJobResult<T: 'static> {
-    //     pub job_id: String,
-    //     pub response: T,
-    //     pub proof: StarkProof,
-    // }
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct GenericProvingResponse {
+        pub response: Value,
+        pub proof: StarkProof,
+    }
 
-    // impl<T> GenerateZKPJobResult<T>
-    // where
-    //     T: Clone + 'static,
-    // {
-    //     pub fn new(job_id: String, response: T, proof: StarkProof) -> Self {
-    //         Self {
-    //             job_id,
-    //             response,
-    //             proof,
-    //         }
-    //     }
-    //     pub fn deserialize_container<'a>(
-    //         json_data: &'static str,
-    //     ) -> Result<GenerateZKPJobResult<T>, serde_json::Error>
-    //     where
-    //         T: Deserialize<'static> + Clone,
-    //     {
-    //         serde_json::from_str(json_data)
-    //     }
-    // }
+    impl GenericProvingResponse {
+        pub fn new(response: Value, proof: StarkProof) -> Self {
+            Self { proof, response }
+        }
+    }
+
+    impl Clone for GenericProvingResponse {
+        fn clone(&self) -> Self {
+            // Temporarily use serde for a dirty clone
+            // TODO: Implement a proper clone or find a better design that does not require cloning
+            // the proof
+            let proof_json = serde_json::to_string(&self.proof).unwrap();
+            let proof = serde_json::from_str(&proof_json).unwrap();
+            Self {
+                proof,
+                response: self.response.clone(),
+            }
+        }
+    }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct FibonnacciProvingRequest {
@@ -206,33 +194,5 @@ pub mod types {
     pub struct PoseidonProvingResponse {
         pub response: Value,
         pub proof: StarkProof,
-    }
-
-    /// Generic type for proving response
-
-    #[derive(Debug, Serialize, Deserialize)]
-    pub struct GenericProvingResponse {
-        pub response: Value,
-        pub proof: StarkProof,
-    }
-
-    impl GenericProvingResponse {
-        pub fn new(response: Value, proof: StarkProof) -> Self {
-            Self { proof, response }
-        }
-    }
-
-    impl Clone for GenericProvingResponse {
-        fn clone(&self) -> Self {
-            // Temporarily use serde for a dirty clone
-            // TODO: Implement a proper clone or find a better design that does not require cloning
-            // the proof
-            let proof_json = serde_json::to_string(&self.proof).unwrap();
-            let proof = serde_json::from_str(&proof_json).unwrap();
-            Self {
-                proof,
-                response: self.response.clone(),
-            }
-        }
     }
 }
