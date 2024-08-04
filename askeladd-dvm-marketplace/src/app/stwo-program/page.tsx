@@ -142,12 +142,12 @@ export default function StwoProgramMarketplace() {
       ];
 
 
-      const params_map: Map<string, string> = new Map<string, string>();
+      const inputs: Map<string, string> = new Map<string, string>();
 
       for (let tag of tags_values) {
-        params_map.set(tag[1], tag[2])
+        inputs.set(tag[1], tag[2])
       }
-      console.log("params_map", Object.fromEntries(params_map))
+      console.log("inputs", Object.fromEntries(inputs))
 
       const content = JSON.stringify({
         request: {
@@ -158,20 +158,20 @@ export default function StwoProgramMarketplace() {
           // contract_name: ProgramInternalContractName.FibonnacciProvingRequest.toString(),
           // internal_contract_name: ProgramInternalContractName.FibonnacciProvingRequest.toString,
           // contract_reached: ContractUploadType.InternalAskeladd.toString(),
-          // params_map:JSON.stringify(Object.fromEntries(params_map)),
+          // inputs:JSON.stringify(Object.fromEntries(inputs)),
 
           contract_name: "FibonnacciProvingRequest",
           internal_contract_name: "FibonnacciProvingRequest",
           contract_reached: "InternalAskeladd",
-          params_map: Object.fromEntries(params_map),
+          inputs: Object.fromEntries(inputs),
 
-          // params_map:tags 
+          // inputs:tags 
         }
       })
       // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
       setTimestampJob(new Date().getTime())
-      console.log("params_map", params_map)
+      console.log("inputs", inputs)
       console.log("content", content)
       // return ;
       /** Use Nostr extension to send event */
@@ -364,7 +364,7 @@ export default function StwoProgramMarketplace() {
 
 
         <div className="gap-3">      {internalProgram?.map((p) => {
-          // const map =  Object.fromEntries(p?.program_params?.params_map)
+          // const map =  Object.fromEntries(p?.program_params?.inputs)
           return (
             <ProgramCard program={p}></ProgramCard>
           )

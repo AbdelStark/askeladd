@@ -15,6 +15,7 @@ use crate::dvm::types::{
 };
 use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
+use crate::utils::convert_inputs;
 
 /// ServiceProvider is the main component of the Askeladd prover agent.
 /// It manages the lifecycle of proving requests, from receiving them via Nostr,
@@ -159,8 +160,6 @@ impl ServiceProvider {
         let tags = &event.tags;
         let params = extract_params_from_tags(tags);
 
-        println!("event.content.to_owned() {:?}", event.content.to_owned());
-
         let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // println!("request value {:?}", request_value);
         // println!("zkp_request {:?}", zkp_request);
@@ -170,18 +169,8 @@ impl ServiceProvider {
 
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
-            println!("program_params: {:?}", program_params);
-
-            for (key, value) in params_program.clone().unwrap().params_map.iter() {
-                if let Ok(num) = value.parse::<u32>() {
-                    successful_parses.insert(key.clone(), num);
-                    println!("The value for '{}' is a valid u32: {}", key, num);
-                } else {
-                    println!("The value for '{}' is not a valid u32.", key);
-                }
-            }
-
-            // params_inputs = program_params.params_map.clone();
+            successful_parses = convert_inputs(program_params.inputs);
+            // params_inputs = program_params.inputs.clone();
             params_inputs = successful_parses.clone();
             println!("params_inputs {:?}", params_inputs);
         } else {

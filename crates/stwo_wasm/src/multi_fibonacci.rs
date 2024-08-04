@@ -33,7 +33,6 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-
 #[wasm_bindgen]
 pub fn stark_proof_multi_fibo(log_sizes: Vec<u32>, claims_int: Vec<u32>) -> StwoResult {
     let claims: Vec<BaseField> = claims_int
@@ -102,4 +101,3 @@ pub fn verify_stark_proof_multi_fibo(
         }
     }
 }
-

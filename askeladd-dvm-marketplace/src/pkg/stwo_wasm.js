@@ -18,11 +18,12 @@ function getStringFromWasm0(ptr, len) {
     return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
 }
 /**
+* @param {number} log_fibonacci_size
 * @param {number} log_n_instances
 * @returns {StwoResult}
 */
-export function prove_stark_proof_poseidon(log_n_instances) {
-    const ret = wasm.prove_stark_proof_poseidon(log_n_instances);
+export function stark_proof_wide_fibo(log_fibonacci_size, log_n_instances) {
+    const ret = wasm.stark_proof_wide_fibo(log_fibonacci_size, log_n_instances);
     return StwoResult.__wrap(ret);
 }
 
@@ -82,28 +83,6 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 /**
-* @param {number} log_n_instances
-* @param {string} stark_proof_str
-* @returns {StwoResult}
-*/
-export function verify_stark_proof_poseidon(log_n_instances, stark_proof_str) {
-    const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.verify_stark_proof_poseidon(log_n_instances, ptr0, len0);
-    return StwoResult.__wrap(ret);
-}
-
-/**
-* @param {number} log_fibonacci_size
-* @param {number} log_n_instances
-* @returns {StwoResult}
-*/
-export function stark_proof_wide_fibo(log_fibonacci_size, log_n_instances) {
-    const ret = wasm.stark_proof_wide_fibo(log_fibonacci_size, log_n_instances);
-    return StwoResult.__wrap(ret);
-}
-
-/**
 * @param {number} log_fibonacci_size
 * @param {number} log_n_instances
 * @param {string} stark_proof_str
@@ -113,6 +92,27 @@ export function verify_stark_proof_wide_fibo(log_fibonacci_size, log_n_instances
     const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.verify_stark_proof_wide_fibo(log_fibonacci_size, log_n_instances, ptr0, len0);
+    return StwoResult.__wrap(ret);
+}
+
+/**
+* @param {number} log_n_instances
+* @returns {StwoResult}
+*/
+export function prove_stark_proof_poseidon(log_n_instances) {
+    const ret = wasm.prove_stark_proof_poseidon(log_n_instances);
+    return StwoResult.__wrap(ret);
+}
+
+/**
+* @param {number} log_n_instances
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_poseidon(log_n_instances, stark_proof_str) {
+    const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.verify_stark_proof_poseidon(log_n_instances, ptr0, len0);
     return StwoResult.__wrap(ret);
 }
 

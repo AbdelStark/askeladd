@@ -36,13 +36,12 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub enum ContractUploadType {
         InternalAskeladd,
-        // URL,
+        // URl,
         // BackendEndpoint,
-        // IPFS,
+        // Ipfs,
     }
 
-    // Enum for internal_name :
-    // Define an enum to encapsulate possible deserialized types
+    // Enum for internal_name program on ASKELADD
     #[derive(Serialize, Deserialize, Debug, Clone)]
     // #[serde(untagged)]
     pub enum ProgramInternalContractName {
@@ -53,77 +52,21 @@ pub mod types {
         Custom(String),
     }
 
-    // TODO finish
-    //  Define an enum to encapsulate possible deserialized types
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[serde(tag = "contract_name")]
-    pub enum ProgramRequestType {
-        FibonnacciProvingRequest(FibonnacciProvingRequest),
-        PoseidonProvingRequest(PoseidonProvingRequest),
-    }
-
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct ProgramParams {
         pub event_id: Option<EventId>,
         pub unique_id: Option<String>,
-        // Use a custom deserializer for the potentially problematic field
-        // #[serde(deserialize_with = "deserialize_params_map")]
-        pub params_map: HashMap<String, String>,
+        pub pubkey_application: Option<String>, /* Use for one to one marketplace => difficult
+                                                 * on the archi of the DVM */
+        pub inputs: HashMap<String, String>,
+        pub inputs_types: Option<HashMap<String, String>>,
+        pub inputs_encrypted: Option<HashMap<String, String>>,
         pub contract_reached: ContractUploadType,
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
+        // For External program
+        // pub endpoint:Option<String>,
     }
-
-    fn deserialize_params_map<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = Value::deserialize(deserializer)?;
-        if let Value::Object(map) = value {
-            let result = map
-                .into_iter()
-                .map(|(k, v)| {
-                    v.as_str()
-                        .map(|s| (k, s.to_string()))
-                        .ok_or_else(|| serde::de::Error::custom("All values must be strings"))
-                })
-                .collect();
-            result
-        } else {
-            Err(serde::de::Error::custom("params_map must be an object"))
-        }
-    }
-
-    // fn deserialize_params_map<'de, D>(deserializer: D) -> Result<HashMap<String, String>,
-    // D::Error> where
-    //     D: Deserializer<'de>,
-    // {
-    //     let val: Value = Deserialize::deserialize(deserializer)?;
-    //     match val {
-    //         Value::Object(map) => map
-    //             .into_iter()
-    //             .map(|(k, v)| match v.as_str() {
-    //                 Some(str_val) => Ok((k, str_val.to_string())),
-    //                 None => Err(serde::de::Error::custom(
-    //                     "Expected a string value in the map",
-    //                 )),
-    //             })
-    //             .collect(),
-    //         _ => Err(serde::de::Error::custom("Expected a map for params_map")),
-    //     }
-    // }
-
-    // #[derive(Debug, Serialize, Deserialize, Clone)]
-    // pub struct GenerateZKPJobRequest<T> {
-    //     pub request: T,
-    //     pub program: ProgramParams,
-    // }
-
-    // impl<T> GenerateZKPJobRequest<T> {
-    //     pub fn new(request: T, program: ProgramParams) -> Self {
-    //         Self { request, program }
-    //     }
-    // }
 
     #[derive(Debug, Serialize, Deserialize)]
     pub enum JobStatus {
@@ -201,14 +144,11 @@ pub mod types {
         pub claim: u32,
     }
 
-
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct MultiFibonnacciProvingRequest {
         pub log_sizes: Vec<u32>,
         pub claims: Vec<u32>,
     }
-
-
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct FibonnacciProvingResponse {

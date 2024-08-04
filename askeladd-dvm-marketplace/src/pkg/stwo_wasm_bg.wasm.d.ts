@@ -1,10 +1,10 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
-export function prove_stark_proof_poseidon(a: number): number;
-export function verify_stark_proof_poseidon(a: number, b: number, c: number): number;
 export function stark_proof_wide_fibo(a: number, b: number): number;
 export function verify_stark_proof_wide_fibo(a: number, b: number, c: number, d: number): number;
+export function prove_stark_proof_poseidon(a: number): number;
+export function verify_stark_proof_poseidon(a: number, b: number, c: number): number;
 export function __wbg_stworesult_free(a: number): void;
 export function stworesult_success(a: number): number;
 export function stworesult_message(a: number, b: number): void;

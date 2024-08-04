@@ -85,7 +85,7 @@ impl Customer {
         let mut params_inputs: HashMap<String, String> = HashMap::new();
         let mut tags = vec![];
         if let Some(p) = program {
-            params_inputs = p.params_map;
+            params_inputs = p.inputs;
         }
         // OLD TAGS creation
         // let tags = vec![

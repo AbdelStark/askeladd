@@ -142,12 +142,12 @@ export default function Home() {
       ];
 
 
-      const params_map:Map<string,string>= new Map<string,string>();
+      const inputs:Map<string,string>= new Map<string,string>();
 
       for(let tag of tags_values) {
-        params_map.set(tag[1], tag[2])
+        inputs.set(tag[1], tag[2])
       }
-      console.log("params_map",Object.fromEntries(params_map))
+      console.log("inputs",Object.fromEntries(inputs))
 
       const content = JSON.stringify({
         request: {
@@ -158,15 +158,15 @@ export default function Home() {
           contract_name:"FibonnacciProvingRequest",
           internal_contract_name:"FibonnacciProvingRequest",
           contract_reached:"InternalAskeladd",
-          // params_map:JSON.stringify(Object.fromEntries(params_map)),
-          params_map:Object.fromEntries(params_map),
-          // params_map:tags 
+          // inputs:JSON.stringify(Object.fromEntries(inputs)),
+          inputs:Object.fromEntries(inputs),
+          // inputs:tags 
         }
       })
       // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
       setTimestampJob(new Date().getTime())
-      console.log("params_map",params_map)
+      console.log("inputs",inputs)
       console.log("content",content)
       // return ;
       /** Use Nostr extension to send event */

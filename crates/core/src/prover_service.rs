@@ -10,8 +10,9 @@ use stwo_wasm::wide_fibonnacci::WideFibStruct;
 use crate::dvm::types::{
     ContractUploadType, FibonnacciProvingRequest, FibonnacciProvingResponse,
     GenericProvingResponse, MultiFibonnacciProvingRequest, PoseidonProvingRequest,
-    ProgramInternalContractName, ProgramParams, ProgramRequestType, WideFibonnacciProvingRequest,
+    ProgramInternalContractName, ProgramParams, WideFibonnacciProvingRequest,
 };
+use crate::utils::convert_inputs;
 
 #[derive(Debug, Default)]
 pub struct ProverService {}
@@ -42,14 +43,7 @@ impl ProverService {
         println!("generate_proof_by_program type {:?}", request);
         let mut successful_parses = HashMap::new();
         if let Some(program_params) = program_params.clone() {
-            for (key, value) in program_params.clone().params_map.iter() {
-                if let Ok(num) = value.parse::<u32>() {
-                    successful_parses.insert(key.clone(), num);
-                    println!("The value for '{}' is a valid u32: {}", key, num);
-                } else {
-                    println!("The value for '{}' is not a valid u32.", key);
-                }
-            }
+            successful_parses = convert_inputs(program_params.inputs);
         }
 
         let serialized_request = serde_json::to_string(&successful_parses).unwrap();
@@ -64,119 +58,100 @@ impl ProverService {
                 ContractUploadType::InternalAskeladd => {
                     match program_params.clone().internal_contract_name {
                         // TODO: add other internal contract
-                        Some(internal_contract) => {
-                            match internal_contract {
-                                ProgramInternalContractName::FibonnacciProvingRequest => {
-                                    println!("try check request fib");
-                                    // let fib_req_res: SerdeResult<FibonnacciProvingRequest> =
-                                    //     serde_json::from_str(request_str);
-
-                                    let fib_req_res: SerdeResult<FibonnacciProvingRequest> =
-                                        serde_json::from_str(&serialized_request);
-
-                                    // fib_req_res.map_err(|e| e.to_string()).as_ref();
-                                    let fib_req: FibonnacciProvingRequest;
-
-                                    match fib_req_res.as_ref() {
-                                        Ok(req) => {
-                                            fib_req = req.clone();
-                                        }
-                                        Err(e) => return Err(e.to_string()),
+                        Some(internal_contract) => match internal_contract {
+                            ProgramInternalContractName::FibonnacciProvingRequest => {
+                                println!("try check request fib");
+                                let fib_req_res: SerdeResult<FibonnacciProvingRequest> =
+                                    serde_json::from_str(&serialized_request);
+                                let fib_req: FibonnacciProvingRequest;
+                                match fib_req_res.as_ref() {
+                                    Ok(req) => {
+                                        fib_req = req.clone();
                                     }
-                                    println!("fiq_req: {:?}", fib_req);
-
-                                    let fib = Fibonacci::new(
-                                        fib_req.log_size,
-                                        BaseField::from(fib_req.claim),
-                                    );
-                                    match fib.prove() {
-                                        Ok(proof) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), proof))
-                                        }
-                                        Err(e) => Err(e.to_string()),
-                                    }
+                                    Err(e) => return Err(e.to_string()),
                                 }
-                                ProgramInternalContractName::PoseidonProvingRequest => {
-                                    let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
-                                        serde_json::from_str(&serialized_request);
-                                    let poseidon_req: PoseidonProvingRequest;
-                                    match poseidon_serde_req.as_ref() {
-                                        Ok(req) => {
-                                            poseidon_req = req.clone();
-                                        }
-                                        Err(e) => return Err(e.to_string()),
+                                let fib = Fibonacci::new(
+                                    fib_req.log_size,
+                                    BaseField::from(fib_req.claim),
+                                );
+                                match fib.prove() {
+                                    Ok(proof) => {
+                                        Ok(GenericProvingResponse::new(request.clone(), proof))
                                     }
-                                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
-                                    match poseidon.prove() {
-                                        Ok(proof) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), proof.1))
-                                        }
-                                        Err(e) => Err(e.to_string()),
-                                    }
+                                    Err(e) => Err(e.to_string()),
                                 }
-                                ProgramInternalContractName::WideFibonnaciProvingRequest => {
-                                    let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
-                                        serde_json::from_str(&serialized_request);
-
-                                    // fib_req_res.map_err(|e| e.to_string()).as_ref();
-                                    let wide_fib_req: WideFibonnacciProvingRequest;
-
-                                    match wide_fib_serde.as_ref() {
-                                        Ok(req) => {
-                                            wide_fib_req = req.clone();
-                                        }
-                                        Err(e) => return Err(e.to_string()),
-                                    }
-
-                                    println!("WideFib create component");
-
-                                    let wide_fib = WideFibStruct::new(
-                                        wide_fib_req.log_fibonacci_size,
-                                        wide_fib_req.log_n_instances,
-                                    );
-
-                                    match wide_fib.prove() {
-                                        Ok(proof) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), proof))
-                                        }
-                                        Err(e) => Err(e.to_string()),
-                                    }
-                                }
-                                ProgramInternalContractName::MultiFibonnaciProvingRequest => {
-                                    let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
-                                        serde_json::from_str(&serialized_request);
-
-                                    // fib_req_res.map_err(|e| e.to_string()).as_ref();
-                                    let mul_fib_req: MultiFibonnacciProvingRequest;
-                                    match multi_fibo_res.as_ref() {
-                                        Ok(req) => {
-                                            mul_fib_req = req.clone();
-                                        }
-                                        Err(e) => return Err(e.to_string()),
-                                    }
-                                    let claims: Vec<BaseField> = mul_fib_req.claims
-                                        .into_iter()
-                                        .map(|f| m31::M31::from_u32_unchecked(f))
-                                        .collect();
-                                    let multi_fibo = MultiFibonacci::new(mul_fib_req.log_sizes, claims);
-                                    match multi_fibo.prove() {
-                                        Ok(proof) => {
-                                            Ok(GenericProvingResponse::new(request.clone(), proof))
-                                        }
-                                        Err(e) => Err(e.to_string()),
-                                    }
-                                }
-                                ProgramInternalContractName::Custom(s) => {
-                                    println!("Custom internal contract");
-                                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                                }
-                                _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
                             }
-                        }
+                            ProgramInternalContractName::PoseidonProvingRequest => {
+                                let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
+                                    serde_json::from_str(&serialized_request);
+                                let poseidon_req: PoseidonProvingRequest;
+                                match poseidon_serde_req.as_ref() {
+                                    Ok(req) => {
+                                        poseidon_req = req.clone();
+                                    }
+                                    Err(e) => return Err(e.to_string()),
+                                }
+                                let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
+                                match poseidon.prove() {
+                                    Ok(proof) => {
+                                        Ok(GenericProvingResponse::new(request.clone(), proof.1))
+                                    }
+                                    Err(e) => Err(e.to_string()),
+                                }
+                            }
+                            ProgramInternalContractName::WideFibonnaciProvingRequest => {
+                                let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
+                                    serde_json::from_str(&serialized_request);
+                                let wide_fib_req: WideFibonnacciProvingRequest;
+                                match wide_fib_serde.as_ref() {
+                                    Ok(req) => {
+                                        wide_fib_req = req.clone();
+                                    }
+                                    Err(e) => return Err(e.to_string()),
+                                }
+                                let wide_fib = WideFibStruct::new(
+                                    wide_fib_req.log_fibonacci_size,
+                                    wide_fib_req.log_n_instances,
+                                );
+                                match wide_fib.prove() {
+                                    Ok(proof) => {
+                                        Ok(GenericProvingResponse::new(request.clone(), proof))
+                                    }
+                                    Err(e) => Err(e.to_string()),
+                                }
+                            }
+                            ProgramInternalContractName::MultiFibonnaciProvingRequest => {
+                                let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
+                                    serde_json::from_str(&serialized_request);
+                                let mul_fib_req: MultiFibonnacciProvingRequest;
+                                match multi_fibo_res.as_ref() {
+                                    Ok(req) => {
+                                        mul_fib_req = req.clone();
+                                    }
+                                    Err(e) => return Err(e.to_string()),
+                                }
+                                let claims: Vec<BaseField> = mul_fib_req
+                                    .claims
+                                    .into_iter()
+                                    .map(|f| m31::M31::from_u32_unchecked(f))
+                                    .collect();
+                                let multi_fibo = MultiFibonacci::new(mul_fib_req.log_sizes, claims);
+                                match multi_fibo.prove() {
+                                    Ok(proof) => {
+                                        Ok(GenericProvingResponse::new(request.clone(), proof))
+                                    }
+                                    Err(e) => Err(e.to_string()),
+                                }
+                            }
+                            ProgramInternalContractName::Custom(s) => {
+                                println!("Custom internal contract");
+                                Err(ProvingError::ConstraintsNotSatisfied.to_string())
+                            }
+                            _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
+                        },
                         None => {
                             println!("No internal contract name");
                             Err(ProvingError::ConstraintsNotSatisfied.to_string())
-
                         }
                     }
                 }

@@ -29,7 +29,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             contract_name:ProgramInternalContractName.FibonnacciProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.FibonnacciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
-            params_map:program_map_fibo
+            inputs:program_map_fibo
         }
 
     },
@@ -44,7 +44,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
-            params_map:program_map_wide_fibo
+            inputs:program_map_wide_fibo
         }
 
     },
@@ -59,7 +59,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             contract_name:ProgramInternalContractName.PoseidonProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.PoseidonProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
-            params_map:program_map_poseidon
+            inputs:program_map_poseidon
         }
 
     },

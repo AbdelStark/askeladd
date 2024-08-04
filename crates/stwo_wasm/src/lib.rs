@@ -1,8 +1,8 @@
 // lib.rs
-pub mod wide_fibonnacci;
-pub mod poseidon;
 pub mod multi_fibonacci;
+pub mod poseidon;
 pub mod types;
+pub mod wide_fibonnacci;
 
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::fields::m31::{self, BaseField};
@@ -127,4 +127,3 @@ pub fn verify_stark_proof(log_size: u32, claim: u32, stark_proof_str: &str) -> S
         }
     }
 }
-

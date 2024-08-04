@@ -67,7 +67,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let job_request = GenerateZKPJobRequest {
         request: req_value,
         program: Some(ProgramParams {
-            params_map: map_inputs,
+            pubkey_application: None,
+            inputs: map_inputs,
+            inputs_encrypted: None,
+            inputs_types: None,
             unique_id: None,
             event_id: None,
             contract_reached: ContractUploadType::InternalAskeladd,
@@ -141,16 +144,15 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
     map_inputs.insert("claimed_sum".to_owned(), claimed_sum.to_string());
     map_inputs.insert("output".to_owned(), "text/json".to_owned());
 
-    let req_value = serde_json::to_value(PoseidonProvingRequest {
-        log_n_rows,
-        claimed_sum,
-    })
-    .unwrap();
+    let req_value = serde_json::to_value(PoseidonProvingRequest { log_n_instances }).unwrap();
 
     let job_request = GenerateZKPJobRequest {
         request: req_value,
         program: Some(ProgramParams {
-            params_map: map_inputs,
+            inputs: map_inputs,
+            pubkey_application: None,
+            inputs_encrypted: None,
+            inputs_types: None,
             unique_id: None,
             event_id: None,
             contract_reached: ContractUploadType::InternalAskeladd,

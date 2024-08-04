@@ -1,17 +1,6 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
-* @param {number} log_n_instances
-* @returns {StwoResult}
-*/
-export function prove_stark_proof_poseidon(log_n_instances: number): StwoResult;
-/**
-* @param {number} log_n_instances
-* @param {string} stark_proof_str
-* @returns {StwoResult}
-*/
-export function verify_stark_proof_poseidon(log_n_instances: number, stark_proof_str: string): StwoResult;
-/**
 * @param {number} log_fibonacci_size
 * @param {number} log_n_instances
 * @returns {StwoResult}
@@ -24,6 +13,17 @@ export function stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instance
 * @returns {StwoResult}
 */
 export function verify_stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instances: number, stark_proof_str: string): StwoResult;
+/**
+* @param {number} log_n_instances
+* @returns {StwoResult}
+*/
+export function prove_stark_proof_poseidon(log_n_instances: number): StwoResult;
+/**
+* @param {number} log_n_instances
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_poseidon(log_n_instances: number, stark_proof_str: string): StwoResult;
 /**
 * @param {number} log_size
 * @param {number} claim
@@ -66,10 +66,10 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly prove_stark_proof_poseidon: (a: number) => number;
-  readonly verify_stark_proof_poseidon: (a: number, b: number, c: number) => number;
   readonly stark_proof_wide_fibo: (a: number, b: number) => number;
   readonly verify_stark_proof_wide_fibo: (a: number, b: number, c: number, d: number) => number;
+  readonly prove_stark_proof_poseidon: (a: number) => number;
+  readonly verify_stark_proof_poseidon: (a: number, b: number, c: number) => number;
   readonly __wbg_stworesult_free: (a: number) => void;
   readonly stworesult_success: (a: number) => number;
   readonly stworesult_message: (a: number, b: number) => void;

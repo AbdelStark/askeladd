@@ -87,10 +87,11 @@ impl PoseidonStruct {
     }
     pub fn prove(&self) -> Result<(PoseidonAir, StarkProof), ProvingError> {
         let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
-
-        let (air, proof) = prove_poseidon(self.air.component.log_n_rows);
-
-        Ok((air, proof))
+        if let (air, proof) = prove_poseidon(self.air.component.log_n_rows) {
+            Ok((air, proof))
+        } else {
+            Err(ProvingError::ConstraintsNotSatisfied)
+        }
     }
 
     pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {

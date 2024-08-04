@@ -91,7 +91,7 @@ export interface IProgramParams {
     event_id?: string;
 
     unique_id?: string;
-    params_map?: Map<string, string>
+    inputs?: Map<string, string>
     contract_reached?: ContractUploadType,
     contract_name?: string;
     internal_contract_name?: ProgramInternalContractName

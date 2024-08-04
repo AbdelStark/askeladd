@@ -1,10 +1,10 @@
-import { NDKEvent } from '@nostr-dev-kit/ndk';
+import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { Event as NostrEvent, Relay, SimplePool } from 'nostr-tools';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT } from '@/types';
+import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from '@/types';
 import { useFetchEvents } from '@/hooks/useFetchEvents';
 import { ASKELADD_RELAY } from '@/constants/relay';
-import init, {verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo} from "../../pkg"
+import init, { verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo, prove_stark_proof_poseidon, verify_stark_proof_poseidon } from "../../pkg"
 // Define the props for the component
 interface TagsCardProps {
     event?: NDKEvent | NostrEvent;  // Array of array of strings
@@ -47,6 +47,100 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
             });
     }, []);
 
+    useEffect(() => {
+        const pool = new SimplePool();
+        runSubscriptionEvent(pool)
+        if (!jobId && !jobEventResult) {
+            timeoutWaitingForJobResult()
+        }
+    }, [jobId, jobEventResult])
+
+
+    const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
+
+        // WebSocket connection setup
+        // const ws = new WebSocket([ASKELADD_RELAY[0]]);  // Replace with your Nostr relay URL
+
+        // ws.onopen = () => {
+        //     // Subscribe to specific events, adjust filters as needed
+        //     ws.send(JSON.stringify({
+        //         "req": "EVENTS",
+        //         // "filter": {
+        //         //     "#e": ["3a5f5b4..."]  // Your event criteria here
+        //         // }
+        //     }));
+        // };
+
+        // ws.onmessage = (event) => {
+        //     const data = JSON.parse(event.data);
+        //     if (data) {
+        //         if (!jobId) return;
+        //         if (pubkey && data?.pubkey == pubkey) {
+        //             setJobId(data?.id)
+        //         }
+        //         // setEvents(currentEvents => [...currentEvents, data]);
+        //     }
+        // };
+
+        // ws.onerror = (error) => {
+        //     console.error("WebSocket error:", error);
+        // };
+
+        let poolSubscription = pool.subscribeMany(
+            ASKELADD_RELAY,
+            [
+                // {
+                //   kinds: [KIND_JOB_REQUEST as NDKKind],
+                //   // since:timestampJob
+                //   // authors: pubkey ? [pubkey] : []
+                // },
+                {
+                    kinds: [KIND_JOB_RESULT as NDKKind],
+                    // since:timestampJob
+                },
+            ],
+            {
+                onevent(event) {
+                    //   if (event?.kind == KIND_JOB_REQUEST) {
+                    //     console.log("Event job request received: ", event?.id);
+                    //     if (!jobId) return;
+                    //     if (pubkey && event?.pubkey == pubkey) {
+                    //       setJobId(event?.id)
+                    //     }
+                    //     poolSubscription.close();
+
+                    //   }
+                    if (event?.kind == KIND_JOB_RESULT) {
+                        console.log("Event job result received: ", event?.id);
+                        if (!jobId) return;
+                        let id = jobId ?? eventIdRequest;
+
+                        if (id && !jobEventResult) {
+                            let isIncludedJobId = event?.content?.includes(jobId)
+                            let jobEventResultFind = event?.content?.includes(jobId)
+                            console.log("isIncludedJobId", isIncludedJobId);
+                            if (isIncludedJobId) {
+                                console.log("Event JOB_RESULT find", jobEventResultFind);
+                                getDataOfEvent(event);
+                                setJobEventResult(event)
+                            }
+                        }
+
+
+                        poolSubscription.close();
+                    }
+                },
+                onclose: () => {
+                    poolSubscription.close()
+                },
+                oneose() {
+                    poolSubscription.close()
+                }
+            }
+        )
+    }
+
+
     const timeoutWaitingForJobResult = async () => {
         console.log("waiting timeout job result")
         setTimeout(() => {
@@ -83,7 +177,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
             let jobEventResultFind = events?.find((e) => e?.content?.includes(id))
             console.log("jobEventResultFind", jobEventResultFind);
             let filterJob = events?.filter((e) => e?.id?.includes(id))
-            console.log("filterJob", filterJob);
+            // console.log("filterJob", filterJob);
             if (jobEventResultFind?.id) {
                 console.log("Event JOB_RESULT find", jobEventResultFind);
                 getDataOfEvent(jobEventResultFind);
@@ -148,37 +242,28 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                 ['output', 'text/json']
             ];
 
-            const tags_values = [
-                ['param', 'log_size', logSize.toString()],
-                ['param', 'claim', claim.toString()],
-            ];
-
-
-            const params_map: Map<string, string> = new Map<string, string>();
+            const inputs: Map<string, string> = new Map<string, string>();
             {
                 Object.entries(form).map(([key, value]) => {
-                    params_map.set(key, value as string)
+                    inputs.set(key, value as string)
                 }
                 )
             }
-
-            // for (let tag of Array.from(form)) {
-            //     params_map.set(tag[1], tag[2])
-            // }
-            console.log("params_map", Object.fromEntries(params_map))
-
+            console.log("inputs", Object.fromEntries(inputs))
             const content = JSON.stringify({
                 request: form,
                 program: {
                     contract_name: program?.program_params?.contract_name,
                     internal_contract_name: program?.program_params?.internal_contract_name,
                     contract_reached: program?.program_params?.contract_reached,
-                    params_map: Object.fromEntries(params_map),
+                    inputs: Object.fromEntries(inputs),
+                    inputs_types: undefined,
+                    inputs_encrypted: undefined
                 }
             })
             // Define the timestamp before which you want to fetch events
             setTimestampJob(new Date().getTime())
-            console.log("params_map", params_map)
+            console.log("inputs", inputs)
             console.log("content", content)
             /** Use Nostr extension to send event */
             const pool = new SimplePool();
@@ -231,20 +316,49 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
         try {
             if (proof) {
                 setIsLoading(true);
-                const prove_result = prove_and_verify(logSize, claim);
-                console.log("prove_result", prove_result);
-                const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
-                console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-                const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
-                console.log("verify result", verify_result);
-                console.log("verify message", verify_result.message);
-                console.log("verify success", verify_result.success);
-                if (verify_result?.success) {
-                    console.log("is success verify result")
-                    setProofStatus("verified");
-                } else {
-                    setError(verify_result?.message)
+                const inputs: Map<string, string> = new Map<string, string>();
+                {
+                    Object.entries(form).map(([key, value]) => {
+                        inputs.set(key, value as string)
+                    }
+                    )
                 }
+
+                if (program?.program_params?.internal_contract_name == ProgramInternalContractName.FibonnacciProvingRequest) {
+                    const prove_result = prove_and_verify(logSize, claim);
+                    console.log("prove_result", prove_result);
+                    const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+                    console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+                    const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
+                    console.log("verify result", verify_result);
+                    console.log("verify message", verify_result.message);
+                    console.log("verify success", verify_result.success);
+                    if (verify_result?.success) {
+                        console.log("is success verify result")
+                        setProofStatus("verified");
+                    } else {
+                        setError(verify_result?.message)
+                    }
+                } else if (program?.program_params?.internal_contract_name == ProgramInternalContractName?.PoseidonProvingRequest) {
+
+                    let log_n_instances = inputs.get("log_n_instances");
+                    if (!log_n_instances) return;
+                    const prove_result = prove_stark_proof_poseidon(Number(log_n_instances));
+                    console.log("prove_result", prove_result);
+                    const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+                    console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+                    const verify_result = verify_stark_proof_poseidon(Number(log_n_instances), serialised_proof_from_nostr_event);
+                    console.log("verify result", verify_result);
+                    console.log("verify message", verify_result.message);
+                    console.log("verify success", verify_result.success);
+                    if (verify_result?.success) {
+                        console.log("is success verify result")
+                        setProofStatus("verified");
+                    } else {
+                        setError(verify_result?.message)
+                    }
+                }
+
                 setIsLoading(false);
                 setIsFetchJob(true)
             }
@@ -259,7 +373,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
 
     const date: string | undefined = event?.created_at ? new Date(event?.created_at).toDateString() : undefined
 
-    const params = Object.fromEntries(program?.program_params?.params_map?.entries() ?? [])
+    const params = Object.fromEntries(program?.program_params?.inputs?.entries() ?? [])
 
     const [form, setForm] = useState({})
     // Handle changes in form inputs
