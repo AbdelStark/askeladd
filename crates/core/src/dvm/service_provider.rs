@@ -51,6 +51,8 @@ pub enum ServiceProviderError {
     SerializationError(#[from] serde_json::Error),
     #[error("Unknown error")]
     Unknown,
+    #[error("No program param")]
+    NoProgramParam,
 }
 
 impl ServiceProvider {
