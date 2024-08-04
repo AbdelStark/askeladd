@@ -5,6 +5,7 @@ import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_R
 import { useFetchEvents } from '@/hooks/useFetchEvents';
 import { ASKELADD_RELAY } from '@/constants/relay';
 import init, { verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo, prove_stark_proof_poseidon, verify_stark_proof_poseidon } from "../../pkg"
+import { useNostrContext } from '@/context/NostrContext';
 // Define the props for the component
 interface TagsCardProps {
     event?: NDKEvent | NostrEvent;  // Array of array of strings
@@ -12,6 +13,8 @@ interface TagsCardProps {
 }
 const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
     const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
+  const { ndk, pool } = useNostrContext()
+
     const [isOpenForm, setIsOpenForm] = useState(false)
     const [logSize, setLogSize] = useState<number>(5);
     const [claim, setClaim] = useState<number>(443693538);
@@ -48,12 +51,14 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
     }, []);
 
     useEffect(() => {
-        const pool = new SimplePool();
-        runSubscriptionEvent(pool)
+        // const pool = new SimplePool();
+        if(pool) {
+            runSubscriptionEvent(pool)
+        }
         if (!jobId && !jobEventResult) {
             timeoutWaitingForJobResult()
         }
-    }, [jobId, jobEventResult])
+    }, [jobId, jobEventResult, pool])
 
 
     const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
