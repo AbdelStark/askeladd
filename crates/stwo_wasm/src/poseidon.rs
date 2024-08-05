@@ -205,7 +205,7 @@ impl PoseidonStruct {
             &InteractionElements::default(),
             commitment_scheme,
         )
-        .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
+        .map_err(Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>);
 
         match proof {
             Ok(p) => Ok(p),
