@@ -87,7 +87,8 @@ pub fn verify_stark_proof_multi_fibo(
     //     success: false,
     //     message: format!("Proof verification failed: {:?}", "no generic value"),
     // }
-    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
+        serde_json::from_str(stark_proof_str);
     match multi_fibo.verify(stark_proof.unwrap()) {
         Ok(()) => {
             console_log!("Proof verified successfully");
@@ -106,7 +107,6 @@ pub fn verify_stark_proof_multi_fibo(
     }
 }
 
-
 // #[wasm_bindgen]
 // pub fn verify_stark_proof_multi_fibo(
 //     log_sizes: Vec<u32>,
@@ -122,8 +122,8 @@ pub fn verify_stark_proof_multi_fibo(
 //         success: false,
 //         message: format!("Proof verification failed: {:?}", "no generic value"),
 //     }
-//     // let stark_proof: Result<StarkProof<H>, serde_json::Error> = serde_json::from_str(stark_proof_str);
-//     // match multi_fibo.verify(stark_proof.unwrap()) {
+//     // let stark_proof: Result<StarkProof<H>, serde_json::Error> =
+// serde_json::from_str(stark_proof_str);     // match multi_fibo.verify(stark_proof.unwrap()) {
 //     //     Ok(()) => {
 //     //         console_log!("Proof verified successfully");
 //     //         StwoResult {

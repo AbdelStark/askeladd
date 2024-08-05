@@ -33,8 +33,11 @@ macro_rules! console_log {
 }
 
 pub trait WideFairImpl {
-    fn verify<H:MerkleHasher>(proof: StarkProof<H>) -> Result<(), VerificationError>;
-    fn prove<H:MerkleHasher>(log_fibonacci_size: u32, log_n_instances: u32) -> Result<StarkProof<H>, ProvingError>;
+    fn verify<H: MerkleHasher>(proof: StarkProof<H>) -> Result<(), VerificationError>;
+    fn prove<H: MerkleHasher>(
+        log_fibonacci_size: u32,
+        log_n_instances: u32,
+    ) -> Result<StarkProof<H>, ProvingError>;
 }
 
 #[derive(Clone)]
@@ -53,7 +56,9 @@ impl WideFibStruct {
         };
         Self { air: wide_fib }
     }
-    pub fn prove<H:MerkleHasher<Hash = Blake2sHash>>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
+    pub fn prove<H: MerkleHasher<Hash = Blake2sHash>>(
+        &self,
+    ) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         let private_input = (0..(1 << self.air.component.log_n_instances))
             .map(|i| Input {
                 a: m31::M31::from_u32_unchecked(i),
@@ -72,7 +77,7 @@ impl WideFibStruct {
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         // let res_proof = commit_and_prove::<CpuBackend>(&self.air, prover_channel, trace);
         let res_proof: Result<StarkProof<Blake2sMerkleHasher>, ProvingError> =
-        commit_and_prove(&self.air, prover_channel, trace);
+            commit_and_prove(&self.air, prover_channel, trace);
         // let res_proof = prove(
         //     &self.air,
         //     prover_channel,
@@ -80,19 +85,18 @@ impl WideFibStruct {
         //     None,
         // )
         // .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
-        
+
         match res_proof {
-            Ok(r) => {
-                Ok(r)
-            },
-            Err(e) => {
-                Err(e)
-            }
+            Ok(r) => Ok(r),
+            Err(e) => Err(e),
         }
         // res_proof
     }
 
-    pub fn verify<H:MerkleHasher>(&self, proof: StarkProof<Blake2sMerkleHasher>) -> Result<(), VerificationError> {
+    pub fn verify<H: MerkleHasher>(
+        &self,
+        proof: StarkProof<Blake2sMerkleHasher>,
+    ) -> Result<(), VerificationError> {
         let verifier_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         commit_and_verify(proof, &self.air, verifier_channel)
@@ -158,7 +162,8 @@ pub fn verify_stark_proof_wide_fibo(
 
     let wide_fib = WideFibStruct { air: wide_fib_air };
 
-    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
+        serde_json::from_str(stark_proof_str);
     match wide_fib.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
         Ok(()) => {
             console_log!("Proof verified successfully");

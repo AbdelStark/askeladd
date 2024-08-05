@@ -34,7 +34,6 @@ pub const LOG_EXPAND: u32 = 2;
 pub const LOG_N_LANES: u32 = 4;
 const N_STATE: usize = 16;
 
-
 #[wasm_bindgen]
 extern "C" {
     // Use `js_namespace` here to bind `console.log(..)` instead of just
@@ -112,22 +111,22 @@ impl PoseidonStruct {
 
         Ok(Self { air })
     }
-    pub fn prove<H:MerkleHasher>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
+    pub fn prove<H: MerkleHasher>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         // let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
         // let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
-        let res = PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.air.component.log_n_rows);
+        let res =
+            PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.air.component.log_n_rows);
         match res {
             Ok(proof) => Ok(proof),
             Err(e) => Err(ProvingError::ConstraintsNotSatisfied),
         }
-
     }
 
     // @TODO handle correctly error to not crash
-    pub fn prove_poseidon<H:MerkleHasher<Hash = Blake2sHash>>(
+    pub fn prove_poseidon<H: MerkleHasher<Hash = Blake2sHash>>(
         // air:PoseidonAir,
         log_n_instances: u32,
-    // ) -> Result<StarkProof<H>, String> {
+        // ) -> Result<StarkProof<H>, String> {
     ) -> Result<StarkProof<Blake2sMerkleHasher>, String> {
         if log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
             return Err("log_n_rows < LOG_N_LANES".to_string());
@@ -220,7 +219,10 @@ impl PoseidonStruct {
         // }
     }
 
-    pub fn verify<H:MerkleHasher<Hash = Blake2sHash>>(&self, proof: StarkProof<H>) -> Result<(), VerificationError> {
+    pub fn verify<H: MerkleHasher<Hash = Blake2sHash>>(
+        &self,
+        proof: StarkProof<H>,
+    ) -> Result<(), VerificationError> {
         let verifier_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         let commitment_scheme = &mut CommitmentSchemeVerifier::new();
@@ -278,7 +280,8 @@ pub fn prove_stark_proof_poseidon(log_n_instances: u32) -> StwoResult {
 pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) -> StwoResult {
     let poseidon = PoseidonStruct::new(log_n_instances);
 
-    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
+        serde_json::from_str(stark_proof_str);
     if let p = poseidon.unwrap() {
         match p.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
             Ok(()) => {

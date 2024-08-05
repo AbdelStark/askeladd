@@ -95,7 +95,7 @@ where
 }
 
 #[wasm_bindgen]
-pub fn verify_stark_proof (log_size: u32, claim: u32, stark_proof_str: &str) -> StwoResult {
+pub fn verify_stark_proof(log_size: u32, claim: u32, stark_proof_str: &str) -> StwoResult {
     console_log!(
         "Starting verify_stark_proof with log_size: {}, claim: {}",
         log_size,
@@ -105,7 +105,8 @@ pub fn verify_stark_proof (log_size: u32, claim: u32, stark_proof_str: &str) -> 
 
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
 
-    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
+        serde_json::from_str(stark_proof_str);
 
     match stark_proof {
         Ok(proof) => {

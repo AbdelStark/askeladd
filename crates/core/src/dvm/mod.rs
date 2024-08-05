@@ -18,7 +18,8 @@ pub mod types {
     use nostr_sdk::EventId;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
-    use stwo_prover::core::{prover::StarkProof, vcs::blake2_merkle::Blake2sMerkleHasher};
+    use stwo_prover::core::prover::StarkProof;
+    use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct GenerateZKPJobRequest {
@@ -84,7 +85,11 @@ pub mod types {
     }
 
     impl GenerateZKPJobResult {
-        pub fn new(job_id: String, response: Value, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
+        pub fn new(
+            job_id: String,
+            response: Value,
+            proof: StarkProof<Blake2sMerkleHasher>,
+        ) -> Self {
             Self {
                 job_id,
                 response,
