@@ -96,9 +96,10 @@ impl Database {
         program: &serde_json::Value,
     ) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
+        let program_json = serde_json::to_string(program).unwrap();
         self.conn.execute(
-            "INSERT INTO stwo_prover_launched (id, request_json, status) VALUES (?1, ?2, ?3)",
-            params![job_id, request_json, RequestStatus::Pending.to_string()],
+            "INSERT INTO stwo_prover_launched (id, request_json, status, program) VALUES (?1, ?2, ?3)",
+            params![job_id, request_json, RequestStatus::Pending.to_string(), program_json.to_string()],
         )?;
         Ok(())
     }

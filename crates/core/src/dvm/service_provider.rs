@@ -11,7 +11,7 @@ use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::{JOB_LAUNCH_PROGRAM_KIND, JOB_REQUEST_KIND};
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
-use crate::nostr_utils::extract_params_from_tags;
+// use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 use crate::utils::convert_inputs_to_run_program;
 
@@ -165,9 +165,9 @@ impl ServiceProvider {
         } = notification
         {
             if subscription_id == SubscriptionId::new(&self.settings.proving_req_sub_id) {
-                self.handle_event(event).await;
+                let _ = self.handle_event(event).await;
             } else if subscription_id == SubscriptionId::new(&self.settings.launch_program_req_id) {
-                self.handle_event_launch_program(event).await;
+                let _ = self.handle_event_launch_program(event).await;
             }
         }
         Ok(false)
@@ -185,15 +185,16 @@ impl ServiceProvider {
         info!("Proving request received [{}]", event.id);
 
         let job_id = event.id.to_string();
-        let tags = &event.tags;
-        let params = extract_params_from_tags(tags);
+        // let tags = &event.tags;
+        // let params = extract_params_from_tags(tags);
 
         let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // println!("request value {:?}", request_value);
         println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
-        let mut successful_parses = HashMap::new();
+        // let mut successful_parses = HashMap::new();
+        let mut successful_parses;
 
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
@@ -248,11 +249,10 @@ impl ServiceProvider {
             self.db.insert_request(&job_id, &request_value)?;
         }
 
-        match self.proving_service.generate_proof_by_program(
-            request_value,
-            &request_str,
-            params_program,
-        ) {
+        match self
+            .proving_service
+            .generate_proof_by_program(request_value, params_program)
+        {
             Ok(response) => {
                 let serialized_proof = serde_json::to_string(&response.proof)?;
                 println!("Generated proof: {:?}", serialized_proof);
@@ -302,12 +302,12 @@ impl ServiceProvider {
         info!("LAUNCH_PROGRAM request received [{}]", event.id);
 
         let job_id = event.id.to_string();
-        let tags = &event.tags;
-        let params = extract_params_from_tags(tags);
+        // let tags = &event.tags;
+        // let params = extract_params_from_tags(tags);
 
         // Deserialze content
         let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
-        let params_program: Option<ProgramParams> = zkp_request.program.clone();
+        // let params_program: Option<ProgramParams> = zkp_request.program.clone();
 
         // Request on the content
         // Check request of the launch_program

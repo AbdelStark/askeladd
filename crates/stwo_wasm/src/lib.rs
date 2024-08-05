@@ -1,11 +1,9 @@
 // lib.rs
 pub mod multi_fibonacci;
 pub mod poseidon;
-pub mod types;
 pub mod wide_fibonnacci;
-
 use serde::{Deserialize, Serialize};
-use stwo_prover::core::fields::m31::{self, BaseField};
+use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::StarkProof;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::examples::fibonacci::Fibonacci;
@@ -84,14 +82,6 @@ pub fn prove_and_verify(log_size: u32, claim: u32) -> StwoResult {
             }
         }
     }
-}
-
-fn process_data<T>(data: T) -> Result<T, String>
-where
-    T: Clone + std::fmt::Debug, // Example constraints
-{
-    println!("Processing data: {:?}", data);
-    Ok(data.clone())
 }
 
 #[wasm_bindgen]

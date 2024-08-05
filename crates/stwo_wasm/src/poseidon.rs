@@ -3,7 +3,6 @@ use stwo_prover::constraint_framework::constant_columns::gen_is_first;
 use stwo_prover::constraint_framework::logup::LookupElements;
 use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
 use stwo_prover::core::backend::simd::SimdBackend;
-use stwo_prover::core::backend::CpuBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::fields::IntoSlice;
@@ -17,13 +16,11 @@ use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::core::vcs::ops::MerkleHasher;
 use stwo_prover::core::InteractionElements;
 use stwo_prover::examples::poseidon::{
-    self,
     gen_interaction_trace,
     gen_trace,
     PoseidonAir,
     PoseidonComponent, //  PoseidonComponent,
 };
-use stwo_prover::trace_generation::commit_and_prove;
 use wasm_bindgen::prelude::*;
 
 use crate::StwoResult;
@@ -100,7 +97,7 @@ impl PoseidonStruct {
         // let (trace0, interaction_data) = gen_trace(LOG_N_ROWS);
         // let (trace1, claimed_sum) =
         //     gen_interaction_trace(LOG_N_ROWS, interaction_data, lookup_elements);
-        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);
+        let (_, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);
 
         let component = PoseidonComponent {
             log_n_rows,
@@ -118,7 +115,7 @@ impl PoseidonStruct {
             PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.air.component.log_n_rows);
         match res {
             Ok(proof) => Ok(proof),
-            Err(e) => Err(ProvingError::ConstraintsNotSatisfied),
+            Err(_) => Err(ProvingError::ConstraintsNotSatisfied),
         }
     }
 
@@ -212,7 +209,7 @@ impl PoseidonStruct {
 
         match proof {
             Ok(p) => Ok(p),
-            Err(e) => Err("PROVING_ERROR".to_string()),
+            Err(_) => Err("PROVING_ERROR".to_string()),
         }
         // } else {
         //     return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());

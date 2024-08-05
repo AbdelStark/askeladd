@@ -1,15 +1,13 @@
 // lib.rs
 use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
-use stwo_prover::core::backend::CpuBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::{self, BaseField};
 use stwo_prover::core::fields::IntoSlice;
 use stwo_prover::core::poly::circle::CanonicCoset;
-use stwo_prover::core::prover::{prove, ProvingError, StarkProof, VerificationError};
+use stwo_prover::core::prover::{ProvingError, StarkProof, VerificationError};
 use stwo_prover::core::vcs::blake2_hash::{Blake2sHash, Blake2sHasher};
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::core::vcs::ops::MerkleHasher;
-use stwo_prover::core::InteractionElements;
 use stwo_prover::examples::wide_fibonacci::component::{
     Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS,
 };

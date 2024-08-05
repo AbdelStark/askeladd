@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::VerificationError;
 use stwo_prover::examples::fibonacci::Fibonacci;
-use stwo_prover::examples::poseidon::PoseidonAir;
 
 use crate::dvm::types::{FibonnacciProvingResponse, GenericProvingResponse};
 // Define an enum to encapsulate possible deserialized types
@@ -36,9 +35,9 @@ impl VerifierService {
                 let fib = Fibonacci::new(fib_answer.log_size, BaseField::from(fib_answer.claim));
                 fib.verify(fib_answer.proof)
             }
-            ProgramType::PoseidonProvingResponse(poseidon) => Ok(()),
-            ProgramType::GenericProvingResponse(generic) => Ok(()),
-            _ => Ok(()),
+            ProgramType::PoseidonProvingResponse(_) => Ok(()),
+            ProgramType::GenericProvingResponse(_) => Ok(()),
+            Err(e) => e,
         }
     }
 }

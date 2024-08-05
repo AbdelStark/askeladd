@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use serde_json::{Result as SerdeResult, Value};
+use serde_json::Result as SerdeResult;
 use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
 use stwo_prover::core::circle::M31_CIRCLE_LOG_ORDER;
 use stwo_prover::core::fields::m31::{self, BaseField};
@@ -57,9 +57,7 @@ impl ProverService {
     pub fn generate_proof_by_program(
         &self,
         request: serde_json::Value,
-        request_str: &str,
         program_params: Option<ProgramParams>,
-        // ) -> Result<GenericProvingResponse, ProvingError> {
     ) -> Result<GenericProvingResponse, String> {
         println!("generate_proof_by_program type {:?}", request);
         let mut successful_parses = HashMap::new();
@@ -86,8 +84,7 @@ impl ProverService {
             match p.contract_reached {
                 ContractUploadType::InternalAskeladd => {
                     self.internal_program(request, request_str, p)
-                }
-                _ => Err(ProverServiceError::NoProgramParam.to_string()),
+                } //  => Err(ProverServiceError::NoProgramParam.to_string()),
             }
         } else {
             Err(ProverServiceError::NoProgramParam.to_string())
@@ -145,7 +142,7 @@ impl ProverService {
                         Err(e) => Err(e.to_string()),
                     }
                 }
-                ProgramInternalContractName::Custom(s) => {
+                ProgramInternalContractName::Custom(_) => {
                     println!("Custom internal contract");
                     Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }
@@ -217,7 +214,7 @@ impl ProverService {
                             Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
                             Err(e) => Err(e.to_string()),
                         },
-                        Err(e) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
+                        Err(_) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
                     }
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }

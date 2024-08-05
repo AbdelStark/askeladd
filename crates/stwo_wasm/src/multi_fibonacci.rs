@@ -1,22 +1,9 @@
 // lib.rs
 
-use serde::{Deserialize, Serialize};
-use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
-use stwo_prover::core::backend::CpuBackend;
-use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::{self, BaseField};
-use stwo_prover::core::fields::IntoSlice;
-use stwo_prover::core::poly::circle::{CanonicCoset, CircleEvaluation};
-use stwo_prover::core::prover::{ProvingError, StarkProof, VerificationError};
-use stwo_prover::core::vcs::blake2_hash::Blake2sHasher;
+use stwo_prover::core::prover::StarkProof;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
-use stwo_prover::core::vcs::ops::MerkleHasher;
 use stwo_prover::examples::fibonacci::MultiFibonacci;
-use stwo_prover::examples::wide_fibonacci::component::{
-    Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS,
-};
-use stwo_prover::examples::wide_fibonacci::constraint_eval::gen_trace;
-use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
 use wasm_bindgen::prelude::*;
 
 use crate::StwoResult;
