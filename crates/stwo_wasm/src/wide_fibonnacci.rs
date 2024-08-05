@@ -5,9 +5,11 @@ use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::{self, BaseField};
 use stwo_prover::core::fields::IntoSlice;
 use stwo_prover::core::poly::circle::CanonicCoset;
-use stwo_prover::core::prover::{ProvingError, StarkProof, VerificationError};
-use stwo_prover::core::vcs::blake2_hash::Blake2sHasher;
-use stwo_prover::core::vcs::hasher::Hasher;
+use stwo_prover::core::prover::{prove, ProvingError, StarkProof, VerificationError};
+use stwo_prover::core::vcs::blake2_hash::{Blake2sHash, Blake2sHasher};
+use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
+use stwo_prover::core::vcs::ops::MerkleHasher;
+use stwo_prover::core::InteractionElements;
 use stwo_prover::examples::wide_fibonacci::component::{
     Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS,
 };
@@ -31,8 +33,8 @@ macro_rules! console_log {
 }
 
 pub trait WideFairImpl {
-    fn verify(proof: StarkProof) -> Result<(), VerificationError>;
-    fn prove(log_fibonacci_size: u32, log_n_instances: u32) -> Result<StarkProof, ProvingError>;
+    fn verify<H:MerkleHasher>(proof: StarkProof<H>) -> Result<(), VerificationError>;
+    fn prove<H:MerkleHasher>(log_fibonacci_size: u32, log_n_instances: u32) -> Result<StarkProof<H>, ProvingError>;
 }
 
 #[derive(Clone)]
@@ -51,7 +53,7 @@ impl WideFibStruct {
         };
         Self { air: wide_fib }
     }
-    pub fn prove(&self) -> Result<StarkProof, ProvingError> {
+    pub fn prove<H:MerkleHasher<Hash = Blake2sHash>>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         let private_input = (0..(1 << self.air.component.log_n_instances))
             .map(|i| Input {
                 a: m31::M31::from_u32_unchecked(i),
@@ -68,11 +70,29 @@ impl WideFibStruct {
             .collect();
         let prover_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
-        let res_proof = commit_and_prove::<CpuBackend>(&self.air, prover_channel, trace);
-        res_proof
+        // let res_proof = commit_and_prove::<CpuBackend>(&self.air, prover_channel, trace);
+        let res_proof: Result<StarkProof<Blake2sMerkleHasher>, ProvingError> =
+        commit_and_prove(&self.air, prover_channel, trace);
+        // let res_proof = prove(
+        //     &self.air,
+        //     prover_channel,
+        //     &InteractionElements::default(),
+        //     None,
+        // )
+        // .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
+        
+        match res_proof {
+            Ok(r) => {
+                Ok(r)
+            },
+            Err(e) => {
+                Err(e)
+            }
+        }
+        // res_proof
     }
 
-    pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {
+    pub fn verify<H:MerkleHasher>(&self, proof: StarkProof<Blake2sMerkleHasher>) -> Result<(), VerificationError> {
         let verifier_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         commit_and_verify(proof, &self.air, verifier_channel)
@@ -91,10 +111,10 @@ pub fn stark_proof_wide_fibo(log_fibonacci_size: u32, log_n_instances: u32) -> S
     };
 
     let wide_fib = WideFibStruct { air: wide_fib_air };
-    match wide_fib.prove() {
+    match wide_fib.prove::<Blake2sMerkleHasher>() {
         Ok(proof) => {
             console_log!("Proof deserialized successfully");
-            match wide_fib.verify(proof) {
+            match wide_fib.verify::<Blake2sMerkleHasher>(proof) {
                 Ok(()) => {
                     console_log!("Proof verified successfully");
                     StwoResult {
@@ -138,8 +158,8 @@ pub fn verify_stark_proof_wide_fibo(
 
     let wide_fib = WideFibStruct { air: wide_fib_air };
 
-    let stark_proof: Result<StarkProof, serde_json::Error> = serde_json::from_str(stark_proof_str);
-    match wide_fib.verify(stark_proof.unwrap()) {
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    match wide_fib.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
         Ok(()) => {
             console_log!("Proof verified successfully");
             StwoResult {

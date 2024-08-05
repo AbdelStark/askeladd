@@ -18,7 +18,7 @@ pub mod types {
     use nostr_sdk::EventId;
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
-    use stwo_prover::core::prover::StarkProof;
+    use stwo_prover::core::{prover::StarkProof, vcs::blake2_merkle::Blake2sMerkleHasher};
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct GenerateZKPJobRequest {
@@ -80,11 +80,11 @@ pub mod types {
         pub job_id: String,
         // pub response: T,
         pub response: serde_json::Value,
-        pub proof: StarkProof,
+        pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
     impl GenerateZKPJobResult {
-        pub fn new(job_id: String, response: Value, proof: StarkProof) -> Self {
+        pub fn new(job_id: String, response: Value, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
             Self {
                 job_id,
                 response,
@@ -103,11 +103,11 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize)]
     pub struct GenericProvingResponse {
         pub response: Value,
-        pub proof: StarkProof,
+        pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
     impl GenericProvingResponse {
-        pub fn new(response: Value, proof: StarkProof) -> Self {
+        pub fn new(response: Value, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
             Self { proof, response }
         }
     }
@@ -142,11 +142,11 @@ pub mod types {
     pub struct FibonnacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
-        pub proof: StarkProof,
+        pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
     impl FibonnacciProvingResponse {
-        pub fn new(log_size: u32, claim: u32, proof: StarkProof) -> Self {
+        pub fn new(log_size: u32, claim: u32, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
             Self {
                 log_size,
                 claim,
@@ -180,7 +180,7 @@ pub mod types {
     pub struct WideFibonnacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
-        pub proof: StarkProof,
+        pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -193,6 +193,6 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize)]
     pub struct PoseidonProvingResponse {
         pub response: Value,
-        pub proof: StarkProof,
+        pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 }

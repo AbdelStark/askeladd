@@ -6,6 +6,7 @@ use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
 use stwo_prover::core::circle::M31_CIRCLE_LOG_ORDER;
 use stwo_prover::core::fields::m31::{self, BaseField};
 use stwo_prover::core::prover::ProvingError;
+use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::examples::fibonacci::{Fibonacci, MultiFibonacci};
 use stwo_wasm::poseidon::{PoseidonStruct, LOG_N_LANES, N_LOG_INSTANCES_PER_ROW};
 use stwo_wasm::wide_fibonnacci::WideFibStruct;
@@ -212,7 +213,7 @@ impl ProverService {
 
                     // TODO fix prove poseidon with inputs_requirements
                     match poseidon {
-                        Ok(poseidon) => match poseidon.prove() {
+                        Ok(poseidon) => match poseidon.prove::<Blake2sMerkleHasher>() {
                             Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
                             Err(e) => Err(e.to_string()),
                         },
@@ -236,7 +237,7 @@ impl ProverService {
                         wide_fib_req.log_fibonacci_size,
                         wide_fib_req.log_n_instances,
                     );
-                    match wide_fib.prove() {
+                    match wide_fib.prove::<Blake2sMerkleHasher>() {
                         Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
                         Err(e) => Err(e.to_string()),
                     }

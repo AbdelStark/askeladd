@@ -12,8 +12,9 @@ use stwo_prover::core::poly::circle::{CanonicCoset, PolyOps};
 use stwo_prover::core::prover::{
     prove, verify, ProvingError, StarkProof, VerificationError, LOG_BLOWUP_FACTOR,
 };
-use stwo_prover::core::vcs::blake2_hash::Blake2sHasher;
-use stwo_prover::core::vcs::hasher::Hasher;
+use stwo_prover::core::vcs::blake2_hash::{Blake2sHash, Blake2sHasher};
+use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
+use stwo_prover::core::vcs::ops::MerkleHasher;
 use stwo_prover::core::InteractionElements;
 use stwo_prover::examples::poseidon::{
     self,
@@ -31,6 +32,8 @@ pub const N_LOG_INSTANCES_PER_ROW: usize = 3;
 pub const LOG_N_ROWS: u32 = 8;
 pub const LOG_EXPAND: u32 = 2;
 pub const LOG_N_LANES: u32 = 4;
+const N_STATE: usize = 16;
+
 
 #[wasm_bindgen]
 extern "C" {
@@ -75,7 +78,9 @@ impl PoseidonStruct {
         let log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
 
         // Draw lookup element.
-        let lookup_elements = LookupElements::draw(channel);
+        // let lookup_elements = LookupElements::draw(channel);
+        let lookup_elements = LookupElements::draw(channel, N_STATE * 2);
+
         // let component = PoseidonComponent {
         // Precompute twiddles.
         let twiddles = SimdBackend::precompute_twiddles(
@@ -96,7 +101,7 @@ impl PoseidonStruct {
         // let (trace0, interaction_data) = gen_trace(LOG_N_ROWS);
         // let (trace1, claimed_sum) =
         //     gen_interaction_trace(LOG_N_ROWS, interaction_data, lookup_elements);
-        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, lookup_elements);
+        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);
 
         let component = PoseidonComponent {
             log_n_rows,
@@ -107,28 +112,23 @@ impl PoseidonStruct {
 
         Ok(Self { air })
     }
-    pub fn prove(&self) -> Result<StarkProof, ProvingError> {
+    pub fn prove<H:MerkleHasher>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         // let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
         // let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
-        let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
-
+        let res = PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.air.component.log_n_rows);
         match res {
             Ok(proof) => Ok(proof),
             Err(e) => Err(ProvingError::ConstraintsNotSatisfied),
         }
 
-        // if let Some(proof) = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows) {
-        //     Ok(proof)
-        // } else {
-        //     Err(ProvingError::ConstraintsNotSatisfied)
-        // }
     }
 
     // @TODO handle correctly error to not crash
-    pub fn prove_poseidon(
+    pub fn prove_poseidon<H:MerkleHasher<Hash = Blake2sHash>>(
         // air:PoseidonAir,
         log_n_instances: u32,
-    ) -> Result<StarkProof, String> {
+    // ) -> Result<StarkProof<H>, String> {
+    ) -> Result<StarkProof<Blake2sMerkleHasher>, String> {
         if log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
             return Err("log_n_rows < LOG_N_LANES".to_string());
         }
@@ -183,9 +183,10 @@ impl PoseidonStruct {
         tree_builder.commit(channel);
 
         // Draw lookup element.
-        let lookup_elements = LookupElements::draw(channel);
+        let lookup_elements = LookupElements::draw(channel, N_STATE * 2);
+
         // Interaction trace.
-        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, lookup_elements);
+        let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);
         let mut tree_builder = commitment_scheme.tree_builder();
         tree_builder.extend_evals(trace);
         tree_builder.commit(channel);
@@ -208,7 +209,7 @@ impl PoseidonStruct {
             &InteractionElements::default(),
             commitment_scheme,
         )
-        .map_err(|op| Err::<StarkProof, ProvingError>(op));
+        .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
 
         match proof {
             Ok(p) => Ok(p),
@@ -219,7 +220,7 @@ impl PoseidonStruct {
         // }
     }
 
-    pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {
+    pub fn verify<H:MerkleHasher<Hash = Blake2sHash>>(&self, proof: StarkProof<H>) -> Result<(), VerificationError> {
         let verifier_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         let commitment_scheme = &mut CommitmentSchemeVerifier::new();
@@ -238,10 +239,10 @@ impl PoseidonStruct {
 pub fn prove_stark_proof_poseidon(log_n_instances: u32) -> StwoResult {
     let poseidon = PoseidonStruct::new(log_n_instances);
     match poseidon {
-        Ok(poseidon) => match poseidon.prove() {
+        Ok(poseidon) => match poseidon.prove::<Blake2sMerkleHasher>() {
             Ok(proof) => {
                 console_log!("Proof deserialized successfully");
-                match poseidon.verify(proof) {
+                match poseidon.verify::<Blake2sMerkleHasher>(proof) {
                     Ok(()) => {
                         console_log!("Proof verified successfully");
                         StwoResult {
@@ -277,9 +278,9 @@ pub fn prove_stark_proof_poseidon(log_n_instances: u32) -> StwoResult {
 pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) -> StwoResult {
     let poseidon = PoseidonStruct::new(log_n_instances);
 
-    let stark_proof: Result<StarkProof, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> = serde_json::from_str(stark_proof_str);
     if let p = poseidon.unwrap() {
-        match p.verify(stark_proof.unwrap()) {
+        match p.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
             Ok(()) => {
                 console_log!("Proof verified successfully");
                 StwoResult {
