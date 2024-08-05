@@ -177,7 +177,7 @@ impl ServiceProvider {
         json_data: &str,
     ) -> Result<GenerateZKPJobRequest, ServiceProviderError> {
         let zkp_request: SerdeResult<GenerateZKPJobRequest> = serde_json::from_str(json_data);
-        zkp_request.map_err(|e| ServiceProviderError::SerializationError(e))
+        zkp_request.map_err(ServiceProviderError::SerializationError)
     }
 
     /// Handles a single proving request event
@@ -194,13 +194,13 @@ impl ServiceProvider {
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
         // let mut successful_parses = HashMap::new();
-        let mut successful_parses;
+        // let mut successful_parses;
 
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("params_program {:?}", params_program);
 
-            successful_parses = convert_inputs_to_run_program(program_params.inputs);
+            let successful_parses = convert_inputs_to_run_program(program_params.inputs);
             // params_inputs = program_params.inputs.clone();
             params_inputs = successful_parses.clone();
             println!("params_inputs {:?}", params_inputs);

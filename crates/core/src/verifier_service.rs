@@ -8,9 +8,9 @@ use crate::dvm::types::{FibonnacciProvingResponse, GenericProvingResponse};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 enum ProgramType {
-    FibonnacciProvingResponse(FibonnacciProvingResponse),
-    PoseidonProvingResponse(GenericProvingResponse),
-    GenericProvingResponse(GenericProvingResponse),
+    Fibonnacci(FibonnacciProvingResponse),
+    Poseidon(GenericProvingResponse),
+    Generic(GenericProvingResponse),
 }
 
 #[derive(Debug, Default)]
@@ -31,12 +31,12 @@ impl VerifierService {
     ) -> Result<(), VerificationError> {
         let data: ProgramType = serde_json::from_value(response).unwrap();
         match data {
-            ProgramType::FibonnacciProvingResponse(fib_answer) => {
+            ProgramType::Fibonnacci(fib_answer) => {
                 let fib = Fibonacci::new(fib_answer.log_size, BaseField::from(fib_answer.claim));
                 fib.verify(fib_answer.proof)
             }
-            ProgramType::PoseidonProvingResponse(_) => Ok(()),
-            ProgramType::GenericProvingResponse(_) => Ok(()),
+            ProgramType::Poseidon(_) => Ok(()),
+            ProgramType::Generic(_) => Ok(()),
             // Err(e) => e,
         }
     }

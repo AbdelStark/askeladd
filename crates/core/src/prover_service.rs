@@ -27,7 +27,7 @@ pub enum ProverServiceError {
 }
 
 impl fmt::Display for ProverServiceError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             ProverServiceError::NoProgramParam => write!(f, "NO PROGRAM PARAM"),
             ProverServiceError::Custom(ref err) => write!(f, "ProverServiceError {}", err),
@@ -107,14 +107,11 @@ impl ProverService {
                 ProgramInternalContractName::FibonnacciProvingRequest => {
                     println!("try check request fib");
                     let fib_req_res: SerdeResult<FibonnacciProvingRequest> =
-                        serde_json::from_str(&serialized_request);
-                    let fib_req: FibonnacciProvingRequest;
-                    match fib_req_res.as_ref() {
-                        Ok(req) => {
-                            fib_req = req.clone();
-                        }
+                        serde_json::from_str(serialized_request);
+                    let fib_req = match fib_req_res.as_ref() {
+                        Ok(req) => req.clone(),
                         Err(e) => return Err(e.to_string()),
-                    }
+                    };
                     let fib = Fibonacci::new(fib_req.log_size, BaseField::from(fib_req.claim));
                     match fib.prove() {
                         Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
@@ -123,18 +120,15 @@ impl ProverService {
                 }
                 ProgramInternalContractName::MultiFibonnaciProvingRequest => {
                     let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
-                        serde_json::from_str(&serialized_request);
-                    let mul_fib_req: MultiFibonnacciProvingRequest;
-                    match multi_fibo_res.as_ref() {
-                        Ok(req) => {
-                            mul_fib_req = req.clone();
-                        }
+                        serde_json::from_str(serialized_request);
+                    let mul_fib_req = match multi_fibo_res.as_ref() {
+                        Ok(req) => req.clone(),
                         Err(e) => return Err(e.to_string()),
-                    }
+                    };
                     let claims: Vec<BaseField> = mul_fib_req
                         .claims
                         .into_iter()
-                        .map(|f| m31::M31::from_u32_unchecked(f))
+                        .map(m31::M31::from_u32_unchecked)
                         .collect();
                     let multi_fibo = MultiFibonacci::new(mul_fib_req.log_sizes, claims);
                     match multi_fibo.prove() {
@@ -149,14 +143,11 @@ impl ProverService {
                 ProgramInternalContractName::PoseidonProvingRequest => {
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
                     let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
-                        serde_json::from_str(&serialized_request);
-                    let poseidon_req: PoseidonProvingRequest;
-                    match poseidon_serde_req.as_ref() {
-                        Ok(req) => {
-                            poseidon_req = req.clone();
-                        }
+                        serde_json::from_str(serialized_request);
+                    let poseidon_req = match poseidon_serde_req.as_ref() {
+                        Ok(req) => req.clone(),
                         Err(e) => return Err(e.to_string()),
-                    }
+                    };
                     // TODO
                     //  add requirements in inputs_requirements
                     if poseidon_req.log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
@@ -192,8 +183,8 @@ impl ProverService {
                         poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE
                     );
 
-                    if poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE as u32
-                        || log_n_rows < MIN_FFT_LOG_SIZE as u32
+                    if poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE
+                        || log_n_rows < MIN_FFT_LOG_SIZE
                     {
                         println!(
                             "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
@@ -222,14 +213,11 @@ impl ProverService {
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
 
                     let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
-                        serde_json::from_str(&serialized_request);
-                    let wide_fib_req: WideFibonnacciProvingRequest;
-                    match wide_fib_serde.as_ref() {
-                        Ok(req) => {
-                            wide_fib_req = req.clone();
-                        }
+                        serde_json::from_str(serialized_request);
+                    let wide_fib_req = match wide_fib_serde.as_ref() {
+                        Ok(req) => req.clone(),
                         Err(e) => return Err(e.to_string()),
-                    }
+                    };
                     let wide_fib = WideFibStruct::new(
                         wide_fib_req.log_fibonacci_size,
                         wide_fib_req.log_n_instances,

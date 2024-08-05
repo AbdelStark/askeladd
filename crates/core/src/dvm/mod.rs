@@ -96,11 +96,6 @@ pub mod types {
                 proof,
             }
         }
-        pub fn deserialize_container<'a>(
-            json_data: &'static str,
-        ) -> Result<GenerateZKPJobResult, serde_json::Error> {
-            serde_json::from_str(json_data)
-        }
     }
 
     /// Generic type for proving response
