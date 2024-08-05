@@ -11,6 +11,7 @@ use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::{JOB_LAUNCH_PROGRAM_KIND, JOB_REQUEST_KIND};
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
+use crate::nostr_utils::extract_params_from_tags;
 // use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 use crate::utils::convert_inputs_to_run_program;
@@ -266,12 +267,18 @@ impl ServiceProvider {
                     proof: response.proof,
                 };
 
+                let tags = vec![
+                    // Reply tag directly to the JOB_REQUEST
+                    Tag::parse(&["e", &job_id.clone(), "", "reply"]).unwrap(),
+                ];
+
                 let response_json = serde_json::to_string(&job_result)?;
                 println!("Response JSON: {:?}", response_json);
 
                 let job_result_event: Event =
                     EventBuilder::job_result(*event, response_json, 0, None)
                         .unwrap()
+                        .add_tags(tags)
                         .to_event(&self.prover_agent_keys)
                         .unwrap();
 
@@ -302,9 +309,10 @@ impl ServiceProvider {
         info!("LAUNCH_PROGRAM request received [{}]", event.id);
 
         let job_id = event.id.to_string();
-        // let tags = &event.tags;
-        // let params = extract_params_from_tags(tags);
+        let tags = &event.tags;
+        let params = extract_params_from_tags(tags);
 
+        println!("params {:?}", params);
         // Deserialze content
         let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // let params_program: Option<ProgramParams> = zkp_request.program.clone();
@@ -346,6 +354,23 @@ impl ServiceProvider {
         // Backend endpoint
         // WASM program
         // Maybe other way to do it
+
+        // TODO check
+
+        // Send JOB_RESULT
+        let response_json = serde_json::to_string(&request_str)?;
+        println!("Response JSON: {:?}", response_json);
+
+        let job_result_event: Event = EventBuilder::job_result(*event, response_json, 0, None)
+            .unwrap()
+            .to_event(&self.prover_agent_keys)
+            .unwrap();
+
+        let event_id = self.nostr_client.send_event(job_result_event).await?;
+        info!(
+            "LAUNCH PROGRAM response published [{}]",
+            event_id.to_string()
+        );
         Ok(())
     }
 }

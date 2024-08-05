@@ -203,9 +203,6 @@ export default function LaunchProgram() {
         }
         )
       }
-      for (let [key, value] of inputs) {
-        tags.push(["param", key, value])
-      }
 
       const inputs_encrypted: Map<string, string> = new Map<string, string>();
       Object.entries(formEncrypted).map(([key, value]) => {
@@ -217,16 +214,21 @@ export default function LaunchProgram() {
       }
       console.log("inputs_encrypted", Object.fromEntries(inputs_encrypted))
 
-      // const inputs_types: Map<string, string> = new Map<string, string>();
-      // {
-      //   Object.entries(formType).map(([key, value]) => {
-      //     inputs_types.set(key, value as string)
-      //   }
-      //   )
-      // }
+      const inputs_types: Map<string, string> = new Map<string, string>();
+      {
+        Object.entries(formType).map(([key, value]) => {
+          inputs_types.set(key, value as string)
+        }
+        )
+      }
       for (let [key, value] of inputs_encrypted) {
         tags.push(["param_encrypted", key, value])
       }
+
+      for (let [key, value] of inputs) {
+        tags.push(["param", key, value, inputs_encrypted.get(key) ?? "false", inputs_types.get(key) ?? "String"])
+      }
+
       const content = JSON.stringify({
         request: form,
         program: {
@@ -251,14 +253,14 @@ export default function LaunchProgram() {
         if (!publicKey) return;
         if (!content) return;
 
-        // let created_at = new Date().getTime();
-        // const event = await window.nostr.signEvent({
-        //   pubkey: publicKey ?? pubkey,
-        //   created_at: created_at,
-        //   kind: NDKKind.AppHandler,
-        //   tags: tags,
-        //   content: content
-        // }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+        let created_at = new Date().getTime();
+        const event = await window.nostr.signEvent({
+          pubkey: publicKey ?? pubkey,
+          created_at: created_at,
+          kind: NDKKind.AppHandler,
+          tags: tags,
+          content: content
+        }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // // Setup job request to fetch job id
 
         // // let eventID = await relay.publish(event as EventNostr);
@@ -345,7 +347,7 @@ export default function LaunchProgram() {
                 className="bg-blue border border-r-3 secondary-button w-full"
                 onClick={() => {
                   setInputsIndex(inputIndex + 1);
-                  setForm({...form, [inputIndex+1]:inputIndex+1})
+                  setForm({ ...form, [inputIndex + 1]: inputIndex + 1 })
                   // form[String(inputIndex + 1).toString()] = (inputIndex + 1).toString()
                 }}
               >
@@ -364,7 +366,7 @@ export default function LaunchProgram() {
 
                     <div className="flex items-center mb-4">
 
-                      {formEncrypted && formEncrypted[key ] == false ?
+                      {formEncrypted && formEncrypted[key] == false ?
                         <>
                           <label className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Change to True</label>
                           <input

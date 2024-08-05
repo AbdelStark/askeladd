@@ -75,6 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             contract_reached: ContractUploadType::InternalAskeladd,
             contract_name: Some("FibonacciProvingRequest".to_owned()),
             internal_contract_name: Some(ProgramInternalContractName::FibonnacciProvingRequest),
+            tags: None,
         }),
     };
     println!("{}", "Job prepared successfully.".green());
@@ -154,6 +155,7 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
             contract_reached: ContractUploadType::InternalAskeladd,
             contract_name: Some("PoseidonProvingRequest".to_owned()),
             internal_contract_name: Some(ProgramInternalContractName::PoseidonProvingRequest),
+            tags: None,
         }),
     };
     println!("{}", "Job prepared successfully.".green());

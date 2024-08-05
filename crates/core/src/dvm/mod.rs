@@ -15,7 +15,7 @@ pub mod constants {
 pub mod types {
     use std::collections::HashMap;
 
-    use nostr_sdk::EventId;
+    use nostr_sdk::{EventId, Tag};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use stwo_prover::core::prover::StarkProof;
@@ -65,8 +65,8 @@ pub mod types {
         pub contract_reached: ContractUploadType,
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
-        // For External program
-        // pub endpoint:Option<String>,
+        pub tags: Option<Tag>, /* For External program
+                                * pub endpoint:Option<String>, */
     }
 
     #[derive(Debug, Serialize, Deserialize)]
