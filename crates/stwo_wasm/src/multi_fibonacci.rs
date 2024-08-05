@@ -25,7 +25,7 @@ macro_rules! console_log {
 pub fn stark_proof_multi_fibo(log_sizes: Vec<u32>, claims_int: Vec<u32>) -> StwoResult {
     let claims: Vec<BaseField> = claims_int
         .into_iter()
-        .map(|f| m31::M31::from_u32_unchecked(f))
+        .map(m31::M31::from_u32_unchecked)
         .collect();
     let multi_fibo = MultiFibonacci::new(log_sizes, claims);
 
@@ -67,7 +67,7 @@ pub fn verify_stark_proof_multi_fibo(
 ) -> StwoResult {
     let claims: Vec<BaseField> = claims_int
         .into_iter()
-        .map(|f| m31::M31::from_u32_unchecked(f))
+        .map(m31::M31::from_u32_unchecked)
         .collect();
     let multi_fibo = MultiFibonacci::new(log_sizes, claims);
     // StwoResult {

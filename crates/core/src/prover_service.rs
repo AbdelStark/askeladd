@@ -238,8 +238,7 @@ impl ProverService {
                         Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
                         Err(e) => Err(e.to_string()),
                     }
-                }
-                _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
+                } // _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
             },
         }
     }

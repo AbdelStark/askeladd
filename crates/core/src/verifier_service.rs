@@ -37,7 +37,7 @@ impl VerifierService {
             }
             ProgramType::PoseidonProvingResponse(_) => Ok(()),
             ProgramType::GenericProvingResponse(_) => Ok(()),
-            Err(e) => e,
+            // Err(e) => e,
         }
     }
 }

@@ -279,8 +279,8 @@ pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) 
 
     let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
         serde_json::from_str(stark_proof_str);
-    if let p = poseidon.unwrap() {
-        match p.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
+    match poseidon {
+        Ok(p) => match p.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
             Ok(()) => {
                 console_log!("Proof verified successfully");
                 StwoResult {
@@ -295,11 +295,10 @@ pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) 
                     message: format!("Proof verification failed: {:?}", e),
                 }
             }
-        }
-    } else {
-        StwoResult {
+        },
+        Err(_) => StwoResult {
             success: false,
             message: "Proof verified successfully".to_string(),
-        }
+        },
     }
 }
