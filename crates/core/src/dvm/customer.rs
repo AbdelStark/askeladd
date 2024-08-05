@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -75,23 +76,45 @@ impl Customer {
     }
 
     /// Submits a job request to the Nostr network
+    // pub async fn submit_job<T>(
     pub async fn submit_job(&self, job: GenerateZKPJobRequest) -> Result<String, CustomerError> {
         debug!("Publishing proving request...");
 
-        let tags = vec![
-            Tag::parse(&[
-                "param",
-                "log_size",
-                job.request.log_size.to_string().as_str(),
-            ])
-            .unwrap(),
-            Tag::parse(&["param", "claim", job.request.claim.to_string().as_str()]).unwrap(),
-            Tag::parse(&["output", "text/json"]).unwrap(),
-        ];
-        let event: Event = EventBuilder::job_request(Kind::Custom(JOB_REQUEST_KIND), tags)
-            .unwrap()
-            .to_event(&self.user_keys)
-            .unwrap();
+        let program = job.clone().program;
+        let mut params_inputs: HashMap<String, String> = HashMap::new();
+        let mut tags = vec![];
+        if let Some(p) = program {
+            params_inputs = p.inputs;
+        }
+        // OLD TAGS creation
+        // let tags = vec![
+        //     Tag::parse(&[
+        //         "param",
+        //         "log_size",
+        //         job.request.log_size.to_string().as_str(),
+        //     ])
+        //     .unwrap(),
+        //     Tag::parse(&["param", "claim", job.request.claim.to_string().as_str()]).unwrap(),
+        //     Tag::parse(&["output", "text/json"]).unwrap(),
+        // ];
+
+        for (key, value) in params_inputs.into_iter() {
+            println!("{} / {}", key, value);
+            let tag = Tag::parse(&["param", &key.to_owned(), &value.to_owned()]);
+            tags.push(tag.unwrap())
+        }
+
+        // Send JSON into the content of the JOB_REQUEST:
+        // Request: Params of the program
+        // Program: Pamaters to select a specific program
+        let content = serde_json::to_string(&job).unwrap();
+        let event_builder = EventBuilder::new(Kind::Custom(JOB_REQUEST_KIND), content, tags);
+        let event: Event = event_builder.to_event(&self.user_keys).unwrap();
+
+        // let event: Event = EventBuilder::job_request(Kind::Custom(JOB_REQUEST_KIND), tags)
+        //     .unwrap()
+        //     .to_event(&self.user_keys)
+        //     .unwrap();
 
         let event_id = self.nostr_client.send_event(event).await?;
 
@@ -100,11 +123,13 @@ impl Customer {
     }
 
     /// Waits for a job result from the Nostr network
+    // pub async fn wait_for_job_result<T: Clone + serde::Deserialize<'static>>(
     pub async fn wait_for_job_result(
         &self,
         job_id: &str,
         timeout_secs: u64,
     ) -> Result<GenerateZKPJobResult, CustomerError> {
+        // )  -> Result<GenerateZKPJobResult<T>, CustomerError> {
         let proving_resp_sub_id = SubscriptionId::new(&self.settings.proving_resp_sub_id);
         let prover_agent_public_key = PublicKey::from_bech32(&self.settings.prover_agent_pk)
             .map_err(|e| CustomerError::Unknown(format!("Failed to parse public key: {}", e)))?;
@@ -132,6 +157,7 @@ impl Customer {
     }
 
     /// Listens for a specific job result from the Nostr network
+    // async fn listen_for_job_result<T:Clone + serde::Deserialize<'static>>(
     async fn listen_for_job_result(
         &self,
         job_id: &str,
@@ -185,14 +211,19 @@ impl Customer {
     }
 
     /// Verifies the proof in a job result
-    pub fn verify_proof(&self, job_result: &GenerateZKPJobResult) -> Result<bool, CustomerError> {
+    // pub fn verify_proof<T: Clone + serde::Deserialize<'static>>(
+    pub fn verify_proof(
+        &self,
+        job_result: &GenerateZKPJobResult,
+        // job_result: &GenerateZKPJobResult<T>,
+    ) -> Result<bool, CustomerError> {
         info!("Verifying proof...");
         info!(
             "Proof: {}",
-            serde_json::to_string(&job_result.response.proof).unwrap()
+            serde_json::to_string(&job_result.proof).unwrap()
         );
         self.verifier_service
-            .verify_proof(job_result.response.clone())
+            .verify_proof_generic(job_result.response.clone())
             .map(|_| true)
             .map_err(|e| CustomerError::VerificationError(e.to_string()))
     }

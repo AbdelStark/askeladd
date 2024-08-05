@@ -22,6 +22,7 @@ pub struct Settings {
     pub prover_agent_pk: String,
     #[serde(default = "default_db_path")]
     pub db_path: PathBuf,
+    pub launch_program_req_id: String,
 }
 
 fn deserialize_subscribed_relays<'de, D>(deserializer: D) -> Result<Vec<String>, D::Error>

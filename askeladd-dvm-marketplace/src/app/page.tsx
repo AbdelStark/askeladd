@@ -135,20 +135,46 @@ export default function Home() {
         ['param', 'claim', claim.toString()],
         ['output', 'text/json']
       ];
+
+      const tags_values = [
+        ['param', 'log_size', logSize.toString()],
+        ['param', 'claim', claim.toString()],
+      ];
+
+
+      const inputs:Map<string,string>= new Map<string,string>();
+
+      for(let tag of tags_values) {
+        inputs.set(tag[1], tag[2])
+      }
+      console.log("inputs",Object.fromEntries(inputs))
+
       const content = JSON.stringify({
         request: {
           log_size: logSize.toString(),
           claim: claim.toString()
+        },
+        program:{
+          contract_name:"FibonnacciProvingRequest",
+          internal_contract_name:"FibonnacciProvingRequest",
+          contract_reached:"InternalAskeladd",
+          // inputs:JSON.stringify(Object.fromEntries(inputs)),
+          inputs:Object.fromEntries(inputs),
+          // inputs:tags 
         }
       })
       // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
       setTimestampJob(new Date().getTime())
+      console.log("inputs",inputs)
+      console.log("content",content)
+      // return ;
       /** Use Nostr extension to send event */
       const pool = new SimplePool();
       const poolJob = new SimplePool();
       const relay = await Relay.connect(ASKELADD_RELAY[0])
       if (typeof window !== "undefined" && window.nostr) {
+        
         const pubkey = await window.nostr.getPublicKey();
         let created_at = new Date().getTime();
         setPublicKey(pubkey)

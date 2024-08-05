@@ -1,8 +1,11 @@
 // lib.rs
-
+pub mod multi_fibonacci;
+pub mod poseidon;
+pub mod wide_fibonnacci;
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::StarkProof;
+use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::examples::fibonacci::Fibonacci;
 use wasm_bindgen::prelude::*;
 
@@ -92,7 +95,8 @@ pub fn verify_stark_proof(log_size: u32, claim: u32, stark_proof_str: &str) -> S
 
     let fib = Fibonacci::new(log_size, BaseField::from(claim));
 
-    let stark_proof: Result<StarkProof, serde_json::Error> = serde_json::from_str(stark_proof_str);
+    let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
+        serde_json::from_str(stark_proof_str);
 
     match stark_proof {
         Ok(proof) => {

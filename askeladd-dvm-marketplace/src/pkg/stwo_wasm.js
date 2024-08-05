@@ -17,22 +17,13 @@ function getStringFromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return cachedTextDecoder.decode(getUint8Memory0().subarray(ptr, ptr + len));
 }
-
-let cachedInt32Memory0 = null;
-
-function getInt32Memory0() {
-    if (cachedInt32Memory0 === null || cachedInt32Memory0.byteLength === 0) {
-        cachedInt32Memory0 = new Int32Array(wasm.memory.buffer);
-    }
-    return cachedInt32Memory0;
-}
 /**
-* @param {number} log_size
-* @param {number} claim
+* @param {number} log_fibonacci_size
+* @param {number} log_n_instances
 * @returns {StwoResult}
 */
-export function prove_and_verify(log_size, claim) {
-    const ret = wasm.prove_and_verify(log_size, claim);
+export function stark_proof_wide_fibo(log_fibonacci_size, log_n_instances) {
+    const ret = wasm.stark_proof_wide_fibo(log_fibonacci_size, log_n_instances);
     return StwoResult.__wrap(ret);
 }
 
@@ -92,6 +83,58 @@ function passStringToWasm0(arg, malloc, realloc) {
     return ptr;
 }
 /**
+* @param {number} log_fibonacci_size
+* @param {number} log_n_instances
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_wide_fibo(log_fibonacci_size, log_n_instances, stark_proof_str) {
+    const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.verify_stark_proof_wide_fibo(log_fibonacci_size, log_n_instances, ptr0, len0);
+    return StwoResult.__wrap(ret);
+}
+
+/**
+* @param {number} log_n_instances
+* @returns {StwoResult}
+*/
+export function prove_stark_proof_poseidon(log_n_instances) {
+    const ret = wasm.prove_stark_proof_poseidon(log_n_instances);
+    return StwoResult.__wrap(ret);
+}
+
+/**
+* @param {number} log_n_instances
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_poseidon(log_n_instances, stark_proof_str) {
+    const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.verify_stark_proof_poseidon(log_n_instances, ptr0, len0);
+    return StwoResult.__wrap(ret);
+}
+
+let cachedInt32Memory0 = null;
+
+function getInt32Memory0() {
+    if (cachedInt32Memory0 === null || cachedInt32Memory0.byteLength === 0) {
+        cachedInt32Memory0 = new Int32Array(wasm.memory.buffer);
+    }
+    return cachedInt32Memory0;
+}
+/**
+* @param {number} log_size
+* @param {number} claim
+* @returns {StwoResult}
+*/
+export function prove_and_verify(log_size, claim) {
+    const ret = wasm.prove_and_verify(log_size, claim);
+    return StwoResult.__wrap(ret);
+}
+
+/**
 * @param {number} log_size
 * @param {number} claim
 * @param {string} stark_proof_str
@@ -101,6 +144,52 @@ export function verify_stark_proof(log_size, claim, stark_proof_str) {
     const ptr0 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.verify_stark_proof(log_size, claim, ptr0, len0);
+    return StwoResult.__wrap(ret);
+}
+
+let cachedUint32Memory0 = null;
+
+function getUint32Memory0() {
+    if (cachedUint32Memory0 === null || cachedUint32Memory0.byteLength === 0) {
+        cachedUint32Memory0 = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachedUint32Memory0;
+}
+
+function passArray32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getUint32Memory0().set(arg, ptr / 4);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
+}
+/**
+* @param {Uint32Array} log_sizes
+* @param {Uint32Array} claims_int
+* @returns {StwoResult}
+*/
+export function stark_proof_multi_fibo(log_sizes, claims_int) {
+    const ptr0 = passArray32ToWasm0(log_sizes, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(claims_int, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.stark_proof_multi_fibo(ptr0, len0, ptr1, len1);
+    return StwoResult.__wrap(ret);
+}
+
+/**
+* @param {Uint32Array} log_sizes
+* @param {Uint32Array} claims_int
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_multi_fibo(log_sizes, claims_int, stark_proof_str) {
+    const ptr0 = passArray32ToWasm0(log_sizes, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(claims_int, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(stark_proof_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len2 = WASM_VECTOR_LEN;
+    const ret = wasm.verify_stark_proof_multi_fibo(ptr0, len0, ptr1, len1, ptr2, len2);
     return StwoResult.__wrap(ret);
 }
 
@@ -210,6 +299,7 @@ function __wbg_finalize_init(instance, module) {
     wasm = instance.exports;
     __wbg_init.__wbindgen_wasm_module = module;
     cachedInt32Memory0 = null;
+    cachedUint32Memory0 = null;
     cachedUint8Memory0 = null;
 
 

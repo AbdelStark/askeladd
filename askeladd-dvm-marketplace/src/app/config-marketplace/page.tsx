@@ -9,6 +9,7 @@ import { Event as EventNostr, SimplePool } from "nostr-tools";
 import { ASKELADD_KINDS, ConfigHandle } from "@/types";
 import EventCard from "../components/EventCard";
 import { generateContentAndTags } from "../utils/generateAppHandler";
+import { HowItWork } from "../components/description";
 
 export default function Home() {
   const [publicKey, setPublicKey] = useState<string | undefined>();
@@ -23,7 +24,6 @@ export default function Home() {
   >("idle");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [openHowItWork, setOpenHowItWork] = useState(false);
   const [isNeedLoadEvents, setIsNeedLoadEvents] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
@@ -114,7 +114,8 @@ export default function Home() {
       let pubkey;
       if (typeof window !== "undefined" && window.nostr) {
         console.log("pubkey", pubkey)
-        if (!pubkey) return;
+        await connectExtension()
+        if (!publicKey) return;
         const { tags, content } = generateContentAndTags(configKind, appKind, pubkey)
         console.log("tags", tags)
         console.log("content", content)
@@ -242,34 +243,7 @@ export default function Home() {
         </div>
       }
 
-      <div onClick={() => setOpenHowItWork(!openHowItWork)}
-        className="max-w-sm cursor-pointer my-5 p-1  m-1 whitespace-pre-line"
-      >
-        <p className="text-white">How the ASKELADD DVM ZK works?</p>
-        {!openHowItWork &&
-          <button> Open </button>
-        }
-        {openHowItWork &&
-          <>
-            <div>
-              <p>As an User  </p>
-              <p className="text-white">User send a JOB_REQUEST with different params on the Nostr event.</p>
-              <p className="text-white">It can change with all STWO Prover enabled on the Marketplace</p>
-              <p className="text-white mb-5">You need theses params on the Nostr event:</p>
-              <p>Inputs  </p>
-
-              <p className="text-white">Request: {JSON.stringify({
-                "claim": "413300",
-                "log_size": "5"
-              })} &quot; The input of the Program</p>
-              <p className="text-white ">Tags: {`[
-                ["param", "input_name", "value"] // The input of the Program
-              ]`} </p>
-            </div>
-            <button> Close </button>
-          </>
-        }
-      </div>
+      <HowItWork/>
 
       <button
         className={`block mb-5 font-bold py-2 px-4 rounded bg-blue-500 hover:bg-blue-700 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}

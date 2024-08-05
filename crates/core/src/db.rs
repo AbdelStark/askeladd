@@ -1,7 +1,5 @@
 use rusqlite::{params, Connection, Result};
 
-use crate::dvm::types::{FibonnacciProvingRequest, FibonnacciProvingResponse};
-
 pub struct Database {
     conn: Connection,
 }
@@ -30,13 +28,26 @@ impl Database {
                 status TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )",
+            );
+            
+            CREATE TABLE IF NOT EXISTS stwo_prover_launched (
+                id TEXT PRIMARY KEY,
+                request_json TEXT NOT NULL,
+                program_param TEXT NOT NULL,
+                response_json TEXT,
+                status TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+            ",
             [],
         )?;
         Ok(())
     }
 
-    pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()> {
+    // pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()>
+    // {
+    pub fn insert_request(&self, job_id: &str, request: &serde_json::Value) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
         self.conn.execute(
             "INSERT INTO requests (id, request_json, status) VALUES (?1, ?2, ?3)",
@@ -48,7 +59,7 @@ impl Database {
     pub fn update_request(
         &self,
         request_id: &str,
-        response: Option<&FibonnacciProvingResponse>,
+        response: Option<&serde_json::Value>,
         status: RequestStatus,
     ) -> Result<()> {
         let response_json = match response {
@@ -66,6 +77,37 @@ impl Database {
         let mut stmt = self
             .conn
             .prepare("SELECT status FROM requests WHERE id = ?1")?;
+        let mut rows = stmt.query(params![request_id])?;
+
+        if let Some(row) = rows.next()? {
+            let status: String = row.get(0)?;
+            Ok(Some(status.parse().unwrap()))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Program function
+
+    pub fn insert_program_launched(
+        &self,
+        job_id: &str,
+        request: &serde_json::Value,
+        program: &serde_json::Value,
+    ) -> Result<()> {
+        let request_json = serde_json::to_string(request).unwrap();
+        let program_json = serde_json::to_string(program).unwrap();
+        self.conn.execute(
+            "INSERT INTO stwo_prover_launched (id, request_json, status, program) VALUES (?1, ?2, ?3)",
+            params![job_id, request_json, RequestStatus::Pending.to_string(), program_json.to_string()],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_program_status(&self, request_id: &str) -> Result<Option<RequestStatus>> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT status FROM stwo_prover_launched WHERE id = ?1")?;
         let mut rows = stmt.query(params![request_id])?;
 
         if let Some(row) = rows.next()? {
