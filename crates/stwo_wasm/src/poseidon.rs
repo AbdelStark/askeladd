@@ -3,6 +3,7 @@ use stwo_prover::constraint_framework::constant_columns::gen_is_first;
 use stwo_prover::constraint_framework::logup::LookupElements;
 use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
 use stwo_prover::core::backend::simd::SimdBackend;
+use stwo_prover::core::backend::CpuBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::fields::IntoSlice;
@@ -21,6 +22,7 @@ use stwo_prover::examples::poseidon::{
     PoseidonAir,
     PoseidonComponent, //  PoseidonComponent,
 };
+use stwo_prover::trace_generation::commit_and_prove;
 use wasm_bindgen::prelude::*;
 
 use crate::StwoResult;
@@ -107,6 +109,7 @@ impl PoseidonStruct {
     }
     pub fn prove(&self) -> Result<StarkProof, ProvingError> {
         // let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
+        // let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
         let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
 
         match res {
@@ -122,7 +125,10 @@ impl PoseidonStruct {
     }
 
     // @TODO handle correctly error to not crash
-    pub fn prove_poseidon(log_n_instances: u32) -> Result<StarkProof, String> {
+    pub fn prove_poseidon(
+        // air:PoseidonAir,
+        log_n_instances: u32,
+    ) -> Result<StarkProof, String> {
         if log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
             return Err("log_n_rows < LOG_N_LANES".to_string());
         }
@@ -139,6 +145,23 @@ impl PoseidonStruct {
                 log_n_rows >= LOG_N_LANES
             );
             return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
+        }
+
+        if log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE {
+            println!(
+                " log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE  {}",
+                log_n_rows >= LOG_N_LANES
+            );
+            return Err(
+                " log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE ".to_string(),
+            );
+        }
+        if log_n_rows < LOG_N_LANES + 2 {
+            println!(
+                "log_n_rows < LOG_N_LANES + 2  {}",
+                log_n_rows < LOG_N_LANES + 2
+            );
+            return Err("log_n_rows < LOG_N_LANES + 2 ".to_string());
         }
 
         // Precompute twiddles.
@@ -161,7 +184,6 @@ impl PoseidonStruct {
 
         // Draw lookup element.
         let lookup_elements = LookupElements::draw(channel);
-
         // Interaction trace.
         let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, lookup_elements);
         let mut tree_builder = commitment_scheme.tree_builder();
@@ -180,15 +202,21 @@ impl PoseidonStruct {
             claimed_sum,
         };
         let air = PoseidonAir { component };
-        let proof = prove::<SimdBackend>(
+        let proof = prove(
             &air,
             channel,
             &InteractionElements::default(),
             commitment_scheme,
         )
-        .unwrap();
+        .map_err(|op| Err::<StarkProof, ProvingError>(op));
 
-        Ok(proof)
+        match proof {
+            Ok(p) => Ok(p),
+            Err(e) => Err("PROVING_ERROR".to_string()),
+        }
+        // } else {
+        //     return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
+        // }
     }
 
     pub fn verify(&self, proof: StarkProof) -> Result<(), VerificationError> {

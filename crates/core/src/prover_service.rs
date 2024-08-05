@@ -189,8 +189,13 @@ impl ProverService {
                         poseidon_req.log_n_instances
                     );
 
-                    if log_n_rows <= MIN_FFT_LOG_SIZE as u32
-                        || poseidon_req.log_n_instances <= MIN_FFT_LOG_SIZE as u32
+                    println!(
+                        "poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE{}",
+                        poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE
+                    );
+
+                    if poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE as u32
+                        || log_n_rows < MIN_FFT_LOG_SIZE as u32
                     {
                         println!(
                             "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
@@ -206,14 +211,14 @@ impl ProverService {
                     let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
 
                     // TODO fix prove poseidon with inputs_requirements
-                    // match poseidon {
-                    //     Ok(poseidon) => match poseidon.prove() {
-                    //         Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                    //         Err(e) => Err(e.to_string()),
-                    //     },
-                    //     Err(e) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
-                    // }
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
+                    match poseidon {
+                        Ok(poseidon) => match poseidon.prove() {
+                            Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
+                            Err(e) => Err(e.to_string()),
+                        },
+                        Err(e) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
+                    }
+                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }
                 ProgramInternalContractName::WideFibonnaciProvingRequest => {
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
