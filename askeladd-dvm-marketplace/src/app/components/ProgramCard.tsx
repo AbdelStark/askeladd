@@ -14,6 +14,7 @@ interface TagsCardProps {
 const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
     const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
     const { ndk, pool } = useNostrContext()
+    const [form, setForm] = useState({})
 
     const [isOpenForm, setIsOpenForm] = useState(false)
     const [logSize, setLogSize] = useState<number>(5);
@@ -237,10 +238,10 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
             setProof(null);
             setJobEventResult(undefined);
             setError(undefined);
-            const tags = [
-                ['param', 'log_size', logSize.toString()],
-                ['param', 'claim', claim.toString()],
-                ['output', 'text/json']
+            let tags:string[][] = [
+                // ['param', 'log_size', logSize.toString()],
+                // ['param', 'claim', claim.toString()],
+                // ['output', 'text/json']
             ];
 
             const inputs: Map<string, string> = new Map<string, string>();
@@ -249,6 +250,10 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
                     inputs.set(key, value as string)
                 }
                 )
+            }
+
+            for(let [key, value] of inputs)  {
+                tags.push(["param", key, value ])
             }
             console.log("inputs", Object.fromEntries(inputs))
             const content = JSON.stringify({
@@ -396,7 +401,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, program }) => {
 
     const params = Object.fromEntries(program?.program_params?.inputs?.entries() ?? [])
 
-    const [form, setForm] = useState({})
     // Handle changes in form inputs
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;

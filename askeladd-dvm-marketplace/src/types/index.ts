@@ -49,6 +49,7 @@ export interface CommitmentSchemeProof {
 export enum ASKELADD_KINDS {
     KIND_JOB_REQUEST = 5600,
     KIND_JOB_RESULT = 6600,
+    KIND_JOB_LAUNCH_PROGRAM = 5700,
     // KIND_SUBMIT_PROGRAM
 }
 
