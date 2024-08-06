@@ -204,7 +204,8 @@ export default function LaunchProgram() {
       const inputs: Map<string, string> = new Map<string, string>();
       {
         Object.entries(form).map(([key, value]) => {
-          inputs.set(key, value as string)
+          // inputs.set(key, value as string)
+          inputs.set(value as string, "")
         }
         )
       }
@@ -236,7 +237,8 @@ export default function LaunchProgram() {
 
       const content = JSON.stringify({
         // request: form as any,
-        request: form,
+        // request: form,
+        request: Object.fromEntries(inputs),
         program: {
           contract_name: programParam?.contract_name ?? "test",
           // internal_contract_name: programParam?.internal_contract_name ?? "test",

@@ -33,7 +33,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             log_size:0,
             claim:0
         },
-        program_params: {
+        program: {
             contract_name:ProgramInternalContractName.FibonnacciProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.FibonnacciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
@@ -48,7 +48,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             log_fibonacci_size:0,
             log_n_instances:0
         },
-        program_params: {
+        program: {
             contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
@@ -63,7 +63,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
         request: {
             log_n_instances:0
         },
-        program_params: {
+        program: {
             contract_name:ProgramInternalContractName.PoseidonProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.PoseidonProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
@@ -78,7 +78,7 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
             log_sizes:0,
             claims:0
         },
-        program_params: {
+        program: {
             contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest.toString(),
             internal_contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,

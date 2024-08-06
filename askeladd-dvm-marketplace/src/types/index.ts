@@ -102,5 +102,5 @@ export interface IProgramParams {
 }
 export interface IGenerateZKPRequestDVM {
     request?: any;
-    program_params?: IProgramParams;
+    program?: IProgramParams;
 }
