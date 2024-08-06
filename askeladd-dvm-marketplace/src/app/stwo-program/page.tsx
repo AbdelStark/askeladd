@@ -151,7 +151,7 @@ export default function StwoProgramMarketplace() {
       <div className="crt-overlay"></div>
       <div className="scanlines"></div>
       <div className="crt-curve"></div>
-      <button  className="secondary-button" onClick={fetchPrograms}>Load programs</button>
+      <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
 
       <div className="arcade-cabinet">
         <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM</h1>
@@ -166,10 +166,8 @@ export default function StwoProgramMarketplace() {
         })}
 
         </div>
-
-
       </div>
-      <button  className="secondary-button" onClick={fetchPrograms}>Load programs</button>
+      <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
       <div>
         <div className="gap-3 flex">      {events?.map((e, i) => {
           console.log("e program", e)

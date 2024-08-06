@@ -4,13 +4,15 @@ import { useState, useEffect, useMemo } from "react";
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
-import { JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT } from "@/types";
-import init, { verify_stark_proof, prove_and_verify } from "../pkg/stwo_wasm";
+import { JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from "@/types";
+import init, { verify_stark_proof, prove_and_verify, prove_and_verify_fib, verify_stark_proof_fib, stark_proof_wide_fibo, verify_stark_proof_wide_fibo } from "../pkg/stwo_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { ASKELADD_RELAY } from "@/constants/relay";
 import { Relay } from 'nostr-tools/relay';
 import { Event as EventNostr, SimplePool } from "nostr-tools";
 export default function Home() {
+  const [log_n_instances, setLogNInstances] = useState<number>(0);
+  const [log_fibonnacci_size, setLogFibonnacciSize] = useState<number>(5);
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
   const [publicKey, setPublicKey] = useState<string | undefined>();
@@ -69,6 +71,7 @@ export default function Home() {
   useEffect(() => {
     if (jobId && !jobEventResult) {
       waitingForJobResult()
+      timeoutWaitingForJobResult()
     }
   }, [jobId, isFetchJob, jobEventResult])
 
@@ -131,53 +134,68 @@ export default function Home() {
       setJobEventResult(undefined);
       setError(undefined);
       const tags = [
-        ['param', 'log_size', logSize.toString()],
-        ['param', 'claim', claim.toString()],
+        ['param', 'log_n_instances', log_n_instances.toString()],
+        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
         ['output', 'text/json']
       ];
+      // const tags = [
+      //   ['param', 'log_size', logSize.toString()],
+      //   ['param', 'claim', claim.toString()],
+      //   ['output', 'text/json']
+      // ];
 
       const tags_values = [
-        ['param', 'log_size', logSize.toString()],
-        ['param', 'claim', claim.toString()],
+        ['param', 'log_n_instances', log_n_instances.toString()],
+        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
+        // ['param', 'claim', claim.toString()],
+        // ['param', 'log_size', logSize.toString()],
+        // ['param', 'claim', claim.toString()],
       ];
 
 
-      const inputs:Map<string,string>= new Map<string,string>();
+      const inputs: Map<string, string> = new Map<string, string>();
 
-      for(let tag of tags_values) {
+      for (let tag of tags_values) {
         inputs.set(tag[1], tag[2])
       }
-      console.log("inputs",Object.fromEntries(inputs))
+      console.log("inputs", Object.fromEntries(inputs))
 
       const content = JSON.stringify({
         request: {
-          log_size: logSize.toString(),
-          claim: claim.toString()
+          // log_size: logSize.toString(),
+          log_n_instances: log_n_instances.toString(),
+          log_fibonnacci_size: log_fibonnacci_size.toString(),
+          // claim: claim.toString()
         },
-        program:{
-           contract_name:"PoseidonProvingRequest",
-          internal_contract_name:"PoseidonrovingRequest",
+        program: {
+          // contract_name: "PoseidonProvingRequest",
+          // internal_contract_name: "PoseidonProvingRequest",
+          contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
+          internal_contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
+          // internal_contract_name: "PoseidonProvingRequest",
+
           // contract_name:"FibonnacciProvingRequest",
           // internal_contract_name:"FibonnacciProvingRequest",
-          contract_reached:"InternalAskeladd",
+          contract_reached: "InternalAskeladd",
           // inputs:JSON.stringify(Object.fromEntries(inputs)),
-          inputs:Object.fromEntries(inputs),
+          inputs: Object.fromEntries(inputs),
           // inputs:tags 
         }
       })
       // Define the timestamp before which you want to fetch events
       // setTimestampJob(new Date().getTime() / 1000)
       setTimestampJob(new Date().getTime())
-      console.log("inputs",inputs)
-      console.log("content",content)
+      console.log("inputs", inputs)
+      console.log("content", content)
       // return ;
       /** Use Nostr extension to send event */
       const pool = new SimplePool();
       const poolJob = new SimplePool();
       const relay = await Relay.connect(ASKELADD_RELAY[0])
       if (typeof window !== "undefined" && window.nostr) {
-        
+
         const pubkey = await window.nostr.getPublicKey();
+        console.log("pubkey",pubkey)
         let created_at = new Date().getTime();
         setPublicKey(pubkey)
         const event = await window.nostr.signEvent({
@@ -305,11 +323,29 @@ export default function Home() {
     try {
       if (proof) {
         setIsLoading(true);
-        const prove_result = prove_and_verify(logSize, claim);
-        console.log("prove_result", prove_result);
+
+        /** Change Poseidon to default */
+        // const prove_result = prove_and_verify(log_n_instances);
+        // console.log("prove_result", prove_result);
+        // const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+        // console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+        // const verify_result = verify_stark_proof(logSize, serialised_proof_from_nostr_event);
+        // console.log("verify result", verify_result);
+        // console.log("verify message", verify_result.message);
+        // console.log("verify success", verify_result.success);
+        // if (verify_result?.success) {
+        //   console.log("is success verify result")
+        //   setProofStatus("verified");
+        // } else {
+        //   setError(verify_result?.message)
+        // }
+
+        if (!log_n_instances && !log_fibonnacci_size) return;
+        const prove_result = stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances));
+        console.log("wide fibo prove_result", prove_result);
         const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
         console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-        const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
+        const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
@@ -320,20 +356,22 @@ export default function Home() {
           setError(verify_result?.message)
         }
 
-        /** @TODO fix ERROR verify loop between all stark proof*/
-        for (let event of events) {
-          const jobProofSerialize: JobResultProver = JSON.parse(event?.content)
-          const proofSerialize = jobProofSerialize?.response?.proof;
-          const verify_result = verify_stark_proof(logSize, claim, JSON.stringify(proofSerialize));
-          if (verify_result?.success) {
-            console.log("loop verify result", verify_result.message);
-            console.log("loop verify success", verify_result.success);
-            console.log("is success verify result")
-            setProofStatus("verified");
-          } else {
-            // setError(verify_result?.message)
-          }
-        }
+        /** FIB default */
+        // const prove_result = prove_and_verify_fib(logSize, claim);
+        // console.log("prove_result", prove_result);
+        // const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+        // console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+        // const verify_result = verify_stark_proof_fib(logSize, claim, serialised_proof_from_nostr_event);
+        // console.log("verify result", verify_result);
+        // console.log("verify message", verify_result.message);
+        // console.log("verify success", verify_result.success);
+        // if (verify_result?.success) {
+        //   console.log("is success verify result")
+        //   setProofStatus("verified");
+        // } else {
+        //   setError(verify_result?.message)
+        // }
+
         setIsLoading(false);
         setIsFetchJob(true)
       }
@@ -357,7 +395,42 @@ export default function Home() {
           <p className="text-center blink neon-text-sm">Censorship resistant global proving network</p>
           <p className="text-center blink neon-text-sm">Verifiable computation for DVMs</p>
           <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
+
+            {/* <p>Prove poseidon</p> */}
+            <p>Wide Fibonnacci</p>
             <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Log Fibonnacci Size</label>
+              <input
+                type="number"
+                value={log_fibonnacci_size}
+                onChange={(e) => setLogFibonnacciSize(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
+
+
+            <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Log N Instances</label>
+              <input
+                type="number"
+                value={log_n_instances}
+                onChange={(e) => setLogNInstances(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div>
+
+            {/* <div className="mb-4">
+              <label className="block mb-2 text-neon-pink">Claim</label>
+              <input
+                type="number"
+                value={claim}
+                onChange={(e) => setClaim(Number(e.target.value))}
+                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
+              />
+            </div> */}
+
+
+            {/* <div className="mb-4">
               <label className="block mb-2 text-neon-pink">Log Size</label>
               <input
                 type="number"
@@ -375,7 +448,7 @@ export default function Home() {
                 onChange={(e) => setClaim(Number(e.target.value))}
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
-            </div>
+            </div> */}
 
             <button
               onClick={submitJob}

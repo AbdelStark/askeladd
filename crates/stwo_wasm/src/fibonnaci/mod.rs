@@ -1,7 +1,6 @@
-use crate::StwoResult;
-
 // mod.rs fibonnaci
 use self::component::FibonacciComponent;
+use crate::StwoResult;
 pub mod air;
 pub mod component;
 pub mod multi_fibonacci;

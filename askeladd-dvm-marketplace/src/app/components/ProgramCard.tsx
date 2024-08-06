@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from '@/types';
 import { useFetchEvents } from '@/hooks/useFetchEvents';
 import { ASKELADD_RELAY } from '@/constants/relay';
-import init, { verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo, prove_stark_proof_poseidon, verify_stark_proof_poseidon } from "../../pkg"
+import init, { verify_stark_proof, verify_stark_proof_wide_fibo, prove_and_verify, stark_proof_wide_fibo, prove_stark_proof_poseidon, verify_stark_proof_poseidon, prove_and_verify_fib, verify_stark_proof_fib } from "../../pkg"
 import { useNostrContext } from '@/context/NostrContext';
 // Define the props for the component
 interface TagsCardProps {
@@ -345,24 +345,9 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                     }
                     )
                 }
-                if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.FibonnacciProvingRequest) {
-                    const prove_result = prove_and_verify(logSize, claim);
-                    console.log("prove_result", prove_result);
-                    const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
-                    console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-                    const verify_result = verify_stark_proof(logSize, claim, serialised_proof_from_nostr_event);
-                    console.log("verify result", verify_result);
-                    console.log("verify message", verify_result.message);
-                    console.log("verify success", verify_result.success);
-                    if (verify_result?.success) {
-                        console.log("is success verify result")
-                        setProofStatus("verified");
-                    } else {
-                        setError(verify_result?.message)
-                    }
-                }
+           
 
-                else if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.WideFibonnaciProvingRequest) {
+                 if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.WideFibonnaciProvingRequest) {
                     let log_n_instances = inputs.get("log_n_instances");
                     let log_fibonacci_size = inputs.get("log_fibonacci_size");
                     if (!log_n_instances && !log_fibonacci_size) return;
@@ -390,6 +375,22 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                     const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
                     console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
                     const verify_result = verify_stark_proof_poseidon(Number(log_n_instances), serialised_proof_from_nostr_event);
+                    console.log("verify result", verify_result);
+                    console.log("verify message", verify_result.message);
+                    console.log("verify success", verify_result.success);
+                    if (verify_result?.success) {
+                        console.log("is success verify result")
+                        setProofStatus("verified");
+                    } else {
+                        setError(verify_result?.message)
+                    }
+                }
+                else if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.FibonnacciProvingRequest) {
+                    const prove_result = prove_and_verify_fib(logSize, claim);
+                    console.log("prove_result", prove_result);
+                    const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+                    console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
+                    const verify_result = verify_stark_proof_fib(logSize, claim, serialised_proof_from_nostr_event);
                     console.log("verify result", verify_result);
                     console.log("verify message", verify_result.message);
                     console.log("verify success", verify_result.success);

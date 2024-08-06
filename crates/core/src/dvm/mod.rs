@@ -173,7 +173,7 @@ pub mod types {
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct WideFibonnacciProvingRequest {
-        pub log_fibonacci_size: u32,
+        pub log_fibonnacci_size: u32,
         pub log_n_instances: u32,
     }
 

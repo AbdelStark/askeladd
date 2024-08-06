@@ -241,7 +241,7 @@ impl ProverService {
                         Err(e) => return Err(e.to_string()),
                     };
                     let wide_fib = WideFibStruct::new(
-                        wide_fib_req.log_fibonacci_size,
+                        wide_fib_req.log_fibonnacci_size,
                         wide_fib_req.log_n_instances,
                     );
                     match wide_fib.prove::<Blake2sMerkleHasher>() {
