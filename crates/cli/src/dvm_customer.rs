@@ -80,6 +80,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
     println!("{}", "Job prepared successfully.".green());
 
+    // /// Add poseidon
+    let settings = Settings::new().expect("Failed to load settings");
+
+    poseidon_program(customer).await?;
+
+    let mut customer = Customer::new(settings)?;
+    customer.init().await?;
+
     // ******************************************************
     // ****************** SUBMIT JOB ************************
     // ******************************************************
@@ -121,14 +129,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", "│                                     │".red());
         println!("{}", "└─────────────────────────────────────┘".red());
     }
-
-    // /// Add poseidon
-    // let settings = Settings::new().expect("Failed to load settings");
-
-    // let mut customer = Customer::new(settings)?;
-    // customer.init().await?;
-
-    // poseidon_program(customer).await?;
 
     Ok(())
 }

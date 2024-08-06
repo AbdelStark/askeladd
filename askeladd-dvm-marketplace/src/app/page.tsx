@@ -155,8 +155,10 @@ export default function Home() {
           claim: claim.toString()
         },
         program:{
-          contract_name:"FibonnacciProvingRequest",
-          internal_contract_name:"FibonnacciProvingRequest",
+           contract_name:"PoseidonProvingRequest",
+          internal_contract_name:"PoseidonrovingRequest",
+          // contract_name:"FibonnacciProvingRequest",
+          // internal_contract_name:"FibonnacciProvingRequest",
           contract_reached:"InternalAskeladd",
           // inputs:JSON.stringify(Object.fromEntries(inputs)),
           inputs:Object.fromEntries(inputs),

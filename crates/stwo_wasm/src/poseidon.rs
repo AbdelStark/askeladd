@@ -18,7 +18,7 @@ use stwo_prover::core::InteractionElements;
 use stwo_prover::examples::poseidon::{
     gen_interaction_trace,
     gen_trace,
-    PoseidonAir,
+    // PoseidonAir,
     PoseidonComponent, //  PoseidonComponent,
 };
 use wasm_bindgen::prelude::*;
@@ -46,7 +46,7 @@ macro_rules! console_log {
 
 #[derive(Clone)]
 pub struct PoseidonStruct {
-    pub air: PoseidonAir,
+    pub component: PoseidonComponent,
 }
 
 impl PoseidonStruct {
@@ -104,15 +104,14 @@ impl PoseidonStruct {
             lookup_elements,
             claimed_sum, // claimed_sum,
         };
-        let air = PoseidonAir { component };
+        // let air = PoseidonAir { component };
 
-        Ok(Self { air })
+        Ok(Self { component })
     }
     pub fn prove<H: MerkleHasher>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         // let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
         // let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
-        let res =
-            PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.air.component.log_n_rows);
+        let res = PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.component.log_n_rows);
         match res {
             Ok(proof) => Ok(proof),
             Err(_) => Err(ProvingError::ConstraintsNotSatisfied),
@@ -198,9 +197,9 @@ impl PoseidonStruct {
             lookup_elements,
             claimed_sum,
         };
-        let air = PoseidonAir { component };
+        // let air = PoseidonAir { component };
         let proof = prove(
-            &air,
+            &[&component],
             channel,
             &InteractionElements::default(),
             commitment_scheme,
@@ -225,7 +224,8 @@ impl PoseidonStruct {
         let commitment_scheme = &mut CommitmentSchemeVerifier::new();
 
         verify(
-            &self.air,
+            // &self.component,
+            &[&self.component],
             verifier_channel,
             &InteractionElements::default(),
             commitment_scheme,
