@@ -33,9 +33,8 @@ impl Database {
             CREATE TABLE IF NOT EXISTS stwo_prover_launched (
                 id TEXT PRIMARY KEY,
                 request_json TEXT NOT NULL,
-                program_param TEXT NOT NULL,
-                response_json TEXT,
                 status TEXT NOT NULL,
+                program TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
@@ -98,7 +97,7 @@ impl Database {
         let request_json = serde_json::to_string(request).unwrap();
         let program_json = serde_json::to_string(program).unwrap();
         self.conn.execute(
-            "INSERT INTO stwo_prover_launched (id, request_json, status, program) VALUES (?1, ?2, ?3)",
+            "INSERT INTO stwo_prover_launched (id, request_json, status, program) VALUES (?1, ?2, ?3, ?4)",
             params![job_id, request_json, RequestStatus::Pending.to_string(), program_json.to_string()],
         )?;
         Ok(())

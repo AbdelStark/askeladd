@@ -37,9 +37,9 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub enum ContractUploadType {
         InternalAskeladd,
+        Ipfs,
         // URl,
         // BackendEndpoint,
-        // Ipfs,
     }
 
     // Enum for internal_name program on ASKELADD
@@ -65,8 +65,9 @@ pub mod types {
         pub contract_reached: ContractUploadType,
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
-        pub tags: Option<Tag>, /* For External program
-                                * pub endpoint:Option<String>, */
+        pub tags: Option<Vec<Tag>>,
+        // For External program
+        // pub endpoint:Option<String>,
     }
 
     #[derive(Debug, Serialize, Deserialize)]

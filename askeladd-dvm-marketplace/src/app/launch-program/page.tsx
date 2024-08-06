@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useSendNote } from "@/hooks/useSendNote";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { APPLICATION_PUBKEY_DVM, ASKELADD_RELAY } from "@/constants/relay";
 import { Event as EventNostr, SimplePool } from "nostr-tools";
-import { ASKELADD_KINDS, ConfigHandle, IGenerateZKPRequestDVM, IProgramParams } from "@/types";
+import { ASKELADD_KINDS, ConfigHandle, ContractUploadType, IGenerateZKPRequestDVM, IProgramParams, KIND_JOB_ADD_PROGRAM } from "@/types";
 import EventCard from "../components/EventCard";
 import { generateContentAndTags } from "../utils/generateAppHandler";
 import { HowItWork } from "../components/description";
@@ -34,7 +34,11 @@ export default function LaunchProgram() {
   const [claim, setClaim] = useState<number>(443693538);
   const [inputIndex, setInputsIndex] = useState(0)
   const [isOpenForm, setIsOpenForm] = useState(false)
-  const [form, setForm] = useState({})
+  const [formState, setForm] = useState({})
+
+  const form = useMemo(() => {
+    return formState
+  }, [formState])
   const [formType, setFormType] = useState({})
   const [formEncrypted, setFormEncrypted] = useState({})
   const [programParam, setProgramParam] = useState<IProgramParams>({
@@ -127,6 +131,7 @@ export default function LaunchProgram() {
         const pubkey = await window.nostr.getPublicKey();
         let created_at = new Date().getTime();
         setPublicKey(pubkey)
+        return pubkey;
       }
 
     } catch (e) {
@@ -230,14 +235,15 @@ export default function LaunchProgram() {
       }
 
       const content = JSON.stringify({
-        request: form,
+        request: {...form},
         program: {
-          contract_name: programParam?.contract_name,
-          internal_contract_name: programParam?.internal_contract_name,
-          contract_reached: programParam?.contract_reached,
+          contract_name: programParam?.contract_name ?? "test",
+          // internal_contract_name: programParam?.internal_contract_name ?? "test",
+          contract_reached: programParam?.contract_reached ?? ContractUploadType.Ipfs,
           inputs: Object.fromEntries(inputs),
           inputs_types: undefined,
-          inputs_encrypted: Object.fromEntries(inputs_encrypted)
+          inputs_encrypted: Object.fromEntries(inputs_encrypted),
+          tags:tags
         }
       })
 
@@ -248,24 +254,25 @@ export default function LaunchProgram() {
       const pool = new SimplePool();
       let pubkey;
       if (typeof window !== "undefined" && window.nostr) {
+        let pubkey = await connectExtension()
+
         console.log("pubkey", pubkey)
-        // await connectExtension()
-        if (!publicKey) return;
+        if (!publicKey && !pubkey) return;
         if (!content) return;
 
         let created_at = new Date().getTime();
         const event = await window.nostr.signEvent({
           pubkey: publicKey ?? pubkey,
           created_at: created_at,
-          kind: NDKKind.AppHandler,
+          kind: KIND_JOB_ADD_PROGRAM,
           tags: tags,
           content: content
         }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // // Setup job request to fetch job id
 
         // // let eventID = await relay.publish(event as EventNostr);
-        // const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
-        // console.log("eventID", eventID[0])
+        const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
+        console.log("eventID", eventID[0])
         setIsNeedLoadEvents(true)
 
       } else {
@@ -334,21 +341,35 @@ export default function LaunchProgram() {
                   <div key={i}>
                     <p >{`${key}`}</p>
                     <p>{`Name: ${value}`}</p>
-                    <input
-                      className='text-black'
-                      placeholder="Name of your input"
-                      name={key}
-                      onChange={handleChange}
-                    ></input>
+                    <div className="flex flex-direction">
+                      <input
+                        className='text-black'
+                        placeholder="Name of your input"
+                        name={key}
+                        onChange={handleChange}
+                      ></input>
+                      <button
+                      
+                      className="p-1"
+                      onClick={() => {
+                        const { [key]: removeKey, ...newObject } = form;
+                        setForm({ ...newObject })
+                        setInputsIndex(inputIndex-1)
+                        const { [key]:removeKeyEncrypted, ...newFormEncrypted } = formEncrypted;
+
+                        setFormEncrypted({ ...newFormEncrypted })
+
+                      }}>X</button>
+                    </div>
+
                   </div>
                 )
               })}
               <button
-                className="bg-blue border border-r-3 secondary-button w-full"
+                className="bg-blue border border-r-3 secondary-button w-full my-5"
                 onClick={() => {
                   setInputsIndex(inputIndex + 1);
                   setForm({ ...form, [inputIndex + 1]: inputIndex + 1 })
-                  // form[String(inputIndex + 1).toString()] = (inputIndex + 1).toString()
                 }}
               >
                 Add input
@@ -358,7 +379,7 @@ export default function LaunchProgram() {
             <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
               <p>Inputs encrypted</p>
 
-              <button onClick={handleLoadFormEncrypted}> Load inputs to continue settings</button>
+              <button className="basic-button" onClick={handleLoadFormEncrypted}> Load inputs to continue settings</button>
               {formEncrypted && Object.entries(formEncrypted).map(([key, value], i) => {
                 return (
                   <div key={i}>

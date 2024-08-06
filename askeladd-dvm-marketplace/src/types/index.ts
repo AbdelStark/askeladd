@@ -83,6 +83,7 @@ export enum ProgramInternalContractName {
 
 export enum ContractUploadType {
     InternalAskeladd = "InternalAskeladd",
+    Ipfs = "Ipfs",
 }
 
 export interface IProgramParams {

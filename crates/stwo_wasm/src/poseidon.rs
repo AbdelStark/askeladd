@@ -29,7 +29,7 @@ pub const N_LOG_INSTANCES_PER_ROW: usize = 3;
 pub const LOG_N_ROWS: u32 = 8;
 pub const LOG_EXPAND: u32 = 2;
 pub const LOG_N_LANES: u32 = 4;
-const N_STATE: usize = 16;
+// const N_STATE: usize = 16;
 
 #[wasm_bindgen]
 extern "C" {
@@ -75,7 +75,7 @@ impl PoseidonStruct {
 
         // Draw lookup element.
         // let lookup_elements = LookupElements::draw(channel);
-        let lookup_elements = LookupElements::draw(channel, N_STATE * 2);
+        let lookup_elements = LookupElements::draw(channel);
 
         // let component = PoseidonComponent {
         // Precompute twiddles.
@@ -179,7 +179,7 @@ impl PoseidonStruct {
         tree_builder.commit(channel);
 
         // Draw lookup element.
-        let lookup_elements = LookupElements::draw(channel, N_STATE * 2);
+        let lookup_elements = LookupElements::draw(channel);
 
         // Interaction trace.
         let (trace, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);

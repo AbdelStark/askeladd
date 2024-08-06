@@ -401,3 +401,18 @@ main {
   transition: all 0.3s ease;
   text-shadow: none;
 }
+
+.basic-button {
+  /* width: 100%; */
+  background: var(--neon-blue);
+  color: #000000;
+  border: 1px solid #000000;
+  box-shadow: 0 0 2px var(--neon-blue);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+  text-shadow: none;
+}

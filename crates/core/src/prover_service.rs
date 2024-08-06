@@ -84,6 +84,10 @@ impl ProverService {
             match p.contract_reached {
                 ContractUploadType::InternalAskeladd => {
                     self.internal_program(request, request_str, p)
+                }
+                ContractUploadType::Ipfs => {
+                    println!("TODO implement IPFS WASM");
+                    Err("IPFS_CONTRACT_IN_PROCESS".to_string())
                 } //  => Err(ProverServiceError::NoProgramParam.to_string()),
             }
         } else {
