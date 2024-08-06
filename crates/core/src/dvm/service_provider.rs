@@ -192,7 +192,7 @@ impl ServiceProvider {
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("params_program {:?}", params_program);
-            
+
             let successful_parses = convert_inputs_to_run_program(program_params.inputs);
             // params_inputs = program_params.inputs.clone();
             params_inputs = successful_parses.clone();

@@ -10,6 +10,7 @@ use stwo_prover::core::prover::{ProvingError, StarkProof, VerificationError};
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::examples::wide_fibonacci::component::WideFibComponent;
 use wasm_bindgen::prelude::*;
+
 use crate::fibonacci::Fibonacci;
 use crate::StwoResult;
 
@@ -56,13 +57,13 @@ impl MultiFibonacci {
             })
             .collect()
     }
-    /* TODO finish implement prove */
+    // TODO finish implement prove
 
     pub fn prove(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
         println!("try proof of multi fibo");
         Err(ProvingError::ConstraintsNotSatisfied)
     }
-    /* TODO finish implement verify */
+    // TODO finish implement verify
     pub fn verify(&self, proof: StarkProof<Blake2sMerkleHasher>) -> Result<(), VerificationError> {
         println!("try verify proof of multi fibo");
         println!("stark proof {:?}", proof);
