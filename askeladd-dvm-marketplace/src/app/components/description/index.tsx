@@ -4,7 +4,6 @@ export const HowItWork = () => {
 
     const [openHowItWork, setOpenHowItWork] = useState(false);
 
-
     return(
         <div onClick={() => setOpenHowItWork(!openHowItWork)}
         className="max-w-sm cursor-pointer my-5 p-1  m-1 whitespace-pre-line break-words"

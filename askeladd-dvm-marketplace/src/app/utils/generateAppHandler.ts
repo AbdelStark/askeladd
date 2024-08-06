@@ -5,9 +5,6 @@ const PARAMS_JOB_REQUEST_ZK = {
     request: {
 
     },
-    params: {
-
-    },
     program: {
 
     }
@@ -24,15 +21,13 @@ const PARAMS_JOB_RESULT_ZK = {
 
     }
 }
-
 const PARAMS_ALL_KIND = {
     [KIND_JOB_REQUEST]:PARAMS_JOB_REQUEST_ZK,
     [KIND_JOB_RESULT]:PARAMS_JOB_RESULT_ZK,
 }
+/** TODO correct bech32 for nprofile, nevent of the application handler */
 export const generateTagsByAppKind = (tags: string[][], appKind: ASKELADD_KINDS, config:ConfigHandle) => {
-
     const randomId = Math.random().toString(36).substring(7);
-    
     if(config == ConfigHandle.SPECIFIC_KIND) {
         tags = [
             ["d", randomId],
@@ -59,6 +54,8 @@ export const generateTagsByAppKind = (tags: string[][], appKind: ASKELADD_KINDS,
     return tags
  
 }
+
+/** TODO correct bech32 for nprofile, nevent of the application handler */
 export const generateContentAndTags = (configKind: ConfigHandle, appKind?: ASKELADD_KINDS, pubkey?:string): { tags?: string[][], content?: string } => {
     let tags: string[][] = []
     let content = "";

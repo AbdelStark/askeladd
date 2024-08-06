@@ -69,7 +69,9 @@ impl ProverService {
         println!("generate_proof_by_program type {:?}", request);
         let mut successful_parses = HashMap::new();
         if let Some(program_params) = program_params.clone() {
-            successful_parses = convert_inputs_to_run_program(program_params.inputs);
+            if let Some(inputs) = program_params.inputs {
+                successful_parses = convert_inputs_to_run_program(inputs);
+            }
         }
         let serialized_request = serde_json::to_string(&successful_parses).unwrap();
         // TODO

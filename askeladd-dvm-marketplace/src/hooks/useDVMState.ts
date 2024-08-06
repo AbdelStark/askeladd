@@ -1,6 +1,5 @@
 import { ASKELADD_RELAY } from '@/constants/relay';
-import { useNostrContext } from '@/context/NostrContext';
-import { IGenerateZKPRequestDVM, KIND_JOB_REQUEST, KIND_JOB_RESULT } from '@/types';
+import { IGenerateZKPRequestDVM, KIND_JOB_ADD_PROGRAM, KIND_JOB_REQUEST, KIND_JOB_RESULT } from '@/types';
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { SimplePool, NostrEvent, Relay } from 'nostr-tools';
 import { useMemo, useState } from 'react';
@@ -11,19 +10,16 @@ export const useDVMState = () => {
     "idle" | "pending" | "received" | "verified"
   >("idle");
   const [publicKey, setPublicKey] = useState<string | undefined>();
-
-  const { ndk } = useNostrContext();
-  // const pool = new SimplePool()
   const [pool, setPool] = useState(new SimplePool())
   const [jobId, setJobId] = useState<string | undefined>();
-  const [jobIdResult, setJobIdResult] = useState<string | undefined>();
   const [isWaitingJob, setIsWaitingJob] = useState(false);
   const [jobEventResult, setJobEventResult] = useState<NostrEvent | undefined | NDKEvent>()
   const [starkProof, setStarkProof] = useState<any | undefined>()
   const [isFetchJob, setIsFetchJob] = useState(false);
   const [isLoadingJobResult, setIsLoadingJobResult] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<NostrEvent | undefined | NDKEvent>()
-
+  const [events, setEvents] = useState<NostrEvent[] | NDKEvent[]>([])
+  const [eventsPrograms, setEventsPrograms] = useState<NostrEvent[] | NDKEvent[]>([])
   let eventIdRequest = useMemo(() => {
     return jobId
   }, [jobId])
@@ -43,11 +39,9 @@ export const useDVMState = () => {
     const { events } = await fetchEventsTools({
       kind: KIND_JOB_REQUEST,
       since: timestampJob,
-      // authors: pubkey ? [pubkey] : []
     });
     console.log("events job request", events);
     if (!events) return;
-    // const lastEvent = events[events?.length - 1]
     const lastEvent = events[0]
     if (!lastEvent?.id) return;
     const lastEventId = lastEvent?.id;
@@ -57,7 +51,6 @@ export const useDVMState = () => {
       eventIdRequest = lastEventId;
       setIsWaitingJob(true)
     }
-
   }
 
 
@@ -84,7 +77,6 @@ export const useDVMState = () => {
               setJobId(event?.id)
             }
             poolRequest.close();
-
           }
           if (event?.kind == KIND_JOB_RESULT) {
             console.log("Event job request received: ", event?.id);
@@ -104,8 +96,6 @@ export const useDVMState = () => {
       }
     )
   }
-
-
 
   /** TODO fetch subscribed event
     * fix search jobId => check if relayer support NIP-50 
@@ -272,6 +262,24 @@ export const useDVMState = () => {
 
   };
 
+  const fetchPrograms = async () => {
+    console.log("fetch events program")
+    const { events } = await fetchEvents({
+      kind: KIND_JOB_ADD_PROGRAM,
+      // kinds:[KIND_JOB_ADD_PROGRAM as NDKKind]
+      // since: timestampJob,
+      // search: jobId
+      // search: `#${jobId}`,
+    })
+    console.log("events job program", events);
+    setEventsPrograms(events)
+    if (!events) return;
+    let lastEvent = events[events?.length - 1]
+    if (!lastEvent) return;
+
+  }
+
+
   return {
     starkProof, proof, proofStatus, setProof, setProofStatus,
     runSubscriptionEvent,
@@ -283,5 +291,9 @@ export const useDVMState = () => {
     isWaitingJob, setIsWaitingJob,
     publicKey, setPublicKey,
     setIsLoadingJobResult,
+    jobEventResult,
+    fetchPrograms,
+    eventsPrograms,
+    events
   }
 };

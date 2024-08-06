@@ -59,7 +59,7 @@ pub mod types {
         pub unique_id: Option<String>,
         pub pubkey_application: Option<String>, /* Use for one to one marketplace => difficult
                                                  * on the archi of the DVM */
-        pub inputs: HashMap<String, String>,
+        pub inputs: Option<HashMap<String, String>>,
         pub inputs_types: Option<HashMap<String, String>>,
         pub inputs_encrypted: Option<HashMap<String, String>>,
         pub contract_reached: ContractUploadType,

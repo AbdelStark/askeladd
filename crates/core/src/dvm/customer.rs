@@ -11,6 +11,7 @@ use tokio::time::timeout;
 use crate::config::Settings;
 use crate::dvm::constants::*;
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult};
+use crate::nostr_utils::extract_params_from_tags;
 use crate::verifier_service::VerifierService;
 
 /// Represents a customer in the Askeladd system.
@@ -84,7 +85,21 @@ impl Customer {
         let mut params_inputs: HashMap<String, String> = HashMap::new();
         let mut tags = vec![];
         if let Some(p) = program {
-            params_inputs = p.inputs;
+            if let Some(inputs) = p.inputs {
+                params_inputs = inputs;
+            }
+            else {
+                let successful_parses = extract_params_from_tags(&tags);
+                // let inputs_values:HashMap<String,Value>= successful_parses
+                //     .into_iter()
+                //     .map(|(k, v)| {
+                //         let val:Value= serde_json::to_value(&v).unwrap();
+                //         // params_inputs.insert(k.clone(), val.clone());
+                //         return (k, val)
+                //     })
+                //     .collect();
+                params_inputs = successful_parses;
+            }
         }
         // OLD TAGS creation
         // let tags = vec![

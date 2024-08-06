@@ -67,7 +67,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         request: req_value,
         program: Some(ProgramParams {
             pubkey_application: None,
-            inputs: map_inputs,
+            inputs: Some(map_inputs),
             inputs_encrypted: None,
             inputs_types: None,
             unique_id: None,
@@ -146,7 +146,7 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
     let job_request = GenerateZKPJobRequest {
         request: req_value,
         program: Some(ProgramParams {
-            inputs: map_inputs,
+            inputs: Some(map_inputs),
             pubkey_application: None,
             inputs_encrypted: None,
             inputs_types: None,

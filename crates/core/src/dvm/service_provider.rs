@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 // use std::collections::HashMap;
 use std::error::Error;
 
@@ -177,6 +178,7 @@ impl ServiceProvider {
     async fn handle_event(&self, event: Box<Event>) -> Result<(), ServiceProviderError> {
         info!("Proving request received [{}]", event.id);
 
+        let tags = event.tags.clone();
         let job_id = event.id.to_string();
         let zkp_request =
             match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
@@ -188,15 +190,31 @@ impl ServiceProvider {
             };
         println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
-        let params_inputs;
+        // let params_inputs= new HashMap()
+        let mut params_inputs: HashMap<String, Value> = HashMap::new();
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("params_program {:?}", params_program);
-
-            let successful_parses = convert_inputs_to_run_program(program_params.inputs);
-            // params_inputs = program_params.inputs.clone();
-            params_inputs = successful_parses.clone();
-            println!("params_inputs {:?}", params_inputs);
+            if let Some(inputs) = program_params.inputs {
+                let successful_parses = convert_inputs_to_run_program(inputs);
+                params_inputs = successful_parses.clone();
+                println!("params_inputs {:?}", params_inputs);
+            } else {
+                let successful_parses = extract_params_from_tags(&tags);
+                successful_parses.into_iter().for_each(|(k, v)| {
+                    let val: Value = serde_json::to_value(v).unwrap();
+                    params_inputs.insert(k.clone(), val.clone());
+                });
+                // let inputs_values:HashMap<String,Value>= successful_parses
+                //     .into_iter()
+                //     .map(|(k, v)| {
+                //         let val:Value= serde_json::to_value(v).unwrap();
+                //         params_inputs.insert(k.clone(), val.clone());
+                //         return (k, val)
+                //     })
+                //     .collect();
+                // params_inputs = inputs_values;
+            }
         } else {
             println!("program_params {:?}", params_program);
         }

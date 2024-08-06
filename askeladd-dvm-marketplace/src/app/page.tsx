@@ -1,21 +1,14 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
-import { useNostrContext } from "@/context/NostrContext";
-import { useSendNote } from "@/hooks/useSendNote";
-import { ContractUploadType, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from "@/types";
-import init, { verify_stark_proof, prove_and_verify, prove_and_verify_fib, verify_stark_proof_fib, stark_proof_wide_fibo, verify_stark_proof_wide_fibo } from "../pkg/stwo_wasm";
-import { useFetchEvents } from "@/hooks/useFetchEvents";
-import { ASKELADD_RELAY } from "@/constants/relay";
-import { Relay } from 'nostr-tools/relay';
-import { Event as EventNostr, SimplePool } from "nostr-tools";
+import { NDKEvent } from '@nostr-dev-kit/ndk';
+import { ContractUploadType, ProgramInternalContractName } from "@/types";
+import init, { stark_proof_wide_fibo, verify_stark_proof_wide_fibo } from "../pkg/stwo_wasm";
+import { Event as EventNostr } from "nostr-tools";
 import { useDVMState } from "@/hooks/useDVMState";
-import { useSubmitJob } from "@/hooks/useSubmitJob";
 export default function Home() {
   const [log_n_instances, setLogNInstances] = useState<number>(0);
   const [log_fibonacci_size, setLogFibonacciSize] = useState<number>(5);
-  const [publicKey, setPublicKey] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>()
   const [jobEventResult, setJobEventResult] = useState<EventNostr | undefined | NDKEvent>()
   const [proofStatus, setProofStatus] = useState<
@@ -24,9 +17,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFetchJob, setIsFetchJob] = useState(false);
-  const { eventIdRequest, jobId, setJobId, setIsWaitingJob, fetchJobRequest, proof, fetchEventsProof, 
+  const { eventIdRequest, jobId, setJobId, setIsWaitingJob, fetchJobRequest, proof, fetchEventsProof,
     starkProof,
-    submitJob: submitJobModular,  } = useDVMState()
+    submitJob: submitJobModular,
+    publicKey } = useDVMState()
   // Init wasm module to run_fibonacci_verify
   useEffect(() => {
     init()
@@ -104,7 +98,7 @@ export default function Home() {
         }
       }
 
-      let res= await submitJobModular(5600, {
+      let res = await submitJobModular(5600, {
         log_n_instances,
         log_fibonacci_size
       },
@@ -115,8 +109,6 @@ export default function Home() {
       fetchJobRequest(undefined, publicKey)
       waitingForJobResult()
       timeoutWaitingForJobResult()
-
-     
 
     } catch (e) {
     } finally {
@@ -131,7 +123,6 @@ export default function Home() {
         setIsLoading(true);
         /** Change Wide fibo to default */
         const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
-
         if (!log_n_instances && !log_fibonacci_size && !serialised_proof_from_nostr_event) return;
         const prove_result = stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances));
         console.log("wide fibo prove_result", prove_result);
@@ -169,9 +160,8 @@ export default function Home() {
           <p className="text-center blink neon-text-sm">Censorship resistant global proving network</p>
           <p className="text-center blink neon-text-sm">Verifiable computation for DVMs</p>
           <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
-
             {/* <p>Prove poseidon</p> */}
-            <p>Wide cci</p>
+            <p>Wide Fibonacci</p>
             <div className="mb-4">
               <label className="block mb-2 text-neon-pink">Log Fibonacci Size</label>
               <input
@@ -181,8 +171,6 @@ export default function Home() {
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
             </div>
-
-
             <div className="mb-4">
               <label className="block mb-2 text-neon-pink">Log N Instances</label>
               <input
@@ -192,38 +180,6 @@ export default function Home() {
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
             </div>
-
-            {/* <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Claim</label>
-              <input
-                type="number"
-                value={claim}
-                onChange={(e) => setClaim(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div> */}
-
-
-            {/* <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Log Size</label>
-              <input
-                type="number"
-                value={logSize}
-                onChange={(e) => setLogSize(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Claim</label>
-              <input
-                type="number"
-                value={claim}
-                onChange={(e) => setClaim(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div> */}
-
             <button
               onClick={submitJob}
               disabled={isLoading}
@@ -234,7 +190,6 @@ export default function Home() {
             </button>
           </div>
           {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
-
           {jobId && (
             <div className="mt-8 text-center">
               <p className="text-neon-orange text-sm sm:text-base">Job ID: <span className="break-all">{jobId}</span></p>
