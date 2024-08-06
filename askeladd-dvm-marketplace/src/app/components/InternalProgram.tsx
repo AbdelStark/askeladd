@@ -11,16 +11,12 @@ interface TagsCardProps {
     event?: NDKEvent | NostrEvent;  // Array of array of strings
     zkp_request?: IGenerateZKPRequestDVM
 }
-const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
-    // console.log("zkp_request config", zkp_request)
+const InternalProgram: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
     const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
     const { ndk, pool } = useNostrContext()
-    const inputs = zkp_request?.program?.inputs
-    const [form, setForm] = useState<any>(zkp_request?.request ? zkp_request?.request : inputs ? inputs : {})
-    // const [form, setForm] = useState<any>(zkp_request?.request ? zkp_request?.request : inputs ? Object.fromEntries(inputs) : {})
-    const [requestTemplate, setRequestTemplate] = useState<any>(zkp_request?.request ? zkp_request?.request : inputs ? Object.fromEntries(inputs) : {})
-    // const [requestValue, setRequetValue] = useState(inputs ? inputs Object.fromEntries(inputs) : {})
-    const [requestValue, setRequetValue] = useState<any>(inputs ? inputs : {})
+    const [form, setForm] = useState({})
+    const program = zkp_request?.program;
+
     const [isOpenForm, setIsOpenForm] = useState(false)
     const [logSize, setLogSize] = useState<number>(5);
     const [claim, setClaim] = useState<number>(443693538);
@@ -42,9 +38,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
     >("idle");
     const [selectedEvent, setSelectedEvent] = useState<NostrEvent | undefined | NDKEvent>()
 
-
-    const program = zkp_request?.program;
-    const contract_reached = zkp_request?.program?.contract_reached;
     let eventIdRequest = useMemo(() => {
         return jobId
     }, [jobId])
@@ -61,94 +54,94 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
 
     useEffect(() => {
         // const pool = new SimplePool();
-        // if (pool) {
-        //     runSubscriptionEvent(pool)
-        // }
+        if (pool) {
+            runSubscriptionEvent(pool)
+        }
         if (!jobId && !jobEventResult) {
             timeoutWaitingForJobResult()
         }
     }, [jobId, jobEventResult, pool])
 
 
-    // const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
+    const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
 
-    //     // WebSocket connection setup
-    //     // const ws = new WebSocket([ASKELADD_RELAY[0]]);  // Replace with your Nostr relay URL
+        // WebSocket connection setup
+        // const ws = new WebSocket([ASKELADD_RELAY[0]]);  // Replace with your Nostr relay URL
 
-    //     // ws.onopen = () => {
-    //     //     // Subscribe to specific events, adjust filters as needed
-    //     //     ws.send(JSON.stringify({
-    //     //         "req": "EVENTS",
-    //     //         // "filter": {
-    //     //         //     "#e": ["3a5f5b4..."]  // Your event criteria here
-    //     //         // }
-    //     //     }));
-    //     // };
+        // ws.onopen = () => {
+        //     // Subscribe to specific events, adjust filters as needed
+        //     ws.send(JSON.stringify({
+        //         "req": "EVENTS",
+        //         // "filter": {
+        //         //     "#e": ["3a5f5b4..."]  // Your event criteria here
+        //         // }
+        //     }));
+        // };
 
-    //     // ws.onmessage = (event) => {
-    //     //     const data = JSON.parse(event.data);
-    //     //     if (data) {
-    //     //         if (!jobId) return;
-    //     //         if (pubkey && data?.pubkey == pubkey) {
-    //     //             setJobId(data?.id)
-    //     //         }
-    //     //         // setEvents(currentEvents => [...currentEvents, data]);
-    //     //     }
-    //     // };
+        // ws.onmessage = (event) => {
+        //     const data = JSON.parse(event.data);
+        //     if (data) {
+        //         if (!jobId) return;
+        //         if (pubkey && data?.pubkey == pubkey) {
+        //             setJobId(data?.id)
+        //         }
+        //         // setEvents(currentEvents => [...currentEvents, data]);
+        //     }
+        // };
 
-    //     // ws.onerror = (error) => {
-    //     //     console.error("WebSocket error:", error);
-    //     // };
+        // ws.onerror = (error) => {
+        //     console.error("WebSocket error:", error);
+        // };
 
-    //     let poolSubscription = pool.subscribeMany(
-    //         ASKELADD_RELAY,
-    //         [
-    //             // {
-    //             //   kinds: [KIND_JOB_REQUEST as NDKKind],
-    //             //   // since:timestampJob
-    //             //   // authors: pubkey ? [pubkey] : []
-    //             // },
-    //             {
-    //                 kinds: [KIND_JOB_RESULT as NDKKind],
-    //                 // since:timestampJob
-    //             },
-    //         ],
-    //         {
-    //             onevent(event) {
-    //                 //   if (event?.kind == KIND_JOB_REQUEST) {
-    //                 //     if (!jobId) return;
-    //                 //     if (pubkey && event?.pubkey == pubkey) {
-    //                 //       setJobId(event?.id)
-    //                 //     }
-    //                 //     poolSubscription.close();
-    //                 //   }
-    //                 if (event?.kind == KIND_JOB_RESULT) {
-    //                     if (!jobId) return;
-    //                     let id = jobId ?? eventIdRequest;
-    //                     if (id && !jobEventResult) {
-    //                         console.log("Event job result received: ", event?.id);
-    //                         console.log("event job content result include job: ", id);
-    //                         let isIncludedJobId = event?.content?.includes(jobId)
-    //                         let jobEventResultFind = event?.content?.includes(jobId)
-    //                         console.log("isIncludedJobId", isIncludedJobId);
-    //                         if (isIncludedJobId) {
-    //                             console.log("Event JOB_RESULT find", jobEventResultFind);
-    //                             getDataOfEvent(event);
-    //                             setJobEventResult(event)
-    //                         }
-    //                     }
-    //                     poolSubscription.close();
-    //                 }
-    //             },
-    //             onclose: () => {
-    //                 poolSubscription.close()
-    //             },
-    //             oneose() {
-    //                 poolSubscription.close()
-    //             }
-    //         }
-    //     )
-    // }
+        let poolSubscription = pool.subscribeMany(
+            ASKELADD_RELAY,
+            [
+                // {
+                //   kinds: [KIND_JOB_REQUEST as NDKKind],
+                //   // since:timestampJob
+                //   // authors: pubkey ? [pubkey] : []
+                // },
+                {
+                    kinds: [KIND_JOB_RESULT as NDKKind],
+                    // since:timestampJob
+                },
+            ],
+            {
+                onevent(event) {
+                    //   if (event?.kind == KIND_JOB_REQUEST) {
+                    //     if (!jobId) return;
+                    //     if (pubkey && event?.pubkey == pubkey) {
+                    //       setJobId(event?.id)
+                    //     }
+                    //     poolSubscription.close();
+                    //   }
+                    if (event?.kind == KIND_JOB_RESULT) {
+                        if (!jobId) return;
+                        let id = jobId ?? eventIdRequest;
+                        if (id && !jobEventResult) {
+                            console.log("Event job result received: ", event?.id);
+                            console.log("event job content result include job: ", id);
+                            let isIncludedJobId = event?.content?.includes(jobId)
+                            let jobEventResultFind = event?.content?.includes(jobId)
+                            console.log("isIncludedJobId", isIncludedJobId);
+                            if (isIncludedJobId) {
+                                console.log("Event JOB_RESULT find", jobEventResultFind);
+                                getDataOfEvent(event);
+                                setJobEventResult(event)
+                            }
+                        }
+                        poolSubscription.close();
+                    }
+                },
+                onclose: () => {
+                    poolSubscription.close()
+                },
+                oneose() {
+                    poolSubscription.close()
+                }
+            }
+        )
+    }
 
 
     const timeoutWaitingForJobResult = async () => {
@@ -177,7 +170,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
             // search: jobId
             // search: `#${jobId}`,
         })
-        // console.log("events job result", events);
+        console.log("events job result", events);
         if (!events) return;
         let lastEvent = events[events?.length - 1]
         if (!lastEvent) return;
@@ -255,11 +248,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
             const inputs: Map<string, string> = new Map<string, string>();
             {
                 Object.entries(form).map(([key, value]) => {
-
-                    if (!requestValue[key]) {
-                        inputs.set(key, value as string)
-                    }
-
+                    inputs.set(key, value as string)
                 }
                 )
             }
@@ -269,8 +258,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
             }
             console.log("inputs", Object.fromEntries(inputs))
             const content = JSON.stringify({
-                // request: form,
-                request: Object.fromEntries(inputs),
+                request: form,
                 program: {
                     contract_name: zkp_request?.program?.contract_name,
                     internal_contract_name: zkp_request?.program?.internal_contract_name,
@@ -280,10 +268,10 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                     inputs_encrypted: undefined
                 }
             })
-            console.log("content", content)
             // Define the timestamp before which you want to fetch events
             setTimestampJob(new Date().getTime())
             console.log("inputs", inputs)
+            console.log("content", content)
             /** Use Nostr extension to send event */
             const pool = new SimplePool();
             if (typeof window !== "undefined" && window.nostr) {
@@ -307,9 +295,9 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                 // let eventID = await relay.publish(event as EventNostr);
                 const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as NostrEvent));
                 console.log("eventID", eventID[0])
-                // await fetchJobRequest(pubkey)
-                // setIsWaitingJob(true);
-                // await timeoutWaitingForJobResult()
+                await fetchJobRequest(pubkey)
+                setIsWaitingJob(true);
+                await timeoutWaitingForJobResult()
 
             } else {
 
@@ -342,9 +330,8 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                     }
                     )
                 }
-           
 
-                 if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.WideFibonnaciProvingRequest) {
+                if (zkp_request?.program?.internal_contract_name == ProgramInternalContractName.WideFibonnaciProvingRequest) {
                     let log_n_instances = inputs.get("log_n_instances");
                     let log_fibonacci_size = inputs.get("log_fibonacci_size");
                     if (!log_n_instances && !log_fibonacci_size) return;
@@ -412,28 +399,18 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
     };
 
     const date: string | undefined = event?.created_at ? new Date(event?.created_at).toDateString() : undefined
-    const params = zkp_request?.program?.inputs ?? []
+
+    const params = Object.fromEntries(zkp_request?.program?.inputs?.entries() ?? [])
+
     // Handle changes in form inputs
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setForm((prev: any) => ({
+        setForm(prev => ({
             ...prev,
             [name]: value
         }));
         console.log("form", form)
     };
-
-
-    // Handle changes in form inputs
-    const handleRequestChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setRequestTemplate((prev: any) => ({
-            ...prev,
-            [name]: value
-        }));
-        console.log("form", form)
-    };
-
 
     return (
         <div className="max-w-sm cursor-pointer my-5 p-1  m-1 break-normal p-5 m-5 text-white mx-auto max-w-lg p-6 border border-gray-200 rounded-lg shadow dark:bg-gray-800 dark:border-gray-700">
@@ -441,11 +418,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                 <p>Event id: {zkp_request?.program?.event_id}</p>
             }
             <p className='break-words whitespace-pre-line'>{zkp_request?.program?.contract_name?.toString()}</p>
-            <p className='break-words whitespace-pre-line'>Deployed: {zkp_request?.program?.contract_reached == ContractUploadType.InternalAskeladd ? "Internal Program"
-
-                : contract_reached == ContractUploadType.Ipfs
-                && "Ipfs"
-            }</p>
+            <p className='break-words whitespace-pre-line'>Deployed: {zkp_request?.program?.contract_reached == ContractUploadType.InternalAskeladd && "Internal Program"}</p>
             {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
             <button
                 className={`mt-4 opacity-50 bg-blue-500 my-5 p-1`}
@@ -456,22 +429,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                     {Object.entries(form).map(([key, value]) => (
                         <p key={key}>{`${key}: ${value}`}</p>
                     ))}
-
-                    {Object.entries(requestTemplate).map((e, i) => {
-                        return (
-                            <div
-                                key={i}
-                            >
-                                {/* <p> {e?.[1]}</p> */}
-                                <input
-
-                                    className='text-black'
-                                    name={String(e?.[0])}
-                                    onChange={handleChange}
-                                ></input>
-                            </div>
-                        )
-                    })}
 
                     {Object.entries(params).map((e, i) => {
                         return (
@@ -534,4 +491,4 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
     )
 };
 
-export default ProgramCard;
+export default InternalProgram;

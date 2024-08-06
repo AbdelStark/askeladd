@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useNostrContext } from "@/context/NostrContext";
 import { useSendNote } from "@/hooks/useSendNote";
-import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from "@/types";
+import { ContractUploadType, IGenerateZKPRequestDVM, JobResultProver, KIND_JOB_ADD_PROGRAM, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from "@/types";
 import init, { verify_stark_proof, prove_and_verify } from "../../pkg/stwo_wasm";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
 import { ASKELADD_RELAY } from "@/constants/relay";
@@ -12,6 +12,7 @@ import { Relay } from 'nostr-tools/relay';
 import { Event as EventNostr, SimplePool } from "nostr-tools";
 import { PROGRAM_INTERAL_REQUEST } from "@/constants/program";
 import ProgramCard from "../components/ProgramCard";
+import InternalProgram from "../components/InternalProgram";
 export default function StwoProgramMarketplace() {
   const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
@@ -55,6 +56,7 @@ export default function StwoProgramMarketplace() {
   /** Effect to fetch the job result when a job request is sent */
   const waitingForJobResult = async () => {
     if (jobEventResult && jobId) return;
+    if(!jobId) return;
     fetchEventsProof()
     setIsLoading(false);
     setIsWaitingJob(false)
@@ -67,12 +69,34 @@ export default function StwoProgramMarketplace() {
   }
 
   useEffect(() => {
+    fetchPrograms()
     if (jobId && !jobEventResult) {
       waitingForJobResult()
     }
   }, [jobId, isFetchJob, jobEventResult])
 
 
+
+  const fetchPrograms = async () => {
+    console.log("fetch events program")
+    // if(jobEventResult && jobId)return;
+    setIsFetchJob(false);
+    setIsLoadingJobResult(true);
+    const { events } = await fetchEvents({
+      kind: KIND_JOB_ADD_PROGRAM,
+      // kinds:[KIND_JOB_ADD_PROGRAM as NDKKind]
+      // since: timestampJob,
+      // search: jobId
+      // search: `#${jobId}`,
+    })
+    console.log("events job program", events);
+    setEvents(events)
+    if (!events) return;
+    let lastEvent = events[events?.length - 1]
+    if (!lastEvent) return;
+    let id = jobId ?? eventIdRequest;
+
+  }
 
   /** TODO fetch subscribed event
     * fix search jobId => check if relayer support NIP-50 
@@ -88,6 +112,7 @@ export default function StwoProgramMarketplace() {
     setIsLoadingJobResult(true);
     const { events } = await fetchEventsTools({
       kind: KIND_JOB_RESULT,
+      // kinds:[KIND_JOB_RESULT as NDKKind]
       // since: timestampJob,
       // search: jobId
       // search: `#${jobId}`,
@@ -127,6 +152,7 @@ export default function StwoProgramMarketplace() {
       <div className="crt-overlay"></div>
       <div className="scanlines"></div>
       <div className="crt-curve"></div>
+      <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
 
       <div className="arcade-cabinet">
         <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade">Askeladd DVM</h1>
@@ -134,14 +160,27 @@ export default function StwoProgramMarketplace() {
         <p className="text-center blink neon-text-sm">Check the STWO Prover ready to use!</p>
 
 
-        <div className="gap-3">      {internalProgram?.map((p, i) => {
+        <div className="gap-3 flex flex-direction col-2 grid">      {internalProgram?.map((p, i) => {
           return (
-            <ProgramCard key={i} program={p}></ProgramCard>
+            <InternalProgram key={i} zkp_request={p}></InternalProgram>
           )
         })}
 
         </div>
+      </div>
+      <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
+      <div>
+        <div className="grid gap-3 flex md:grid-flow-row">      {events?.map((e, i) => {
+          console.log("e program", e)
 
+          const p: IGenerateZKPRequestDVM = JSON.parse(e.content)
+          console.log("p", p)
+
+          return (
+            <ProgramCard key={i} zkp_request={p}></ProgramCard>
+          )
+        })}
+        </div>
       </div>
       <div className="marquee">
         <span>Prove your claims and conquer the Nostr realm!</span>

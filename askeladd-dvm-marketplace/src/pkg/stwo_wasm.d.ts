@@ -1,18 +1,35 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
-* @param {number} log_fibonacci_size
+* @param {Uint32Array} log_sizes
+* @param {Uint32Array} claims_int
+* @returns {StwoResult}
+*/
+export function stark_proof_multi_fibo(log_sizes: Uint32Array, claims_int: Uint32Array): StwoResult;
+/**
 * @param {number} log_n_instances
 * @returns {StwoResult}
 */
-export function stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instances: number): StwoResult;
+export function prove_and_verify(log_n_instances: number): StwoResult;
 /**
-* @param {number} log_fibonacci_size
 * @param {number} log_n_instances
 * @param {string} stark_proof_str
 * @returns {StwoResult}
 */
-export function verify_stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instances: number, stark_proof_str: string): StwoResult;
+export function verify_stark_proof(log_n_instances: number, stark_proof_str: string): StwoResult;
+/**
+* @param {number} log_size
+* @param {number} claim
+* @returns {StwoResult}
+*/
+export function prove_and_verify_fib(log_size: number, claim: number): StwoResult;
+/**
+* @param {number} log_size
+* @param {number} claim
+* @param {string} stark_proof_str
+* @returns {StwoResult}
+*/
+export function verify_stark_proof_fib(log_size: number, claim: number, stark_proof_str: string): StwoResult;
 /**
 * @param {number} log_n_instances
 * @returns {StwoResult}
@@ -25,31 +42,18 @@ export function prove_stark_proof_poseidon(log_n_instances: number): StwoResult;
 */
 export function verify_stark_proof_poseidon(log_n_instances: number, stark_proof_str: string): StwoResult;
 /**
-* @param {number} log_size
-* @param {number} claim
+* @param {number} log_fibonacci_size
+* @param {number} log_n_instances
 * @returns {StwoResult}
 */
-export function prove_and_verify(log_size: number, claim: number): StwoResult;
+export function stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instances: number): StwoResult;
 /**
-* @param {number} log_size
-* @param {number} claim
+* @param {number} log_fibonacci_size
+* @param {number} log_n_instances
 * @param {string} stark_proof_str
 * @returns {StwoResult}
 */
-export function verify_stark_proof(log_size: number, claim: number, stark_proof_str: string): StwoResult;
-/**
-* @param {Uint32Array} log_sizes
-* @param {Uint32Array} claims_int
-* @returns {StwoResult}
-*/
-export function stark_proof_multi_fibo(log_sizes: Uint32Array, claims_int: Uint32Array): StwoResult;
-/**
-* @param {Uint32Array} log_sizes
-* @param {Uint32Array} claims_int
-* @param {string} stark_proof_str
-* @returns {StwoResult}
-*/
-export function verify_stark_proof_multi_fibo(log_sizes: Uint32Array, claims_int: Uint32Array, stark_proof_str: string): StwoResult;
+export function verify_stark_proof_wide_fibo(log_fibonacci_size: number, log_n_instances: number, stark_proof_str: string): StwoResult;
 /**
 */
 export class StwoResult {
@@ -66,21 +70,22 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly stark_proof_wide_fibo: (a: number, b: number) => number;
-  readonly verify_stark_proof_wide_fibo: (a: number, b: number, c: number, d: number) => number;
-  readonly prove_stark_proof_poseidon: (a: number) => number;
-  readonly verify_stark_proof_poseidon: (a: number, b: number, c: number) => number;
+  readonly stark_proof_multi_fibo: (a: number, b: number, c: number, d: number) => number;
   readonly __wbg_stworesult_free: (a: number) => void;
   readonly stworesult_success: (a: number) => number;
   readonly stworesult_message: (a: number, b: number) => void;
-  readonly prove_and_verify: (a: number, b: number) => number;
-  readonly verify_stark_proof: (a: number, b: number, c: number, d: number) => number;
-  readonly stark_proof_multi_fibo: (a: number, b: number, c: number, d: number) => number;
-  readonly verify_stark_proof_multi_fibo: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
+  readonly prove_and_verify: (a: number) => number;
+  readonly verify_stark_proof: (a: number, b: number, c: number) => number;
+  readonly prove_and_verify_fib: (a: number, b: number) => number;
+  readonly verify_stark_proof_fib: (a: number, b: number, c: number, d: number) => number;
+  readonly prove_stark_proof_poseidon: (a: number) => number;
+  readonly verify_stark_proof_poseidon: (a: number, b: number, c: number) => number;
+  readonly stark_proof_wide_fibo: (a: number, b: number) => number;
+  readonly verify_stark_proof_wide_fibo: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
-  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
   readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;

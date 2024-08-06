@@ -36,6 +36,12 @@ const Navbar: React.FC = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className="nav-button-link rounded m-5 text-white">DVM ZK Config</Link>
             </li>
+
+            <li className='my-5'>
+              <Link href={"/launch-program"}
+                onClick={() => setIsOpen(!isOpen)}
+                className="nav-button-link rounded m-5 text-white">Launch program</Link>
+            </li>
           </ul>
         </div>
       </div>

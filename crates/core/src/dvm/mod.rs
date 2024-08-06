@@ -15,7 +15,7 @@ pub mod constants {
 pub mod types {
     use std::collections::HashMap;
 
-    use nostr_sdk::EventId;
+    use nostr_sdk::{EventId, Tag};
     use serde::{Deserialize, Serialize};
     use serde_json::Value;
     use stwo_prover::core::prover::StarkProof;
@@ -37,9 +37,9 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub enum ContractUploadType {
         InternalAskeladd,
+        Ipfs,
         // URl,
         // BackendEndpoint,
-        // Ipfs,
     }
 
     // Enum for internal_name program on ASKELADD
@@ -65,6 +65,7 @@ pub mod types {
         pub contract_reached: ContractUploadType,
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
+        pub tags: Option<Vec<Tag>>,
         // For External program
         // pub endpoint:Option<String>,
     }
@@ -172,7 +173,7 @@ pub mod types {
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct WideFibonnacciProvingRequest {
-        pub log_fibonacci_size: u32,
+        pub log_fibonnacci_size: u32,
         pub log_n_instances: u32,
     }
 

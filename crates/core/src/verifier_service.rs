@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::VerificationError;
-use stwo_prover::examples::fibonacci::Fibonacci;
+use stwo_wasm::fibonnaci::Fibonacci;
 
 use crate::dvm::types::{FibonnacciProvingResponse, GenericProvingResponse};
 // Define an enum to encapsulate possible deserialized types

@@ -75,9 +75,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             contract_reached: ContractUploadType::InternalAskeladd,
             contract_name: Some("FibonacciProvingRequest".to_owned()),
             internal_contract_name: Some(ProgramInternalContractName::FibonnacciProvingRequest),
+            tags: None,
         }),
     };
     println!("{}", "Job prepared successfully.".green());
+
+    // /// Add poseidon
+    let settings = Settings::new().expect("Failed to load settings");
+
+    poseidon_program(customer).await?;
+
+    let mut customer = Customer::new(settings)?;
+    customer.init().await?;
 
     // ******************************************************
     // ****************** SUBMIT JOB ************************
@@ -121,14 +130,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("{}", "└─────────────────────────────────────┘".red());
     }
 
-    // /// Add poseidon
-    // let settings = Settings::new().expect("Failed to load settings");
-
-    // let mut customer = Customer::new(settings)?;
-    // customer.init().await?;
-
-    // poseidon_program(customer).await?;
-
     Ok(())
 }
 
@@ -154,6 +155,7 @@ pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
             contract_reached: ContractUploadType::InternalAskeladd,
             contract_name: Some("PoseidonProvingRequest".to_owned()),
             internal_contract_name: Some(ProgramInternalContractName::PoseidonProvingRequest),
+            tags: None,
         }),
     };
     println!("{}", "Job prepared successfully.".green());

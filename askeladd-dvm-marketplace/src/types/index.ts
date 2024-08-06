@@ -49,6 +49,7 @@ export interface CommitmentSchemeProof {
 export enum ASKELADD_KINDS {
     KIND_JOB_REQUEST = 5600,
     KIND_JOB_RESULT = 6600,
+    KIND_JOB_LAUNCH_PROGRAM = 5700,
     // KIND_SUBMIT_PROGRAM
 }
 
@@ -82,6 +83,7 @@ export enum ProgramInternalContractName {
 
 export enum ContractUploadType {
     InternalAskeladd = "InternalAskeladd",
+    Ipfs = "Ipfs",
 }
 
 export interface IProgramParams {
@@ -100,5 +102,5 @@ export interface IProgramParams {
 }
 export interface IGenerateZKPRequestDVM {
     request?: any;
-    program_params?: IProgramParams;
+    program?: IProgramParams;
 }

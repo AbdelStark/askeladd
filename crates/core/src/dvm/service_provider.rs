@@ -11,6 +11,7 @@ use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::{JOB_LAUNCH_PROGRAM_KIND, JOB_REQUEST_KIND};
 use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
+use crate::nostr_utils::extract_params_from_tags;
 // use crate::nostr_utils::extract_params_from_tags;
 use crate::prover_service::ProverService;
 use crate::utils::convert_inputs_to_run_program;
@@ -114,16 +115,6 @@ impl ServiceProvider {
 
         info!("Subscribed to proving requests, waiting for requests...");
 
-        // Start handling Nostr notifications
-        self.nostr_client
-            .handle_notifications(|notification| async {
-                match self.handle_notification(notification).await {
-                    Ok(result) => Ok(result),
-                    Err(e) => Err(Box::new(e) as Box<dyn Error>),
-                }
-            })
-            .await?;
-
         // Start JOB LAUNCH PROGRAM subscription
         let launch_program_req_id = SubscriptionId::new(&self.settings.launch_program_req_id);
         let filter_launch_program = Filter::new()
@@ -140,7 +131,9 @@ impl ServiceProvider {
             .await
             .map_err(|e| ServiceProviderError::NostrSubscriptionError(e.to_string()))?;
 
-        // Start handling LAUNCH_PROGRAM
+        info!("Subscribed to launch program, waiting for requests...");
+
+        // Start handling Nostr notifications
         self.nostr_client
             .handle_notifications(|notification| async {
                 match self.handle_notification(notification).await {
@@ -266,12 +259,18 @@ impl ServiceProvider {
                     proof: response.proof,
                 };
 
+                let tags = vec![
+                    // Reply tag directly to the JOB_REQUEST
+                    Tag::parse(&["e", &job_id.clone(), "", "reply"]).unwrap(),
+                ];
+
                 let response_json = serde_json::to_string(&job_result)?;
                 println!("Response JSON: {:?}", response_json);
 
                 let job_result_event: Event =
                     EventBuilder::job_result(*event, response_json, 0, None)
                         .unwrap()
+                        .add_tags(tags)
                         .to_event(&self.prover_agent_keys)
                         .unwrap();
 
@@ -302,42 +301,62 @@ impl ServiceProvider {
         info!("LAUNCH_PROGRAM request received [{}]", event.id);
 
         let job_id = event.id.to_string();
-        // let tags = &event.tags;
-        // let params = extract_params_from_tags(tags);
+        println!("job_id {:?}", job_id);
+
+        let tags = &event.tags;
+        let params = extract_params_from_tags(tags);
+
+        println!("params {:?}", params);
+
+        println!("event {:?}", event.content);
 
         // Deserialze content
-        let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
+        // let zkp_request =
+        // ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         // let params_program: Option<ProgramParams> = zkp_request.program.clone();
+        // println!("zkp_request {:?}", zkp_request);
 
         // Request on the content
         // Check request of the launch_program
-        let request_str = serde_json::to_string(&zkp_request.request).unwrap();
-        // let request_str = serde_json::to_string(&request).unwrap();
-        let request_value = serde_json::from_str(&request_str).unwrap();
+        let request_str = serde_json::to_string(&event.content).unwrap();
+        // let request_str = serde_json::to_string(&zkp_request.request).unwrap();
+        let request_value: Value = serde_json::from_str(&request_str).unwrap();
+        println!("request_value {:?}", request_value);
 
         // TAGS
-        let program_str = serde_json::to_string(&zkp_request.program).unwrap();
-        let program_value = serde_json::from_str(&program_str).unwrap();
+        // let program_str = serde_json::to_string(&zkp_request.program).unwrap();
+        let program_value: Value = serde_json::from_str(&request_str).unwrap();
+        println!("program_value {:?}", program_value);
 
+        let zkp_request =
+            match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
+                Ok(zkp) => zkp,
+                Err(e) => {
+                    println!("{:?}", e);
+                    return Err(e);
+                }
+            };
+        println!("zkp_request {:?}", zkp_request);
+        //  TODO
         // Look if this program is already launched and save
-        if let Some(status) = self.db.get_program_status(&job_id)? {
-            match status {
-                RequestStatus::Completed => {
-                    info!("Request {} already processed, skipping", &job_id);
-                    return Ok(());
-                }
-                RequestStatus::Failed => {
-                    info!("Request {} failed before, retrying", &job_id);
-                }
-                RequestStatus::Pending => {
-                    info!("Request {} is already pending, skipping", &job_id);
-                    return Ok(());
-                }
-            }
-        } else {
-            self.db
-                .insert_program_launched(&job_id, &request_value, &program_value)?;
-        }
+        // if let Some(status) = self.db.get_program_status(&job_id)? {
+        //     match status {
+        //         RequestStatus::Completed => {
+        //             info!("Request LAUNCH_PROGRAM {} already processed, skipping", &job_id);
+        //             return Ok(());
+        //         }
+        //         RequestStatus::Failed => {
+        //             info!("Request LAUNCH_PROGRAM {} failed before, retrying", &job_id);
+        //         }
+        //         RequestStatus::Pending => {
+        //             info!("Request LAUNCH_PROGRAM {} is already pending, skipping", &job_id);
+        //             return Ok(());
+        //         }
+        //     }
+        // } else {
+        //     self.db
+        //         .insert_program_launched(&job_id, &request_value, &program_value)?;
+        // }
 
         // Look program param
 
@@ -346,6 +365,23 @@ impl ServiceProvider {
         // Backend endpoint
         // WASM program
         // Maybe other way to do it
+
+        // TODO check
+
+        // Send JOB_RESULT
+        let response_json = serde_json::to_string(&request_str)?;
+        println!("Response JSON: {:?}", response_json);
+
+        let job_result_event: Event = EventBuilder::job_result(*event, response_json, 0, None)
+            .unwrap()
+            .to_event(&self.prover_agent_keys)
+            .unwrap();
+
+        let event_id = self.nostr_client.send_event(job_result_event).await?;
+        info!(
+            "LAUNCH PROGRAM response published [{}]",
+            event_id.to_string()
+        );
         Ok(())
     }
 }
