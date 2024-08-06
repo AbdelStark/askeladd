@@ -34,13 +34,13 @@ export default function LaunchProgram() {
   const [claim, setClaim] = useState<number>(443693538);
   const [inputIndex, setInputsIndex] = useState(0)
   const [isOpenForm, setIsOpenForm] = useState(false)
-  const [formState, setForm] = useState({})
+  const [formState, setForm] = useState<any>({})
 
   const form = useMemo(() => {
     return formState
   }, [formState])
-  const [formType, setFormType] = useState({})
-  const [formEncrypted, setFormEncrypted] = useState({})
+  const [formType, setFormType] = useState<any>({})
+  const [formEncrypted, setFormEncrypted] = useState<any>({})
   const [programParam, setProgramParam] = useState<IProgramParams>({
     pubkey_app: undefined,
     event_id: undefined,
@@ -53,7 +53,7 @@ export default function LaunchProgram() {
   // Handle changes in form inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({
+    setForm((prev:any) => ({
       ...prev,
       [name]: value
     }));
@@ -63,7 +63,7 @@ export default function LaunchProgram() {
     //   [value]: false
     // }));
 
-    setFormType(prev => ({
+    setFormType((prev: any) => ({
       ...prev,
       [name]: "String"
     }));
@@ -75,7 +75,7 @@ export default function LaunchProgram() {
   // Handle changes in form inputs
   const handleInputType = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormType(prev => ({
+    setFormType((prev: any) => ({
       ...prev,
       [name]: value
     }));
@@ -85,7 +85,7 @@ export default function LaunchProgram() {
   // Handle changes in form inputs
   const handleInputEncrypted = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormEncrypted(prev => ({
+    setFormEncrypted((prev: any) => ({
       ...prev,
       [name]: value
     }));
@@ -257,12 +257,12 @@ export default function LaunchProgram() {
         let pubkey = await connectExtension()
 
         console.log("pubkey", pubkey)
-        if (!publicKey && !pubkey) return;
+        if (!pubkey) return;
         if (!content) return;
 
         let created_at = new Date().getTime();
         const event = await window.nostr.signEvent({
-          pubkey: publicKey ?? pubkey,
+          pubkey: pubkey,
           created_at: created_at,
           kind: KIND_JOB_ADD_PROGRAM,
           tags: tags,
