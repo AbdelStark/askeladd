@@ -116,7 +116,7 @@ export const useDVMState = () => {
      */
   const fetchEventsProof = async () => {
     console.log("fetch events job result proof")
-    console.log("last job request id",jobId)
+    console.log("last job request id", jobId)
     // if(jobEventResult && jobId)return;
     setIsFetchJob(false);
     setIsLoadingJobResult(true);
@@ -157,137 +157,123 @@ export const useDVMState = () => {
     setProofStatus("received");
     return proofSerialize
   }
-  
-  const submitJob = async (kind: number, form: any, zkp_request?: IGenerateZKPRequestDVM, tags_parents?:string[][], request?: any) => {
+
+  const submitJob = async (kind: number, form: any, zkp_request?: IGenerateZKPRequestDVM, tags_parents?: string[][], request?: any) => {
     try {
-        // setIsLoading(true);
-        // setIsFetchJob(false);
-        // setJobId(undefined)
-        // setProofStatus("pending");
-        // setProof(null);
-        // setJobEventResult(undefined);
-        // setError(undefined);
-        let tags: string[][] = tags_parents ?? []
-        console.log("tags parents", tags)
-        console.log("zkp_request parent", zkp_request)
+      // setIsLoading(true);
+      // setIsFetchJob(false);
+      // setJobId(undefined)
+      // setProofStatus("pending");
+      // setProof(null);
+      // setJobEventResult(undefined);
+      // setError(undefined);
+      let tags: string[][] = tags_parents ?? []
+      console.log("tags parents", tags)
+      console.log("zkp_request parent", zkp_request)
 
-        const inputs: Map<string, string> = zkp_request?.program?.inputs ?? new Map<string, string>();
-        if (zkp_request?.program?.inputs) {
-            Object.entries(zkp_request.program.inputs).map(([key, value]) => {
-                inputs.set(key, value as string)
-            }
-            )
-            for (let [key, value] of inputs) {
-                tags.push(["param", key, value])
-            }
-        } else if(form) {
-            Object.entries(form).map(([key, value]) => {
-                inputs.set(key, value as string)
-            }
-            )
-            for (let [key, value] of inputs) {
-                tags.push(["param", key, value])
-            }
+      const inputs: Map<string, string> = zkp_request?.program?.inputs ?? new Map<string, string>();
+      if (zkp_request?.program?.inputs) {
+        Object.entries(zkp_request.program.inputs).map(([key, value]) => {
+          inputs.set(key, value as string)
         }
-        tags.push(['output', 'text/json'])
-        console.log("tags", tags)
-
-        console.log("inputs", Object.fromEntries(inputs))
-        const content = JSON.stringify({
-            // request: form,
-            request: form ?? inputs,
-            // request: Object.fromEntries(inputs),
-            program: {
-                contract_name: zkp_request?.program?.contract_name,
-                internal_contract_name: zkp_request?.program?.internal_contract_name,
-                contract_reached: zkp_request?.program?.contract_reached,
-                inputs: Object.fromEntries(inputs),
-                // inputs:inputs,
-                inputs_types: undefined,
-                inputs_encrypted: undefined
-            }
-        })
-
-
-        // const content = JSON.stringify({
-        //     request: request,
-        //     program: {
-        //         // contract_name: "PoseidonProvingRequest",
-        //         // internal_contract_name: "PoseidonProvingRequest",
-        //         contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-        //         internal_contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-        //         // internal_contract_name: "PoseidonProvingRequest",
-
-        //         // contract_name:"FibonnacciProvingRequest",
-        //         // internal_contract_name:"FibonnacciProvingRequest",
-        //         contract_reached: "InternalAskeladd",
-        //         // inputs:JSON.stringify(Object.fromEntries(inputs)),
-        //         inputs: Object.fromEntries(inputs),
-        //         // inputs:tags 
-        //     }
-        // })
-        // Define the timestamp before which you want to fetch events
-        // setTimestampJob(new Date().getTime() / 1000)
-        //   setTimestampJob(new Date().getTime())
-        console.log("inputs", inputs)
-        console.log("content", content)
-        // return ;
-        const timestamp = new Date().getTime()
-        /** Use Nostr extension to send event */
-        const pool = new SimplePool();
-        const poolJob = new SimplePool();
-        const relay = await Relay.connect(ASKELADD_RELAY[0])
-        if (typeof window !== "undefined" && window.nostr) {
-
-            const pubkey = await window.nostr.getPublicKey();
-            console.log("pubkey", pubkey)
-            setPublicKey(pubkey)
-
-            let created_at = new Date().getTime();
-            // setPublicKey(pubkey)
-            const event = await window.nostr.signEvent({
-                pubkey: pubkey,
-                created_at: created_at,
-                kind: kind,
-                tags: tags,
-                content: content
-            }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
-            // Setup job request to fetch job id
-
-            /** @TODO why the event id is not return?
-             * - get the last event and fetch job_id event
-             * - check if events is sent with subscription
-             * 
-            */
-            // let eventID = await relay.publish(event as EventNostr);
-            const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as NostrEvent));
-            console.log("eventID", eventID[0])
-            await fetchJobRequest(timestamp, pubkey)
-            setIsWaitingJob(true);
-            // await timeoutWaitingForJobResult()
-
-        } else {
-
-            /** @TODO flow is user doesn't have NIP-07 extension */
-            // let { result, event } = await sendNote({ content, tags, kind: 5600 })
-            // console.log("event", event)
-            // if (event?.sig) {
-            //   setJobId(event?.sig);
-            // }
-            // setIsWaitingJob(true)
-            /** NDK event
-             * Generate or import private key after
-             */
+        )
+        for (let [key, value] of inputs) {
+          tags.push(["param", key, value])
         }
+      } else if (form) {
+        Object.entries(form).map(([key, value]) => {
+          inputs.set(key, value as string)
+        }
+        )
+        for (let [key, value] of inputs) {
+          tags.push(["param", key, value])
+        }
+      }
+      tags.push(['output', 'text/json'])
+      console.log("tags", tags)
+
+      console.log("inputs", Object.fromEntries(inputs))
+      const content = JSON.stringify({
+        // request: form,
+        request: form ?? inputs,
+        // request: Object.fromEntries(inputs),
+        program: {
+          contract_name: zkp_request?.program?.contract_name,
+          internal_contract_name: zkp_request?.program?.internal_contract_name,
+          contract_reached: zkp_request?.program?.contract_reached,
+          inputs: Object.fromEntries(inputs),
+          // inputs:inputs,
+          inputs_types: undefined,
+          inputs_encrypted: undefined
+        }
+      })
+
+      console.log("inputs", inputs)
+      console.log("content", content)
+      // return ;
+      const timestamp = new Date().getTime()
+      /** Use Nostr extension to send event */
+      const pool = new SimplePool();
+      const poolJob = new SimplePool();
+      const relay = await Relay.connect(ASKELADD_RELAY[0])
+      if (typeof window !== "undefined" && window.nostr) {
+
+        const pubkey = await window.nostr.getPublicKey();
+        console.log("pubkey", pubkey)
+        setPublicKey(pubkey)
+
+        let created_at = new Date().getTime();
+        // setPublicKey(pubkey)
+        const event = await window.nostr.signEvent({
+          pubkey: pubkey,
+          created_at: created_at,
+          kind: kind,
+          tags: tags,
+          content: content
+        }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
+        // Setup job request to fetch job id
+
+        /** @TODO why the event id is not return?
+         * - get the last event and fetch job_id event
+         * - check if events is sent with subscription
+         * 
+        */
+        // let eventID = await relay.publish(event as EventNostr);
+        const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as NostrEvent));
+        console.log("eventID", eventID[0])
+        await fetchJobRequest(timestamp, pubkey)
+        setIsWaitingJob(true);
+
+        return {
+          success: true,
+        };
+        // await timeoutWaitingForJobResult()
+
+      } else {
+
+        /** @TODO flow is user doesn't have NIP-07 extension */
+        // let { result, event } = await sendNote({ content, tags, kind: 5600 })
+        // console.log("event", event)
+        // if (event?.sig) {
+        //   setJobId(event?.sig);
+        // }
+        // setIsWaitingJob(true)
+        /** NDK event
+         * Generate or import private key after
+         */
+        return {
+          success: false,
+        };
+      }
     } catch (e) {
     } finally {
-        // setIsLoading(false);
+      // setIsLoading(false);
     }
 
-};
+  };
 
   return {
-    starkProof, proof, proofStatus,
+    starkProof, proof, proofStatus, setProof, setProofStatus,
     runSubscriptionEvent,
     fetchJobRequest,
     submitJob,
@@ -296,6 +282,6 @@ export const useDVMState = () => {
     jobId, eventIdRequest,
     isWaitingJob, setIsWaitingJob,
     publicKey, setPublicKey,
-    setIsLoadingJobResult
+    setIsLoadingJobResult,
   }
 };

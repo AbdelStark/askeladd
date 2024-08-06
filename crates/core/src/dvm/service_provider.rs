@@ -180,8 +180,19 @@ impl ServiceProvider {
         let job_id = event.id.to_string();
         // let tags = &event.tags;
         // let params = extract_params_from_tags(tags);
+        println!("event {:?}", event.content);
 
-        let zkp_request = ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
+        // let zkp_request =
+        // ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
+        let zkp_request =
+            match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
+                Ok(zkp) => zkp,
+                Err(e) => {
+                    println!("{:?}", e);
+                    return Err(e);
+                }
+            };
+        println!("zkp_request {:?}", zkp_request);
         // println!("request value {:?}", request_value);
         println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();

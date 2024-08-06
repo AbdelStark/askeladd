@@ -14,7 +14,7 @@ import { useDVMState } from "@/hooks/useDVMState";
 import { useSubmitJob } from "@/hooks/useSubmitJob";
 export default function Home() {
   const [log_n_instances, setLogNInstances] = useState<number>(0);
-  const [log_fibonnacci_size, setLogFibonnacciSize] = useState<number>(5);
+  const [log_fibonacci_size, setLogFibonacciSize] = useState<number>(5);
   const [publicKey, setPublicKey] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>()
   const [jobEventResult, setJobEventResult] = useState<EventNostr | undefined | NDKEvent>()
@@ -74,13 +74,13 @@ export default function Home() {
       setError(undefined);
       const tags = [
         ['param', 'log_n_instances', log_n_instances.toString()],
-        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
+        ['param', 'log_fibonacci_size', log_fibonacci_size.toString()],
         ['output', 'text/json']
       ];
 
       const tags_values = [
         ['param', 'log_n_instances', log_n_instances.toString()],
-        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
+        ['param', 'log_fibonacci_size', log_fibonacci_size.toString()],
       ];
 
 
@@ -94,11 +94,11 @@ export default function Home() {
       const zkp_request = {
         request: {
           log_n_instances: log_n_instances.toString(),
-          log_fibonnacci_size: log_fibonnacci_size.toString(),
+          log_fibonacci_size: log_fibonacci_size.toString(),
         },
         program: {
-          contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-          internal_contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest,
+          contract_name: ProgramInternalContractName.WideFibonacciProvingRequest.toString(),
+          internal_contract_name: ProgramInternalContractName.WideFibonacciProvingRequest,
           contract_reached: ContractUploadType.InternalAskeladd,
           inputs: inputs,
         }
@@ -106,7 +106,7 @@ export default function Home() {
 
       let res= await submitJobModular(5600, {
         log_n_instances,
-        log_fibonnacci_size
+        log_fibonacci_size
       },
         zkp_request,
         tags
@@ -132,11 +132,11 @@ export default function Home() {
         /** Change Wide fibo to default */
         const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
 
-        if (!log_n_instances && !log_fibonnacci_size && !serialised_proof_from_nostr_event) return;
-        const prove_result = stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances));
+        if (!log_n_instances && !log_fibonacci_size && !serialised_proof_from_nostr_event) return;
+        const prove_result = stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances));
         console.log("wide fibo prove_result", prove_result);
         console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-        const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
+        const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
@@ -171,13 +171,13 @@ export default function Home() {
           <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
 
             {/* <p>Prove poseidon</p> */}
-            <p>Wide Fibonnacci</p>
+            <p>Wide cci</p>
             <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Log Fibonnacci Size</label>
+              <label className="block mb-2 text-neon-pink">Log Fibonacci Size</label>
               <input
                 type="number"
-                value={log_fibonnacci_size}
-                onChange={(e) => setLogFibonnacciSize(Number(e.target.value))}
+                value={log_fibonacci_size}
+                onChange={(e) => setLogFibonacciSize(Number(e.target.value))}
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
             </div>

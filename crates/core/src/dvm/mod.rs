@@ -48,8 +48,8 @@ pub mod types {
     pub enum ProgramInternalContractName {
         FibonnacciProvingRequest,
         PoseidonProvingRequest,
-        WideFibonnaciProvingRequest,
-        MultiFibonnaciProvingRequest,
+        WideFibonacciProvingRequest,
+        MultiFibonacciProvingRequest,
         Custom(String),
     }
 
@@ -128,25 +128,25 @@ pub mod types {
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct FibonnacciProvingRequest {
+    pub struct FibonacciProvingRequest {
         pub log_size: u32,
         pub claim: u32,
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct MultiFibonnacciProvingRequest {
+    pub struct MultiFibonacciProvingRequest {
         pub log_sizes: Vec<u32>,
         pub claims: Vec<u32>,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct FibonnacciProvingResponse {
+    pub struct FibonacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
         pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
-    impl FibonnacciProvingResponse {
+    impl FibonacciProvingResponse {
         pub fn new(log_size: u32, claim: u32, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
             Self {
                 log_size,
@@ -156,7 +156,7 @@ pub mod types {
         }
     }
 
-    impl Clone for FibonnacciProvingResponse {
+    impl Clone for FibonacciProvingResponse {
         fn clone(&self) -> Self {
             // Temporarily use serde for a dirty clone
             // TODO: Implement a proper clone or find a better design that does not require cloning
@@ -172,13 +172,13 @@ pub mod types {
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct WideFibonnacciProvingRequest {
-        pub log_fibonnacci_size: u32,
+    pub struct WideFibonacciProvingRequest {
+        pub log_fibonacci_size: u32,
         pub log_n_instances: u32,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct WideFibonnacciProvingResponse {
+    pub struct WideFibonacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
         pub proof: StarkProof<Blake2sMerkleHasher>,

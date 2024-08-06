@@ -15,7 +15,7 @@ use stwo_prover::examples::wide_fibonacci::component::WideFibComponent;
 // use stwo_prover::core::fields::IntoSlice;
 use wasm_bindgen::prelude::*;
 
-use crate::fibonnaci::Fibonacci;
+use crate::fibonacci::Fibonacci;
 use crate::StwoResult;
 
 #[wasm_bindgen]

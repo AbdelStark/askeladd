@@ -6,7 +6,7 @@ use std::time::Duration;
 use askeladd::config::Settings;
 use askeladd::dvm::customer::{Customer, CustomerError};
 use askeladd::dvm::types::{
-    ContractUploadType, FibonnacciProvingRequest, GenerateZKPJobRequest, PoseidonProvingRequest,
+    ContractUploadType, FibonacciProvingRequest, GenerateZKPJobRequest, PoseidonProvingRequest,
     ProgramInternalContractName, ProgramParams,
 };
 use colored::*;
@@ -58,7 +58,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     map_inputs.insert("log_size".to_owned(), "5".to_owned());
     map_inputs.insert("claim".to_owned(), "443693538".to_owned());
     map_inputs.insert("output".to_owned(), "text/json".to_owned());
-    let req_value = serde_json::to_value(FibonnacciProvingRequest {
+    let req_value = serde_json::to_value(FibonacciProvingRequest {
         log_size: 5,
         claim: 443693538,
     })

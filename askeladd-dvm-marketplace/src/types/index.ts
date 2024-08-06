@@ -73,10 +73,10 @@ export enum ConfigHandle {
 }
 
 export enum ProgramInternalContractName {
-    FibonnacciProvingRequest = "FibonnacciProvingRequest",
+    FibonacciProvingRequest = "FibonacciProvingRequest",
     PoseidonProvingRequest = "PoseidonProvingRequest",
-    WideFibonnaciProvingRequest = "WideFibonnaciProvingRequest",
-    MultiFibonnacciProvingRequest = "MultiFibonnacciProvingRequest",
+    WideFibonacciProvingRequest = "WideFibonacciProvingRequest",
+    MultiFibonacciProvingRequest = "MultiFibonacciProvingRequest",
     Custom = "Custom"
 }
 
@@ -95,6 +95,8 @@ export interface IProgramParams {
 
     unique_id?: string;
     inputs?: Map<string, string>
+    inputs_types?: Map<string, string>
+    inputs_encrypted?: Map<string, string>
     contract_reached?: ContractUploadType,
     contract_name?: string;
     internal_contract_name?: ProgramInternalContractName

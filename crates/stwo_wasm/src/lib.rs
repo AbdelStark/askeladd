@@ -1,9 +1,9 @@
 // lib.rs
 pub mod poseidon;
-pub mod wide_fibonnacci;
+pub mod wide_fibonacci;
 // Deprecated program examples on the STWO
 // Recreate it internally
-pub mod fibonnaci;
+pub mod fibonacci;
 // pub mod multi_fibonacci;
 
 use poseidon::PoseidonStruct;

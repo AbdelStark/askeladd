@@ -13,34 +13,21 @@ import { Event as EventNostr, SimplePool } from "nostr-tools";
 import { PROGRAM_INTERAL_REQUEST } from "@/constants/program";
 import ProgramCard from "../components/ProgramCard";
 import InternalProgram from "../components/InternalProgram";
+import { useDVMState } from "@/hooks/useDVMState";
 export default function StwoProgramMarketplace() {
-  const [logSize, setLogSize] = useState<number>(5);
-  const [claim, setClaim] = useState<number>(443693538);
-  const [publicKey, setPublicKey] = useState<string | undefined>();
-  const [jobId, setJobId] = useState<string | undefined>();
-  const [error, setError] = useState<string | undefined>()
-  const [starkProof, setStarkProof] = useState<any | undefined>()
   const [jobEventResult, setJobEventResult] = useState<EventNostr | undefined | NDKEvent>()
   const [events, setEvents] = useState<EventNostr[] | NDKEvent[]>([])
-  const [selectedEvent, setSelectedEvent] = useState<EventNostr | undefined | NDKEvent>()
-  const [proofStatus, setProofStatus] = useState<
-    "idle" | "pending" | "received" | "verified"
-  >("idle");
-  const [proof, setProof] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFetchJob, setIsFetchJob] = useState(false);
   const [isLoadingJobResult, setIsLoadingJobResult] = useState(false);
   const [isWaitingJob, setIsWaitingJob] = useState(false);
-  const [timestampJob, setTimestampJob] = useState<number | undefined>();
 
   const [internalProgram, setInternalProgram] = useState<IGenerateZKPRequestDVM[]>(PROGRAM_INTERAL_REQUEST)
 
-  let eventIdRequest = useMemo(() => {
-    return jobId
-  }, [jobId])
   const { ndk, pool } = useNostrContext()
   const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
+  const {fetchEventsProof, jobId} = useDVMState()
   const { sendNote, publishNote } = useSendNote()
 
   // Init wasm module to run_fibonacci_verify
@@ -94,58 +81,10 @@ export default function StwoProgramMarketplace() {
     if (!events) return;
     let lastEvent = events[events?.length - 1]
     if (!lastEvent) return;
-    let id = jobId ?? eventIdRequest;
 
   }
 
-  /** TODO fetch subscribed event
-    * fix search jobId => check if relayer support NIP-50 
-    * Fetch Job result from the Prover
-     * - Tags: By reply of the event_id of the job request?
-     * - By author
-     * - Timestamp since/until (doesn't work as expected for me)
-     */
-  const fetchEventsProof = async () => {
-    console.log("fetch events job result proof")
-    // if(jobEventResult && jobId)return;
-    setIsFetchJob(false);
-    setIsLoadingJobResult(true);
-    const { events } = await fetchEventsTools({
-      kind: KIND_JOB_RESULT,
-      // kinds:[KIND_JOB_RESULT as NDKKind]
-      // since: timestampJob,
-      // search: jobId
-      // search: `#${jobId}`,
-    })
-    console.log("events job result", events);
-    if (!events) return;
-    let lastEvent = events[events?.length - 1]
-    if (!lastEvent) return;
-    let id = jobId ?? eventIdRequest;
-    if (jobEventResult && jobEventResult?.id == id && proof && proofStatus != "pending") return;
-    if (id && !jobEventResult) {
-      let jobEventResultFind = events?.find((e) => e?.content?.includes(id))
-      console.log("jobEventResultFind", jobEventResultFind);
-      if (jobEventResultFind?.id) {
-        console.log("Event JOB_RESULT find", jobEventResultFind);
-        getDataOfEvent(jobEventResultFind);
-        setJobEventResult(jobEventResultFind)
-      }
-    }
-  }
 
-  const getDataOfEvent = (lastEvent?: NDKEvent | EventNostr) => {
-    if (!lastEvent || !lastEvent?.content) return;
-    setSelectedEvent(lastEvent);
-    setProof(lastEvent?.content?.toString())
-    const jobProofSerialize: any = JSON.parse(lastEvent?.content)
-    console.log('jobProofSerialize serialize', jobProofSerialize);
-    const proofSerialize = jobProofSerialize?.response?.proof;
-    console.log('proof serialize', proofSerialize);
-    setStarkProof(proofSerialize);
-    setProofStatus("received");
-    return proofSerialize
-  }
 
   return (
     <main className="min-h-screen bg-black text-neon-green font-arcade p-4 pb-16 relative overflow-hidden">
@@ -171,11 +110,7 @@ export default function StwoProgramMarketplace() {
       <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
       <div>
         <div className="grid gap-3 flex md:grid-flow-row">      {events?.map((e, i) => {
-          console.log("e program", e)
-
           const p: IGenerateZKPRequestDVM = JSON.parse(e.content)
-          console.log("p", p)
-
           return (
             <ProgramCard key={i} zkp_request={p}></ProgramCard>
           )
