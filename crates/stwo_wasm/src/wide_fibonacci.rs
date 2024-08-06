@@ -61,10 +61,8 @@ impl WideFibStruct {
             .map(|i| Input {
                 a: m31::M31::from_u32_unchecked(i),
                 b: m31::M31::from_u32_unchecked(i),
-                // b: m31!(i),
             })
             .collect();
-        // let trace = wide_fib.get_trace();
         let trace = gen_trace(&self.air.component.clone(), private_input);
         let trace_domain = CanonicCoset::new(self.air.component.log_column_size());
         let trace = trace
@@ -73,9 +71,12 @@ impl WideFibStruct {
             .collect();
         let prover_channel =
             &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
-        // let res_proof = commit_and_prove::<CpuBackend>(&self.air, prover_channel, trace);
         let res_proof: Result<StarkProof<Blake2sMerkleHasher>, ProvingError> =
             commit_and_prove(&self.air, prover_channel, trace);
+        match res_proof {
+            Ok(r) => Ok(r),
+            Err(e) => Err(e),
+        }
         // let res_proof = prove(
         //     &self.air,
         //     prover_channel,
@@ -83,11 +84,6 @@ impl WideFibStruct {
         //     None,
         // )
         // .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
-
-        match res_proof {
-            Ok(r) => Ok(r),
-            Err(e) => Err(e),
-        }
         // res_proof
     }
 

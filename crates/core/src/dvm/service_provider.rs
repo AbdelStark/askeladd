@@ -178,12 +178,6 @@ impl ServiceProvider {
         info!("Proving request received [{}]", event.id);
 
         let job_id = event.id.to_string();
-        // let tags = &event.tags;
-        // let params = extract_params_from_tags(tags);
-        println!("event {:?}", event.content);
-
-        // let zkp_request =
-        // ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
         let zkp_request =
             match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
                 Ok(zkp) => zkp,
@@ -193,17 +187,12 @@ impl ServiceProvider {
                 }
             };
         println!("zkp_request {:?}", zkp_request);
-        // println!("request value {:?}", request_value);
-        println!("zkp_request {:?}", zkp_request);
         let params_program: Option<ProgramParams> = zkp_request.program.clone();
         let params_inputs;
-        // let mut successful_parses = HashMap::new();
-        // let mut successful_parses;
-
         // TODO Check strict if user have sent a good request
         if let Some(program_params) = params_program.clone() {
             println!("params_program {:?}", params_program);
-
+            
             let successful_parses = convert_inputs_to_run_program(program_params.inputs);
             // params_inputs = program_params.inputs.clone();
             params_inputs = successful_parses.clone();
@@ -212,27 +201,8 @@ impl ServiceProvider {
             println!("program_params {:?}", params_program);
         }
 
-        // for (key, value) in params_inputs.into_iter() {
-        //     println!("{} / {}", key, value);
-        //     let tag = Tag::parse(&["param", &key.to_owned(), &value.to_owned()]);
-        //     tags.push(tag.unwrap())
-        //     // map.remove(key);
-        // }
-
-        // let log_size = params
-        //     .get("log_size")
-        //     .and_then(|s| s.parse::<u32>().ok())
-        //     .unwrap();
-        // let claim = params
-        //     .get("claim")
-        //     .and_then(|s| s.parse::<u32>().ok())
-        //     .unwrap();
-
-        // let request = FibonnacciProvingRequest { log_size, claim };
         let request_str = serde_json::to_string(&zkp_request.request).unwrap();
-        // let request_str = serde_json::to_string(&request).unwrap();
         let request_value = serde_json::from_str(&request_str).unwrap();
-
         println!("request_str {:?}", request_str);
 
         if let Some(status) = self.db.get_request_status(&job_id)? {
@@ -266,7 +236,6 @@ impl ServiceProvider {
                 let job_result = GenerateZKPJobResult {
                     job_id: job_id.clone(),
                     response: value_answer,
-                    // response:serde_json::from_value(response.clone()).unwrap(),
                     proof: response.proof,
                 };
 
@@ -310,7 +279,6 @@ impl ServiceProvider {
         event: Box<Event>,
     ) -> Result<(), ServiceProviderError> {
         info!("LAUNCH_PROGRAM request received [{}]", event.id);
-
         let job_id = event.id.to_string();
         println!("job_id {:?}", job_id);
 
@@ -318,19 +286,9 @@ impl ServiceProvider {
         let params = extract_params_from_tags(tags);
 
         println!("params {:?}", params);
-
-        println!("event {:?}", event.content);
-
-        // Deserialze content
-        // let zkp_request =
-        // ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned())?;
-        // let params_program: Option<ProgramParams> = zkp_request.program.clone();
-        // println!("zkp_request {:?}", zkp_request);
-
         // Request on the content
         // Check request of the launch_program
         let request_str = serde_json::to_string(&event.content).unwrap();
-        // let request_str = serde_json::to_string(&zkp_request.request).unwrap();
         let request_value: Value = serde_json::from_str(&request_str).unwrap();
         println!("request_value {:?}", request_value);
 
@@ -339,6 +297,7 @@ impl ServiceProvider {
         let program_value: Value = serde_json::from_str(&request_str).unwrap();
         println!("program_value {:?}", program_value);
 
+        // Deserialze content
         let zkp_request =
             match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
                 Ok(zkp) => zkp,

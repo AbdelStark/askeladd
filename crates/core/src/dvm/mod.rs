@@ -66,8 +66,7 @@ pub mod types {
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
         pub tags: Option<Vec<Tag>>,
-        // For External program
-        // pub endpoint:Option<String>,
+        // todo config payment and minimal sats
     }
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +79,6 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize)]
     pub struct GenerateZKPJobResult {
         pub job_id: String,
-        // pub response: T,
         pub response: serde_json::Value,
         pub proof: StarkProof<Blake2sMerkleHasher>,
     }
@@ -98,8 +96,6 @@ pub mod types {
             }
         }
     }
-
-    /// Generic type for proving response
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct GenericProvingResponse {
@@ -187,8 +183,6 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct PoseidonProvingRequest {
         pub log_n_instances: u32,
-        // pub lookup_elements: stwo_prover::constraint_framework::logup::LookupElements,
-        // pub claimed_sum: stwo_prover::core::fields::qm31::SecureField,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
