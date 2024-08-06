@@ -10,7 +10,7 @@ program_map_fibo.set("1","claim")
 
 const program_map_wide_fibo= new Map<string,string>()
 
-program_map_wide_fibo.set("0","log_fibonacci_size")
+program_map_wide_fibo.set("0","log_fibonnacci_size")
 program_map_wide_fibo.set("1","log_n_instances")
 
 
