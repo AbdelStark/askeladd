@@ -87,8 +87,7 @@ impl Customer {
         if let Some(p) = program {
             if let Some(inputs) = p.inputs {
                 params_inputs = inputs;
-            }
-            else {
+            } else {
                 let successful_parses = extract_params_from_tags(&tags);
                 // let inputs_values:HashMap<String,Value>= successful_parses
                 //     .into_iter()
