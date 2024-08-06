@@ -12,7 +12,7 @@ interface TagsCardProps {
     zkp_request?: IGenerateZKPRequestDVM
 }
 const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
-    console.log("zkp_request config", zkp_request)
+    // console.log("zkp_request config", zkp_request)
     const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
     const { ndk, pool } = useNostrContext()
     const inputs = zkp_request?.program?.inputs
@@ -21,7 +21,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
     const [requestTemplate, setRequestTemplate] = useState<any>(zkp_request?.request ? zkp_request?.request : inputs ? Object.fromEntries(inputs) : {})
     // const [requestValue, setRequetValue] = useState(inputs ? inputs Object.fromEntries(inputs) : {})
     const [requestValue, setRequetValue] = useState<any>(inputs ? inputs : {})
-
     const [isOpenForm, setIsOpenForm] = useState(false)
     const [logSize, setLogSize] = useState<number>(5);
     const [claim, setClaim] = useState<number>(443693538);
@@ -46,8 +45,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
 
     const program = zkp_request?.program;
     const contract_reached = zkp_request?.program?.contract_reached;
-    console.log("program", program)
-    console.log("contract_reached", contract_reached)
     let eventIdRequest = useMemo(() => {
         return jobId
     }, [jobId])
@@ -64,94 +61,94 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
 
     useEffect(() => {
         // const pool = new SimplePool();
-        if (pool) {
-            runSubscriptionEvent(pool)
-        }
+        // if (pool) {
+        //     runSubscriptionEvent(pool)
+        // }
         if (!jobId && !jobEventResult) {
             timeoutWaitingForJobResult()
         }
     }, [jobId, jobEventResult, pool])
 
 
-    const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
+    // const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
 
-        // WebSocket connection setup
-        // const ws = new WebSocket([ASKELADD_RELAY[0]]);  // Replace with your Nostr relay URL
+    //     // WebSocket connection setup
+    //     // const ws = new WebSocket([ASKELADD_RELAY[0]]);  // Replace with your Nostr relay URL
 
-        // ws.onopen = () => {
-        //     // Subscribe to specific events, adjust filters as needed
-        //     ws.send(JSON.stringify({
-        //         "req": "EVENTS",
-        //         // "filter": {
-        //         //     "#e": ["3a5f5b4..."]  // Your event criteria here
-        //         // }
-        //     }));
-        // };
+    //     // ws.onopen = () => {
+    //     //     // Subscribe to specific events, adjust filters as needed
+    //     //     ws.send(JSON.stringify({
+    //     //         "req": "EVENTS",
+    //     //         // "filter": {
+    //     //         //     "#e": ["3a5f5b4..."]  // Your event criteria here
+    //     //         // }
+    //     //     }));
+    //     // };
 
-        // ws.onmessage = (event) => {
-        //     const data = JSON.parse(event.data);
-        //     if (data) {
-        //         if (!jobId) return;
-        //         if (pubkey && data?.pubkey == pubkey) {
-        //             setJobId(data?.id)
-        //         }
-        //         // setEvents(currentEvents => [...currentEvents, data]);
-        //     }
-        // };
+    //     // ws.onmessage = (event) => {
+    //     //     const data = JSON.parse(event.data);
+    //     //     if (data) {
+    //     //         if (!jobId) return;
+    //     //         if (pubkey && data?.pubkey == pubkey) {
+    //     //             setJobId(data?.id)
+    //     //         }
+    //     //         // setEvents(currentEvents => [...currentEvents, data]);
+    //     //     }
+    //     // };
 
-        // ws.onerror = (error) => {
-        //     console.error("WebSocket error:", error);
-        // };
+    //     // ws.onerror = (error) => {
+    //     //     console.error("WebSocket error:", error);
+    //     // };
 
-        let poolSubscription = pool.subscribeMany(
-            ASKELADD_RELAY,
-            [
-                // {
-                //   kinds: [KIND_JOB_REQUEST as NDKKind],
-                //   // since:timestampJob
-                //   // authors: pubkey ? [pubkey] : []
-                // },
-                {
-                    kinds: [KIND_JOB_RESULT as NDKKind],
-                    // since:timestampJob
-                },
-            ],
-            {
-                onevent(event) {
-                    //   if (event?.kind == KIND_JOB_REQUEST) {
-                    //     if (!jobId) return;
-                    //     if (pubkey && event?.pubkey == pubkey) {
-                    //       setJobId(event?.id)
-                    //     }
-                    //     poolSubscription.close();
-                    //   }
-                    if (event?.kind == KIND_JOB_RESULT) {
-                        if (!jobId) return;
-                        let id = jobId ?? eventIdRequest;
-                        if (id && !jobEventResult) {
-                            console.log("Event job result received: ", event?.id);
-                            console.log("event job content result include job: ", id);
-                            let isIncludedJobId = event?.content?.includes(jobId)
-                            let jobEventResultFind = event?.content?.includes(jobId)
-                            console.log("isIncludedJobId", isIncludedJobId);
-                            if (isIncludedJobId) {
-                                console.log("Event JOB_RESULT find", jobEventResultFind);
-                                getDataOfEvent(event);
-                                setJobEventResult(event)
-                            }
-                        }
-                        poolSubscription.close();
-                    }
-                },
-                onclose: () => {
-                    poolSubscription.close()
-                },
-                oneose() {
-                    poolSubscription.close()
-                }
-            }
-        )
-    }
+    //     let poolSubscription = pool.subscribeMany(
+    //         ASKELADD_RELAY,
+    //         [
+    //             // {
+    //             //   kinds: [KIND_JOB_REQUEST as NDKKind],
+    //             //   // since:timestampJob
+    //             //   // authors: pubkey ? [pubkey] : []
+    //             // },
+    //             {
+    //                 kinds: [KIND_JOB_RESULT as NDKKind],
+    //                 // since:timestampJob
+    //             },
+    //         ],
+    //         {
+    //             onevent(event) {
+    //                 //   if (event?.kind == KIND_JOB_REQUEST) {
+    //                 //     if (!jobId) return;
+    //                 //     if (pubkey && event?.pubkey == pubkey) {
+    //                 //       setJobId(event?.id)
+    //                 //     }
+    //                 //     poolSubscription.close();
+    //                 //   }
+    //                 if (event?.kind == KIND_JOB_RESULT) {
+    //                     if (!jobId) return;
+    //                     let id = jobId ?? eventIdRequest;
+    //                     if (id && !jobEventResult) {
+    //                         console.log("Event job result received: ", event?.id);
+    //                         console.log("event job content result include job: ", id);
+    //                         let isIncludedJobId = event?.content?.includes(jobId)
+    //                         let jobEventResultFind = event?.content?.includes(jobId)
+    //                         console.log("isIncludedJobId", isIncludedJobId);
+    //                         if (isIncludedJobId) {
+    //                             console.log("Event JOB_RESULT find", jobEventResultFind);
+    //                             getDataOfEvent(event);
+    //                             setJobEventResult(event)
+    //                         }
+    //                     }
+    //                     poolSubscription.close();
+    //                 }
+    //             },
+    //             onclose: () => {
+    //                 poolSubscription.close()
+    //             },
+    //             oneose() {
+    //                 poolSubscription.close()
+    //             }
+    //         }
+    //     )
+    // }
 
 
     const timeoutWaitingForJobResult = async () => {
@@ -416,9 +413,6 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
 
     const date: string | undefined = event?.created_at ? new Date(event?.created_at).toDateString() : undefined
     const params = zkp_request?.program?.inputs ?? []
-    console.log("params", params)
-    console.log("program?.program?.inputs", zkp_request?.program?.inputs)
-
     // Handle changes in form inputs
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -472,7 +466,7 @@ const ProgramCard: React.FC<TagsCardProps> = ({ event, zkp_request }) => {
                                 <input
 
                                     className='text-black'
-                                    name={String(e?.[1])}
+                                    name={String(e?.[0])}
                                     onChange={handleChange}
                                 ></input>
                             </div>

@@ -56,6 +56,7 @@ export default function StwoProgramMarketplace() {
   /** Effect to fetch the job result when a job request is sent */
   const waitingForJobResult = async () => {
     if (jobEventResult && jobId) return;
+    if(!jobId) return;
     fetchEventsProof()
     setIsLoading(false);
     setIsWaitingJob(false)
@@ -169,7 +170,7 @@ export default function StwoProgramMarketplace() {
       </div>
       <button className="secondary-button" onClick={fetchPrograms}>Load programs</button>
       <div>
-        <div className="gap-3 flex">      {events?.map((e, i) => {
+        <div className="grid gap-3 flex md:grid-flow-row">      {events?.map((e, i) => {
           console.log("e program", e)
 
           const p: IGenerateZKPRequestDVM = JSON.parse(e.content)
