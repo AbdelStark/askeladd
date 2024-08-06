@@ -1,3 +1,5 @@
+use crate::StwoResult;
+
 // mod.rs fibonnaci
 use self::component::FibonacciComponent;
 pub mod air;
@@ -6,7 +8,7 @@ pub mod multi_fibonacci;
 
 use air::FibonacciAir;
 use num_traits::One;
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
 use stwo_prover::core::backend::CpuBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
@@ -50,26 +52,6 @@ extern "C" {
 macro_rules! console_log {
     // Note that this is using the `log` function imported above
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-#[derive(Serialize, Deserialize)]
-#[wasm_bindgen]
-pub struct StwoResult {
-    success: bool,
-    message: String,
-}
-
-#[wasm_bindgen]
-impl StwoResult {
-    #[wasm_bindgen(getter)]
-    pub fn success(&self) -> bool {
-        self.success
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn message(&self) -> String {
-        self.message.clone()
-    }
 }
 
 #[derive(Clone)]
@@ -182,7 +164,7 @@ impl Fibonacci {
 }
 
 #[wasm_bindgen]
-pub fn prove_and_verify(log_size: u32, claim: u32) -> StwoResult {
+pub fn prove_and_verify_fib(log_size: u32, claim: u32) -> StwoResult {
     console_log!(
         "Starting prove_and_verify with log_size: {}, claim: {}",
         log_size,
@@ -224,7 +206,7 @@ pub fn prove_and_verify(log_size: u32, claim: u32) -> StwoResult {
 }
 
 #[wasm_bindgen]
-pub fn verify_stark_proof(log_size: u32, claim: u32, stark_proof_str: &str) -> StwoResult {
+pub fn verify_stark_proof_fib(log_size: u32, claim: u32, stark_proof_str: &str) -> StwoResult {
     console_log!(
         "Starting verify_stark_proof with log_size: {}, claim: {}",
         log_size,
