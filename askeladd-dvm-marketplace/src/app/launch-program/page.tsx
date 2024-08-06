@@ -53,7 +53,7 @@ export default function LaunchProgram() {
   // Handle changes in form inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm((prev:any) => ({
+    setForm((prev: any) => ({
       ...prev,
       [name]: value
     }));
@@ -235,15 +235,16 @@ export default function LaunchProgram() {
       }
 
       const content = JSON.stringify({
-        request: {...form},
+        // request: form as any,
+        request: form,
         program: {
           contract_name: programParam?.contract_name ?? "test",
           // internal_contract_name: programParam?.internal_contract_name ?? "test",
           contract_reached: programParam?.contract_reached ?? ContractUploadType.Ipfs,
           inputs: Object.fromEntries(inputs),
-          inputs_types: undefined,
-          inputs_encrypted: Object.fromEntries(inputs_encrypted),
-          tags:tags
+          // inputs_types: Object.fromEntries(inputs),
+          // inputs_encrypted: Object.fromEntries(inputs_encrypted),
+          // tags: tags
         }
       })
 
@@ -298,6 +299,14 @@ export default function LaunchProgram() {
   const handleLoadFormEncrypted = () => {
     console.log("form load key")
     Object.entries(form).map(([key, value]) => {
+      setFormEncrypted({ ...formEncrypted, [value as string]: false })
+    }
+    )
+
+  }
+
+  const handleAllInputsEncrypted = () => {
+    Object.entries(form).map(([key, value]) => {
       setFormEncrypted({ ...formEncrypted, [value as string]: true })
     }
     )
@@ -349,17 +358,17 @@ export default function LaunchProgram() {
                         onChange={handleChange}
                       ></input>
                       <button
-                      
-                      className="p-1"
-                      onClick={() => {
-                        const { [key]: removeKey, ...newObject } = form;
-                        setForm({ ...newObject })
-                        setInputsIndex(inputIndex-1)
-                        const { [key]:removeKeyEncrypted, ...newFormEncrypted } = formEncrypted;
 
-                        setFormEncrypted({ ...newFormEncrypted })
+                        className="p-1"
+                        onClick={() => {
+                          const { [key]: removeKey, ...newObject } = form;
+                          setForm({ ...newObject })
+                          setInputsIndex(inputIndex - 1)
+                          const { [key]: removeKeyEncrypted, ...newFormEncrypted } = formEncrypted;
 
-                      }}>X</button>
+                          setFormEncrypted({ ...newFormEncrypted })
+
+                        }}>X</button>
                     </div>
 
                   </div>
