@@ -7,7 +7,6 @@ pub mod multi_fibonacci;
 
 use air::FibonacciAir;
 use num_traits::One;
-// use serde::{Deserialize, Serialize};
 use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
 use stwo_prover::core::backend::CpuBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
@@ -31,14 +30,7 @@ use stwo_prover::trace_generation::{
     // commit_and_prove,
     commit_and_verify,
 };
-// use stwo_prover::core::pcs::{ CommitmentSchemeVerifier};
-
-// use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
 use wasm_bindgen::prelude::*;
-
-// use num_traits::One;
-
-// use self::air::{FibonacciAir, MultiFibonacciAir};
 
 #[wasm_bindgen]
 extern "C" {
@@ -91,26 +83,18 @@ impl Fibonacci {
     }
 
     pub fn prove(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
-        println!("channel");
-
         let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[self
             .component
             .claim])));
-        println!("twiddles");
 
         let twiddles = CpuBackend::precompute_twiddles(
             CanonicCoset::new(self.component.log_size)
                 .circle_domain()
                 .half_coset,
         );
-        println!("commitment_scheme");
 
         let commitment_scheme = &mut CommitmentSchemeProver::new(LOG_BLOWUP_FACTOR, &twiddles);
-        println!("get trace");
-
         // let trace = self.get_trace();
-
-        println!("trace_domain");
         // let trace_domain = CanonicCoset::new(self.component.log_size, self.component.claim);
 
         // let trace = trace

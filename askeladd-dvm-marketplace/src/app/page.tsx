@@ -1,49 +1,26 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
-import { useNostrContext } from "@/context/NostrContext";
-import { useSendNote } from "@/hooks/useSendNote";
-import { JobResultProver, KIND_JOB_REQUEST, KIND_JOB_RESULT, ProgramInternalContractName } from "@/types";
-import init, { verify_stark_proof, prove_and_verify, prove_and_verify_fib, verify_stark_proof_fib, stark_proof_wide_fibo, verify_stark_proof_wide_fibo } from "../pkg/stwo_wasm";
-import { useFetchEvents } from "@/hooks/useFetchEvents";
-import { ASKELADD_RELAY } from "@/constants/relay";
-import { Relay } from 'nostr-tools/relay';
-import { Event as EventNostr, SimplePool } from "nostr-tools";
+import { NDKEvent } from '@nostr-dev-kit/ndk';
+import { ContractUploadType, ProgramInternalContractName } from "@/types";
+import init, { stark_proof_wide_fibo, verify_stark_proof_wide_fibo } from "../pkg/stwo_wasm";
+import { Event as EventNostr } from "nostr-tools";
+import { useDVMState } from "@/hooks/useDVMState";
 export default function Home() {
   const [log_n_instances, setLogNInstances] = useState<number>(0);
-  const [log_fibonnacci_size, setLogFibonnacciSize] = useState<number>(5);
-  const [logSize, setLogSize] = useState<number>(5);
-  const [claim, setClaim] = useState<number>(443693538);
-  const [publicKey, setPublicKey] = useState<string | undefined>();
-  const [jobId, setJobId] = useState<string | undefined>();
-  // const [jobId, setJobId] = useState<string | undefined>("78e3026c35d08ab8345b4efa49e0fe27c74f3849589720e01286cda69c36cc39");
-  // Event ID test : "f708c6ba3c078a364ef7d5222310c14288841a63956b10186959b48e3284c4bb"
-  // 191ade3aa99bdbb7d6781e1149cf0ec4205db1ac097df9f83a6d7a10d88712c0
+  const [log_fibonacci_size, setLogFibonacciSize] = useState<number>(5);
   const [error, setError] = useState<string | undefined>()
-  const [starkProof, setStarkProof] = useState<any | undefined>()
   const [jobEventResult, setJobEventResult] = useState<EventNostr | undefined | NDKEvent>()
-  // const [starkProof, setStarkProof] = useState<StarkProof | undefined>()
-  const [events, setEvents] = useState<EventNostr[] | NDKEvent[]>([])
-  const [selectedEvent, setSelectedEvent] = useState<EventNostr | undefined | NDKEvent>()
   const [proofStatus, setProofStatus] = useState<
     "idle" | "pending" | "received" | "verified"
   >("idle");
-  const [proof, setProof] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isFetchJob, setIsFetchJob] = useState(false);
-  const [isLoadingJobResult, setIsLoadingJobResult] = useState(false);
-  const [isWaitingJob, setIsWaitingJob] = useState(false);
-  const [timestampJob, setTimestampJob] = useState<number | undefined>();
-
-  let eventIdRequest = useMemo(() => {
-    return jobId
-  }, [jobId])
-  const { ndk, pool } = useNostrContext()
-  const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
-  const { sendNote, publishNote } = useSendNote()
-
+  const { eventIdRequest, jobId, setJobId, setIsWaitingJob, fetchJobRequest, proof, fetchEventsProof,
+    starkProof,
+    submitJob: submitJobModular,
+    publicKey } = useDVMState()
   // Init wasm module to run_fibonacci_verify
   useEffect(() => {
     init()
@@ -75,49 +52,6 @@ export default function Home() {
     }
   }, [jobId, isFetchJob, jobEventResult])
 
-  const runSubscriptionEvent = (pool: SimplePool, pubkey?: string) => {
-    let poolRequest = pool.subscribeMany(
-      ASKELADD_RELAY,
-      [
-        {
-          kinds: [KIND_JOB_REQUEST as NDKKind],
-          // since:timestampJob
-          // authors: pubkey ? [pubkey] : []
-        },
-        {
-          kinds: [KIND_JOB_RESULT as NDKKind],
-          // since:timestampJob
-        },
-      ],
-      {
-        onevent(event) {
-          if (event?.kind == KIND_JOB_REQUEST) {
-            console.log("Event job request received: ", event?.id);
-            if (!jobId) return;
-            if (pubkey && event?.pubkey == pubkey) {
-              setJobId(event?.id)
-            }
-            poolRequest.close();
-
-          }
-          if (event?.kind == KIND_JOB_RESULT) {
-            console.log("Event job request received: ", event?.id);
-            if (!jobId) return;
-            if (pubkey && event?.pubkey == pubkey) {
-              setJobId(event?.id)
-            }
-            poolRequest.close();
-          }
-        },
-        onclose: () => {
-          poolRequest.close()
-        },
-        oneose() {
-          poolRequest.close()
-        }
-      }
-    )
-  }
 
   /** Submit job with JOB_REQUEST 5600
    * - Use extension NIP-7
@@ -130,26 +64,17 @@ export default function Home() {
       setIsFetchJob(false);
       setJobId(undefined)
       setProofStatus("pending");
-      setProof(null);
       setJobEventResult(undefined);
       setError(undefined);
       const tags = [
         ['param', 'log_n_instances', log_n_instances.toString()],
-        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
+        ['param', 'log_fibonacci_size', log_fibonacci_size.toString()],
         ['output', 'text/json']
       ];
-      // const tags = [
-      //   ['param', 'log_size', logSize.toString()],
-      //   ['param', 'claim', claim.toString()],
-      //   ['output', 'text/json']
-      // ];
 
       const tags_values = [
         ['param', 'log_n_instances', log_n_instances.toString()],
-        ['param', 'log_fibonnacci_size', log_fibonnacci_size.toString()],
-        // ['param', 'claim', claim.toString()],
-        // ['param', 'log_size', logSize.toString()],
-        // ['param', 'claim', claim.toString()],
+        ['param', 'log_fibonacci_size', log_fibonacci_size.toString()],
       ];
 
 
@@ -158,80 +83,33 @@ export default function Home() {
       for (let tag of tags_values) {
         inputs.set(tag[1], tag[2])
       }
-      console.log("inputs", Object.fromEntries(inputs))
+      console.log("parent inputs", Object.fromEntries(inputs))
 
-      const content = JSON.stringify({
+      const zkp_request = {
         request: {
-          // log_size: logSize.toString(),
           log_n_instances: log_n_instances.toString(),
-          log_fibonnacci_size: log_fibonnacci_size.toString(),
-          // claim: claim.toString()
+          log_fibonacci_size: log_fibonacci_size.toString(),
         },
         program: {
-          // contract_name: "PoseidonProvingRequest",
-          // internal_contract_name: "PoseidonProvingRequest",
-          contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-          internal_contract_name: ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-          // internal_contract_name: "PoseidonProvingRequest",
-
-          // contract_name:"FibonnacciProvingRequest",
-          // internal_contract_name:"FibonnacciProvingRequest",
-          contract_reached: "InternalAskeladd",
-          // inputs:JSON.stringify(Object.fromEntries(inputs)),
-          inputs: Object.fromEntries(inputs),
-          // inputs:tags 
+          contract_name: ProgramInternalContractName.WideFibonacciProvingRequest.toString(),
+          internal_contract_name: ProgramInternalContractName.WideFibonacciProvingRequest,
+          contract_reached: ContractUploadType.InternalAskeladd,
+          inputs: inputs,
         }
-      })
-      // Define the timestamp before which you want to fetch events
-      // setTimestampJob(new Date().getTime() / 1000)
-      setTimestampJob(new Date().getTime())
-      console.log("inputs", inputs)
-      console.log("content", content)
-      // return ;
-      /** Use Nostr extension to send event */
-      const pool = new SimplePool();
-      const poolJob = new SimplePool();
-      const relay = await Relay.connect(ASKELADD_RELAY[0])
-      if (typeof window !== "undefined" && window.nostr) {
-
-        const pubkey = await window.nostr.getPublicKey();
-        console.log("pubkey",pubkey)
-        let created_at = new Date().getTime();
-        setPublicKey(pubkey)
-        const event = await window.nostr.signEvent({
-          pubkey: pubkey,
-          created_at: created_at,
-          kind: 5600,
-          tags: tags,
-          content: content
-        }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
-        // Setup job request to fetch job id
-
-        /** @TODO why the event id is not return?
-         * - get the last event and fetch job_id event
-         * - check if events is sent with subscription
-         * 
-        */
-        // let eventID = await relay.publish(event as EventNostr);
-        const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
-        console.log("eventID", eventID[0])
-        await fetchJobRequest(pubkey)
-        setIsWaitingJob(true);
-        await timeoutWaitingForJobResult()
-
-      } else {
-
-        /** @TODO flow is user doesn't have NIP-07 extension */
-        // let { result, event } = await sendNote({ content, tags, kind: 5600 })
-        // console.log("event", event)
-        // if (event?.sig) {
-        //   setJobId(event?.sig);
-        // }
-        // setIsWaitingJob(true)
-        /** NDK event
-         * Generate or import private key after
-         */
       }
+
+      let res = await submitJobModular(5600, {
+        log_n_instances,
+        log_fibonacci_size
+      },
+        zkp_request,
+        tags
+
+      )
+      fetchJobRequest(undefined, publicKey)
+      waitingForJobResult()
+      timeoutWaitingForJobResult()
+
     } catch (e) {
     } finally {
       setIsLoading(false);
@@ -239,113 +117,17 @@ export default function Home() {
 
   };
 
-  /** TODO fetch subscribed event
- * fix search jobId => check if relayer support NIP-50 
- * Fetch Job result from the Prover
- * - Tags: By reply of the event_id of the job request?
- * - By author
- * - Timestamp since/until (doesn't work as expected for me)
-*/
-  const fetchJobRequest = async (pubkey?: string) => {
-
-    const { events } = await fetchEventsTools({
-      kind: KIND_JOB_REQUEST,
-      since: timestampJob,
-      // authors: pubkey ? [pubkey] : []
-    });
-    console.log("events job request", events);
-    if (!events) return;
-    // const lastEvent = events[events?.length - 1]
-    const lastEvent = events[0]
-    if (!lastEvent?.id) return;
-    const lastEventId = lastEvent?.id;
-    if (pubkey && pubkey == lastEvent?.pubkey) {
-      console.log("lastEventId", lastEventId)
-      setJobId(lastEventId);
-      eventIdRequest = lastEventId;
-      setIsWaitingJob(true)
-    }
-
-  }
-
-
-  /** TODO fetch subscribed event
-    * fix search jobId => check if relayer support NIP-50 
-    * Fetch Job result from the Prover
-     * - Tags: By reply of the event_id of the job request?
-     * - By author
-     * - Timestamp since/until (doesn't work as expected for me)
-     */
-  const fetchEventsProof = async () => {
-    console.log("fetch events job result proof")
-    // if(jobEventResult && jobId)return;
-    setIsFetchJob(false);
-    setIsLoadingJobResult(true);
-    const { events } = await fetchEventsTools({
-      kind: KIND_JOB_RESULT,
-      // since: timestampJob,
-      // search: jobId
-      // search: `#${jobId}`,
-    })
-    console.log("events job result", events);
-    if (!events) return;
-    let lastEvent = events[events?.length - 1]
-    if (!lastEvent) return;
-    let id = jobId ?? eventIdRequest;
-    if (jobEventResult && jobEventResult?.id == id && proof && proofStatus != "pending") return;
-    if (id && !jobEventResult) {
-      let jobEventResultFind = events?.find((e) => e?.content?.includes(id))
-      console.log("jobEventResultFind", jobEventResultFind);
-      let filterJob = events?.filter((e) => e?.id?.includes(id))
-      console.log("filterJob", filterJob);
-      if (jobEventResultFind?.id) {
-        console.log("Event JOB_RESULT find", jobEventResultFind);
-        getDataOfEvent(jobEventResultFind);
-        setJobEventResult(jobEventResultFind)
-      }
-    }
-  }
-
-  const getDataOfEvent = (lastEvent?: NDKEvent | EventNostr) => {
-    if (!lastEvent || !lastEvent?.content) return;
-    setSelectedEvent(lastEvent);
-    setProof(lastEvent?.content?.toString())
-    const jobProofSerialize: any = JSON.parse(lastEvent?.content)
-    console.log('jobProofSerialize serialize', jobProofSerialize);
-    const proofSerialize = jobProofSerialize?.response?.proof;
-    console.log('proof serialize', proofSerialize);
-    setStarkProof(proofSerialize);
-    setProofStatus("received");
-    return proofSerialize
-  }
-
   const verifyProofHandler = async () => {
     try {
       if (proof) {
         setIsLoading(true);
-
-        /** Change Poseidon to default */
-        // const prove_result = prove_and_verify(log_n_instances);
-        // console.log("prove_result", prove_result);
-        // const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
-        // console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-        // const verify_result = verify_stark_proof(logSize, serialised_proof_from_nostr_event);
-        // console.log("verify result", verify_result);
-        // console.log("verify message", verify_result.message);
-        // console.log("verify success", verify_result.success);
-        // if (verify_result?.success) {
-        //   console.log("is success verify result")
-        //   setProofStatus("verified");
-        // } else {
-        //   setError(verify_result?.message)
-        // }
-
-        if (!log_n_instances && !log_fibonnacci_size) return;
-        const prove_result = stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances));
-        console.log("wide fibo prove_result", prove_result);
+        /** Change Wide fibo to default */
         const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
+        if (!log_n_instances && !log_fibonacci_size && !serialised_proof_from_nostr_event) return;
+        const prove_result = stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances));
+        console.log("wide fibo prove_result", prove_result);
         console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-        const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonnacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
+        const verify_result = verify_stark_proof_wide_fibo(Number(log_fibonacci_size), Number(log_n_instances), serialised_proof_from_nostr_event);
         console.log("verify result", verify_result);
         console.log("verify message", verify_result.message);
         console.log("verify success", verify_result.success);
@@ -355,23 +137,6 @@ export default function Home() {
         } else {
           setError(verify_result?.message)
         }
-
-        /** FIB default */
-        // const prove_result = prove_and_verify_fib(logSize, claim);
-        // console.log("prove_result", prove_result);
-        // const serialised_proof_from_nostr_event = JSON.stringify(starkProof);
-        // console.log("serialised_proof_from_nostr_event", serialised_proof_from_nostr_event);
-        // const verify_result = verify_stark_proof_fib(logSize, claim, serialised_proof_from_nostr_event);
-        // console.log("verify result", verify_result);
-        // console.log("verify message", verify_result.message);
-        // console.log("verify success", verify_result.success);
-        // if (verify_result?.success) {
-        //   console.log("is success verify result")
-        //   setProofStatus("verified");
-        // } else {
-        //   setError(verify_result?.message)
-        // }
-
         setIsLoading(false);
         setIsFetchJob(true)
       }
@@ -395,20 +160,17 @@ export default function Home() {
           <p className="text-center blink neon-text-sm">Censorship resistant global proving network</p>
           <p className="text-center blink neon-text-sm">Verifiable computation for DVMs</p>
           <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
-
             {/* <p>Prove poseidon</p> */}
-            <p>Wide Fibonnacci</p>
+            <p>Wide Fibonacci</p>
             <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Log Fibonnacci Size</label>
+              <label className="block mb-2 text-neon-pink">Log Fibonacci Size</label>
               <input
                 type="number"
-                value={log_fibonnacci_size}
-                onChange={(e) => setLogFibonnacciSize(Number(e.target.value))}
+                value={log_fibonacci_size}
+                onChange={(e) => setLogFibonacciSize(Number(e.target.value))}
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
             </div>
-
-
             <div className="mb-4">
               <label className="block mb-2 text-neon-pink">Log N Instances</label>
               <input
@@ -418,38 +180,6 @@ export default function Home() {
                 className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
               />
             </div>
-
-            {/* <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Claim</label>
-              <input
-                type="number"
-                value={claim}
-                onChange={(e) => setClaim(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div> */}
-
-
-            {/* <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Log Size</label>
-              <input
-                type="number"
-                value={logSize}
-                onChange={(e) => setLogSize(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block mb-2 text-neon-pink">Claim</label>
-              <input
-                type="number"
-                value={claim}
-                onChange={(e) => setClaim(Number(e.target.value))}
-                className="w-full bg-black text-neon-green px-3 py-2 rounded border-neon-green border-2"
-              />
-            </div> */}
-
             <button
               onClick={submitJob}
               disabled={isLoading}
@@ -460,7 +190,6 @@ export default function Home() {
             </button>
           </div>
           {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
-
           {jobId && (
             <div className="mt-8 text-center">
               <p className="text-neon-orange text-sm sm:text-base">Job ID: <span className="break-all">{jobId}</span></p>

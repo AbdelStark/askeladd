@@ -10,7 +10,6 @@ import { ASKELADD_KINDS, ConfigHandle } from "@/types";
 import EventCard from "../components/EventCard";
 import { generateContentAndTags } from "../utils/generateAppHandler";
 import { HowItWork } from "../components/description";
-
 export default function Home() {
   const [publicKey, setPublicKey] = useState<string | undefined>();
   const [appKind, setAppKind] = useState<ASKELADD_KINDS | undefined>(ASKELADD_KINDS.KIND_JOB_REQUEST)
@@ -28,7 +27,6 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
   const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
-  const { sendNote, publishNote } = useSendNote()
 
   useEffect(() => {
     if (isNeedLoadEvents || !isInitialized) {
@@ -59,7 +57,6 @@ export default function Home() {
     setEvents(events);
     setIsNeedLoadEvents(false)
   }
-
 
   /** Connect you */
   const connectExtension = async () => {
@@ -109,7 +106,6 @@ export default function Home() {
       setError(undefined);
 
       setTimestampJob(new Date().getTime())
-      /** Use Nostr extension to send event */
       const pool = new SimplePool();
       let pubkey;
       if (typeof window !== "undefined" && window.nostr) {
@@ -130,7 +126,6 @@ export default function Home() {
           content: content
         }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // Setup job request to fetch job id
-
         // let eventID = await relay.publish(event as EventNostr);
         const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
         console.log("eventID", eventID[0])

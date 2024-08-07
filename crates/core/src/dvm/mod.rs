@@ -48,8 +48,8 @@ pub mod types {
     pub enum ProgramInternalContractName {
         FibonnacciProvingRequest,
         PoseidonProvingRequest,
-        WideFibonnaciProvingRequest,
-        MultiFibonnaciProvingRequest,
+        WideFibonacciProvingRequest,
+        MultiFibonacciProvingRequest,
         Custom(String),
     }
 
@@ -59,15 +59,14 @@ pub mod types {
         pub unique_id: Option<String>,
         pub pubkey_application: Option<String>, /* Use for one to one marketplace => difficult
                                                  * on the archi of the DVM */
-        pub inputs: HashMap<String, String>,
+        pub inputs: Option<HashMap<String, String>>,
         pub inputs_types: Option<HashMap<String, String>>,
         pub inputs_encrypted: Option<HashMap<String, String>>,
         pub contract_reached: ContractUploadType,
         pub contract_name: Option<String>,
         pub internal_contract_name: Option<ProgramInternalContractName>,
         pub tags: Option<Vec<Tag>>,
-        // For External program
-        // pub endpoint:Option<String>,
+        // todo config payment and minimal sats
     }
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +79,6 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize)]
     pub struct GenerateZKPJobResult {
         pub job_id: String,
-        // pub response: T,
         pub response: serde_json::Value,
         pub proof: StarkProof<Blake2sMerkleHasher>,
     }
@@ -98,8 +96,6 @@ pub mod types {
             }
         }
     }
-
-    /// Generic type for proving response
 
     #[derive(Debug, Serialize, Deserialize)]
     pub struct GenericProvingResponse {
@@ -128,25 +124,25 @@ pub mod types {
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct FibonnacciProvingRequest {
+    pub struct FibonacciProvingRequest {
         pub log_size: u32,
         pub claim: u32,
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct MultiFibonnacciProvingRequest {
+    pub struct MultiFibonacciProvingRequest {
         pub log_sizes: Vec<u32>,
         pub claims: Vec<u32>,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct FibonnacciProvingResponse {
+    pub struct FibonacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
         pub proof: StarkProof<Blake2sMerkleHasher>,
     }
 
-    impl FibonnacciProvingResponse {
+    impl FibonacciProvingResponse {
         pub fn new(log_size: u32, claim: u32, proof: StarkProof<Blake2sMerkleHasher>) -> Self {
             Self {
                 log_size,
@@ -156,7 +152,7 @@ pub mod types {
         }
     }
 
-    impl Clone for FibonnacciProvingResponse {
+    impl Clone for FibonacciProvingResponse {
         fn clone(&self) -> Self {
             // Temporarily use serde for a dirty clone
             // TODO: Implement a proper clone or find a better design that does not require cloning
@@ -172,13 +168,13 @@ pub mod types {
     }
 
     #[derive(Debug, Serialize, Deserialize, Clone)]
-    pub struct WideFibonnacciProvingRequest {
-        pub log_fibonnacci_size: u32,
+    pub struct WideFibonacciProvingRequest {
+        pub log_fibonacci_size: u32,
         pub log_n_instances: u32,
     }
 
     #[derive(Debug, Serialize, Deserialize)]
-    pub struct WideFibonnacciProvingResponse {
+    pub struct WideFibonacciProvingResponse {
         pub log_size: u32,
         pub claim: u32,
         pub proof: StarkProof<Blake2sMerkleHasher>,
@@ -187,8 +183,6 @@ pub mod types {
     #[derive(Debug, Serialize, Deserialize, Clone)]
     pub struct PoseidonProvingRequest {
         pub log_n_instances: u32,
-        // pub lookup_elements: stwo_prover::constraint_framework::logup::LookupElements,
-        // pub claimed_sum: stwo_prover::core::fields::qm31::SecureField,
     }
 
     #[derive(Debug, Serialize, Deserialize)]

@@ -4,14 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import { NDKEvent, NDKKind } from '@nostr-dev-kit/ndk';
 import { useSendNote } from "@/hooks/useSendNote";
 import { useFetchEvents } from "@/hooks/useFetchEvents";
-import { APPLICATION_PUBKEY_DVM, ASKELADD_RELAY } from "@/constants/relay";
+import { ASKELADD_RELAY } from "@/constants/relay";
 import { Event as EventNostr, SimplePool } from "nostr-tools";
 import { ASKELADD_KINDS, ConfigHandle, ContractUploadType, IGenerateZKPRequestDVM, IProgramParams, KIND_JOB_ADD_PROGRAM } from "@/types";
-import EventCard from "../components/EventCard";
-import { generateContentAndTags } from "../utils/generateAppHandler";
 import { HowItWork } from "../components/description";
-import { PROGRAM_INTERAL_REQUEST } from "@/constants/program";
-
 export default function LaunchProgram() {
   const [publicKey, setPublicKey] = useState<string | undefined>();
   const [appKind, setAppKind] = useState<ASKELADD_KINDS | undefined>(ASKELADD_KINDS.KIND_JOB_REQUEST)
@@ -30,7 +26,6 @@ export default function LaunchProgram() {
   const [timestampJob, setTimestampJob] = useState<number | undefined>();
   const { fetchEvents, fetchEventsTools, setupSubscriptionNostr } = useFetchEvents()
   const { sendNote, publishNote } = useSendNote()
-  const [logSize, setLogSize] = useState<number>(5);
   const [claim, setClaim] = useState<number>(443693538);
   const [inputIndex, setInputsIndex] = useState(0)
   const [isOpenForm, setIsOpenForm] = useState(false)
@@ -178,20 +173,6 @@ export default function LaunchProgram() {
 
   };
 
-  const mockProgram = async () => {
-    /** Todo better check */
-    if (!isLoading && !isOpenForm && Object.entries(form).length == 0) return;
-    setIsLoading(true);
-    setJobId(undefined)
-    setProofStatus("pending");
-    setError(undefined);
-    const tags = [
-      ['param', 'log_size', logSize.toString()],
-      ['param', 'claim', claim.toString()],
-      ['output', 'text/json']
-    ];
-
-  }
   const submitProgram = async () => {
     try {
       setIsLoading(true);
@@ -199,7 +180,6 @@ export default function LaunchProgram() {
       setLastConfig(undefined);
       setError(undefined);
       console.log("formEncrypted", formEncrypted)
-
       let tags: string[][] = []
       const inputs: Map<string, string> = new Map<string, string>();
       {
@@ -236,20 +216,13 @@ export default function LaunchProgram() {
       }
 
       const content = JSON.stringify({
-        // request: form as any,
-        // request: form,
         request: Object.fromEntries(inputs),
         program: {
           contract_name: programParam?.contract_name ?? "test",
-          // internal_contract_name: programParam?.internal_contract_name ?? "test",
           contract_reached: programParam?.contract_reached ?? ContractUploadType.Ipfs,
           inputs: Object.fromEntries(inputs),
-          // inputs_types: Object.fromEntries(inputs),
-          // inputs_encrypted: Object.fromEntries(inputs_encrypted),
-          // tags: tags
         }
       })
-
       console.log("tags", tags)
       console.log("content", content)
       setTimestampJob(new Date().getTime())
@@ -272,7 +245,6 @@ export default function LaunchProgram() {
           content: content
         }) // takes an event object, adds `id`, `pubkey` and `sig` and returns it
         // // Setup job request to fetch job id
-
         // // let eventID = await relay.publish(event as EventNostr);
         const eventID = await Promise.any(pool.publish(ASKELADD_RELAY, event as EventNostr));
         console.log("eventID", eventID[0])
@@ -307,13 +279,13 @@ export default function LaunchProgram() {
 
   }
 
-  const handleAllInputsEncrypted = () => {
-    Object.entries(form).map(([key, value]) => {
-      setFormEncrypted({ ...formEncrypted, [value as string]: true })
-    }
-    )
+  // const handleAllInputsEncrypted = () => {
+  //   Object.entries(form).map(([key, value]) => {
+  //     setFormEncrypted({ ...formEncrypted, [value as string]: true })
+  //   }
+  //   )
 
-  }
+  // }
 
   return (
     <main className="min-h-screen bg-black text-neon-green font-arcade p-4 pb-16 overflow-hidden">
@@ -327,8 +299,6 @@ export default function LaunchProgram() {
       >
         {isLoading ? "PROCESSING..." : "CONNECT"}
       </button>
-
-
       <div className="arcade-cabinet">
         <h1 className="text-4xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade NIP-89">Askeladd DVM</h1>
         <p className="text-2xl mb-4 text-center glitch neon-text" data-text="Askeladd DVM Arcade NIP-89">Launch program</p>
@@ -372,7 +342,6 @@ export default function LaunchProgram() {
 
                         }}>X</button>
                     </div>
-
                   </div>
                 )
               })}
@@ -389,7 +358,6 @@ export default function LaunchProgram() {
 
             <div className="max-w-md mx-auto bg-dark-purple p-6 rounded-lg shadow-neon mt-8 relative game-screen">
               <p>Inputs encrypted</p>
-
               <button className="basic-button" onClick={handleLoadFormEncrypted}> Load inputs to continue settings</button>
               {formEncrypted && Object.entries(formEncrypted).map(([key, value], i) => {
                 return (
@@ -449,13 +417,7 @@ export default function LaunchProgram() {
         </div>
         {isLoading && <div className="pixel-spinner mt-4 mx-auto"></div>}
       </div>
-      {/* </div> */}
-      {/* <HowItWork /> */}
-      {/* <button
-        className={`block mb-5 font-bold py-2 px-4 rounded bg-blue-500 hover:bg-blue-700 ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-        disabled={isLoading}
-        onClick={fetchEventsApp}>{events && events?.length ? "Refresh" : "Load"}</button> */}
-
+      <HowItWork />
       <div className="marquee">
       </div>
     </main>

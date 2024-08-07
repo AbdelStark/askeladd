@@ -29,14 +29,14 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
 
  
     {
-        // Wide Fibonnaci
+        // Wide Fibonacci
         request: {
             log_fibonacci_size:0,
             log_n_instances:0
         },
         program: {
-            contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest.toString(),
-            internal_contract_name:ProgramInternalContractName.WideFibonnaciProvingRequest,
+            contract_name:ProgramInternalContractName.WideFibonacciProvingRequest.toString(),
+            internal_contract_name:ProgramInternalContractName.WideFibonacciProvingRequest,
             contract_reached:ContractUploadType.InternalAskeladd,
             inputs:program_map_wide_fibo
         }
@@ -65,8 +65,8 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
     //         claim:0
     //     },
     //     program: {
-    //         contract_name:ProgramInternalContractName.FibonnacciProvingRequest.toString(),
-    //         internal_contract_name:ProgramInternalContractName.FibonnacciProvingRequest,
+    //         contract_name:ProgramInternalContractName.FibonacciProvingRequest.toString(),
+    //         internal_contract_name:ProgramInternalContractName.FibonacciProvingRequest,
     //         contract_reached:ContractUploadType.InternalAskeladd,
     //         inputs:program_map_fibo
     //     }
@@ -81,8 +81,8 @@ export const PROGRAM_INTERAL_REQUEST:IGenerateZKPRequestDVM[] = [
     //         claims:0
     //     },
     //     program: {
-    //         contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest.toString(),
-    //         internal_contract_name:ProgramInternalContractName.MultiFibonnacciProvingRequest,
+    //         contract_name:ProgramInternalContractName.MultiFibonacciProvingRequest.toString(),
+    //         internal_contract_name:ProgramInternalContractName.MultiFibonacciProvingRequest,
     //         contract_reached:ContractUploadType.InternalAskeladd,
     //         inputs:program_map_multi_fibo
     //     }

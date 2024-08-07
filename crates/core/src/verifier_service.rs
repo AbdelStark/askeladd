@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::VerificationError;
-use stwo_wasm::fibonnaci::Fibonacci;
+use stwo_wasm::fibonacci::Fibonacci;
 
-use crate::dvm::types::{FibonnacciProvingResponse, GenericProvingResponse};
+use crate::dvm::types::{FibonacciProvingResponse, GenericProvingResponse};
 // Define an enum to encapsulate possible deserialized types
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]
 enum ProgramType {
-    Fibonnacci(FibonnacciProvingResponse),
+    Fibonacci(FibonacciProvingResponse),
     Poseidon(GenericProvingResponse),
     Generic(GenericProvingResponse),
 }
@@ -19,7 +19,7 @@ pub struct VerifierService {}
 impl VerifierService {
     pub fn verify_proof(
         &self,
-        response: FibonnacciProvingResponse,
+        response: FibonacciProvingResponse,
     ) -> Result<(), VerificationError> {
         let fib = Fibonacci::new(response.log_size, BaseField::from(response.claim));
         fib.verify(response.proof)
@@ -31,7 +31,7 @@ impl VerifierService {
     ) -> Result<(), VerificationError> {
         let data: ProgramType = serde_json::from_value(response).unwrap();
         match data {
-            ProgramType::Fibonnacci(fib_answer) => {
+            ProgramType::Fibonacci(fib_answer) => {
                 let fib = Fibonacci::new(fib_answer.log_size, BaseField::from(fib_answer.claim));
                 fib.verify(fib_answer.proof)
             }

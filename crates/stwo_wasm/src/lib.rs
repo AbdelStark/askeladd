@@ -1,11 +1,9 @@
 // lib.rs
 pub mod poseidon;
-pub mod wide_fibonnacci;
+pub mod wide_fibonacci;
 // Deprecated program examples on the STWO
 // Recreate it internally
-pub mod fibonnaci;
-// pub mod multi_fibonacci;
-
+pub mod fibonacci;
 use poseidon::PoseidonStruct;
 use serde::{Deserialize, Serialize};
 use stwo_prover::core::prover::StarkProof;
@@ -46,15 +44,12 @@ impl StwoResult {
 }
 
 #[wasm_bindgen]
-// pub fn prove_and_verify(log_size: u32, claim: u32) -> StwoResult {
 pub fn prove_and_verify(log_n_instances: u32) -> StwoResult {
     console_log!(
         "Starting prove_and_verify with log_n_instances: {}",
         log_n_instances,
     );
-
     let poseidon = PoseidonStruct::new(log_n_instances);
-
     match poseidon {
         Err(e) => StwoResult {
             success: false,

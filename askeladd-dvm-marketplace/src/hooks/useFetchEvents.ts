@@ -3,7 +3,8 @@ import { useNostrContext } from '@/context/NostrContext';
 import { KIND_JOB_REQUEST, KIND_JOB_RESULT } from '@/types';
 import { NDKKind } from '@nostr-dev-kit/ndk';
 import { SimplePool, NostrEvent } from 'nostr-tools';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useDVMState } from './useDVMState';
 
 interface IEventFilter {
   kind?: NDKKind | number, limit?: number, since?: number, until?: number, kinds?: NDKKind[], search?: string, ids?: string[], authors?: string[]
@@ -19,6 +20,21 @@ export const useFetchEvents = () => {
   const { ndk } = useNostrContext();
   // const pool = new SimplePool()
   const [pool, setPool] = useState(new SimplePool())
+  const [isWaitingJob, setIsWaitingJob] = useState(false);
+
+//   let eventIdRequest = useMemo(() => {
+//     return jobId
+//   }, [jobId])
+
+  /** TODO fetch subscribed event
+* fix search jobId => check if relayer support NIP-50 
+* Fetch Job result from the Prover
+* - Tags: By reply of the event_id of the job request?
+* - By author
+* - Timestamp since/until (doesn't work as expected for me)
+*/
+ 
+
 
   const fetchEvents = async (data: IEventFilter) => {
     try {
@@ -98,5 +114,55 @@ export const useFetchEvents = () => {
     // setPool(pool);
     return h;
   }
-  return { fetchEvents, fetchEventsTools, setupSubscriptionNostr, pool }
+
+  const runSubscriptionEvent = (pool: SimplePool, pubkey?: string, jobId?:string) => {
+    let poolRequest = pool.subscribeMany(
+      ASKELADD_RELAY,
+      [
+        {
+          kinds: [KIND_JOB_REQUEST as NDKKind],
+          // since:timestampJob
+          // authors: pubkey ? [pubkey] : []
+        },
+        {
+          kinds: [KIND_JOB_RESULT as NDKKind],
+          // since:timestampJob
+        },
+      ],
+      {
+        onevent(event) {
+          // if (event?.kind == KIND_JOB_REQUEST) {
+          //   console.log("Event job request received: ", event?.id);
+          //   if (!jobId) return;
+          //   if (pubkey && event?.pubkey == pubkey) {
+          //     setJobId(event?.id)
+          //   }
+          //   poolRequest.close();
+
+          // }
+          // if (event?.kind == KIND_JOB_RESULT) {
+          //   console.log("Event job request received: ", event?.id);
+          //   if (!jobId) return;
+          //   if (pubkey && event?.pubkey == pubkey) {
+          //     setJobId(event?.id)
+          //   }
+          //   poolRequest.close();
+          // }
+        },
+        onclose: () => {
+          poolRequest.close()
+        },
+        oneose() {
+          poolRequest.close()
+        }
+      }
+    )
+  }
+
+
+  return {
+    fetchEvents, fetchEventsTools, setupSubscriptionNostr, pool, runSubscriptionEvent,
+
+    isWaitingJob, setIsWaitingJob,
+  }
 };

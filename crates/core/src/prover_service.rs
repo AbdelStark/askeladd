@@ -7,21 +7,21 @@ use stwo_prover::core::circle::M31_CIRCLE_LOG_ORDER;
 use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::prover::ProvingError;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
-use stwo_wasm::fibonnaci::Fibonacci;
+use stwo_wasm::fibonacci::Fibonacci;
 use stwo_wasm::poseidon::{PoseidonStruct, LOG_N_LANES, N_LOG_INSTANCES_PER_ROW};
-use stwo_wasm::wide_fibonnacci::WideFibStruct;
+use stwo_wasm::wide_fibonacci::WideFibStruct;
 use thiserror::Error;
 
 use crate::dvm::types::{
     ContractUploadType,
-    FibonnacciProvingRequest,
-    FibonnacciProvingResponse,
+    FibonacciProvingRequest,
+    FibonacciProvingResponse,
     GenericProvingResponse,
     PoseidonProvingRequest,
     ProgramInternalContractName,
     ProgramParams,
-    WideFibonnacciProvingRequest,
-    // MultiFibonnacciProvingRequest
+    WideFibonacciProvingRequest,
+    // MultiFibonacciProvingRequest
 };
 // use stwo_wasm::fibonnaci::multi_fibonacci::MultiFibonacci;
 use crate::utils::convert_inputs_to_run_program;
@@ -48,11 +48,11 @@ pub struct ProverService {}
 impl ProverService {
     pub fn generate_proof(
         &self,
-        request: FibonnacciProvingRequest,
-    ) -> Result<FibonnacciProvingResponse, ProvingError> {
+        request: FibonacciProvingRequest,
+    ) -> Result<FibonacciProvingResponse, ProvingError> {
         let fib = Fibonacci::new(request.log_size, BaseField::from(request.claim));
         match fib.prove() {
-            Ok(proof) => Ok(FibonnacciProvingResponse::new(
+            Ok(proof) => Ok(FibonacciProvingResponse::new(
                 request.log_size,
                 request.claim,
                 proof,
@@ -69,7 +69,9 @@ impl ProverService {
         println!("generate_proof_by_program type {:?}", request);
         let mut successful_parses = HashMap::new();
         if let Some(program_params) = program_params.clone() {
-            successful_parses = convert_inputs_to_run_program(program_params.inputs);
+            if let Some(inputs) = program_params.inputs {
+                successful_parses = convert_inputs_to_run_program(inputs);
+            }
         }
         let serialized_request = serde_json::to_string(&successful_parses).unwrap();
         // TODO
@@ -137,7 +139,7 @@ impl ProverService {
                     //     Err(e) => Err(e.to_string()),
                     // }
                 }
-                ProgramInternalContractName::MultiFibonnaciProvingRequest => {
+                ProgramInternalContractName::MultiFibonacciProvingRequest => {
                     println!("WIP FIX Multi Fibonnacci WASM");
 
                     Err(ProvingError::ConstraintsNotSatisfied.to_string())
@@ -231,17 +233,17 @@ impl ProverService {
                     }
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
                 }
-                ProgramInternalContractName::WideFibonnaciProvingRequest => {
+                ProgramInternalContractName::WideFibonacciProvingRequest => {
                     // Err(ProvingError::ConstraintsNotSatisfied.to_string())
 
-                    let wide_fib_serde: SerdeResult<WideFibonnacciProvingRequest> =
+                    let wide_fib_serde: SerdeResult<WideFibonacciProvingRequest> =
                         serde_json::from_str(serialized_request);
                     let wide_fib_req = match wide_fib_serde.as_ref() {
                         Ok(req) => req.clone(),
                         Err(e) => return Err(e.to_string()),
                     };
                     let wide_fib = WideFibStruct::new(
-                        wide_fib_req.log_fibonnacci_size,
+                        wide_fib_req.log_fibonacci_size,
                         wide_fib_req.log_n_instances,
                     );
                     match wide_fib.prove::<Blake2sMerkleHasher>() {

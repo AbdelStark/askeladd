@@ -44,8 +44,6 @@ impl Database {
         Ok(())
     }
 
-    // pub fn insert_request(&self, job_id: &str, request: &FibonnacciProvingRequest) -> Result<()>
-    // {
     pub fn insert_request(&self, job_id: &str, request: &serde_json::Value) -> Result<()> {
         let request_json = serde_json::to_string(request).unwrap();
         self.conn.execute(
