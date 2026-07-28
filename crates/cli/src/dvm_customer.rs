@@ -1,24 +1,99 @@
+//! `dvm_customer` — a client for the Askeladd proving network.
+//!
+//! Submits verifiable computation jobs to Nostr (NIP-90), waits for a prover
+//! agent to answer with a STARK proof, and verifies the proof locally.
+//!
+//! ## Examples
+//!
+//! ```bash
+//! dvm_customer fibonacci --log-size 5 --claim 443693538
+//! dvm_customer poseidon --log-n-instances 8
+//! dvm_customer wide-fibonacci --log-fibonacci-size 5 --log-n-instances 5
+//! dvm_customer demo
+//! ```
+
 use std::collections::HashMap;
 use std::io::Write;
-use std::thread;
-use std::time::Duration;
 
 use askeladd::config::Settings;
 use askeladd::dvm::customer::{Customer, CustomerError};
 use askeladd::dvm::types::{
-    ContractUploadType, FibonacciProvingRequest, GenerateZKPJobRequest, PoseidonProvingRequest,
-    ProgramInternalContractName, ProgramParams,
+    ContractUploadType, FibonacciProvingRequest, GenerateZKPJobRequest,
+    MultiFibonacciProvingRequest, PoseidonProvingRequest, ProgramInternalContractName,
+    ProgramParams, WideFibonacciProvingRequest,
 };
+use clap::{Parser, Subcommand};
 use colored::*;
 use dotenv::dotenv;
 use env_logger::Env;
 use log::info;
 
+/// Submit proving jobs to the Askeladd network and verify the STARK proofs
+/// that come back. Don't trust — verify.
+#[derive(Parser)]
+#[command(name = "dvm_customer", version, about, long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    /// Prove a Fibonacci-squared sequence claim.
+    Fibonacci {
+        /// log₂ of the sequence length.
+        #[arg(long, default_value_t = 5)]
+        log_size: u32,
+        /// The claimed final value of the sequence.
+        #[arg(long, default_value_t = 443693538)]
+        claim: u32,
+        /// Seconds to wait for a prover before giving up.
+        #[arg(long, default_value_t = 60)]
+        timeout_secs: u64,
+    },
+    /// Prove Poseidon hash permutations.
+    Poseidon {
+        /// log₂ of the number of permutations (minimum 9).
+        #[arg(long, default_value_t = 9)]
+        log_n_instances: u32,
+        /// Seconds to wait for a prover before giving up.
+        #[arg(long, default_value_t = 60)]
+        timeout_secs: u64,
+    },
+    /// Prove many Fibonacci instances in a single proof.
+    WideFibonacci {
+        /// log₂ of each sequence's length (minimum 8).
+        #[arg(long, default_value_t = 8)]
+        log_fibonacci_size: u32,
+        /// log₂ of the number of sequences.
+        #[arg(long, default_value_t = 8)]
+        log_n_instances: u32,
+        /// Seconds to wait for a prover before giving up.
+        #[arg(long, default_value_t = 60)]
+        timeout_secs: u64,
+    },
+    /// Prove several Fibonacci claims in a single proof.
+    MultiFibonacci {
+        /// Comma-separated log₂ sequence lengths (e.g. "5,5").
+        #[arg(long, default_value = "5,5")]
+        log_sizes: String,
+        /// Comma-separated claims (e.g. "443693538,443693538").
+        #[arg(long, default_value = "443693538,443693538")]
+        claims: String,
+        /// Seconds to wait for a prover before giving up.
+        #[arg(long, default_value_t = 60)]
+        timeout_secs: u64,
+    },
+    /// The classic tour: a Fibonacci job and a Poseidon job, end to end.
+    Demo {
+        /// Seconds to wait for a prover before giving up.
+        #[arg(long, default_value_t = 60)]
+        timeout_secs: u64,
+    },
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // ******************************************************
-    // ****************** SETUP *****************************
-    // ******************************************************
     dotenv().ok();
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
         .format(|buf, record| {
@@ -35,172 +110,205 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .init();
 
-    println!("{}", "=".repeat(80).green());
-    println!("{}", "Askeladd DVM Customer".bold().green());
-    println!("{}", "=".repeat(80).green());
+    let cli = Cli::parse();
 
-    let settings = Settings::new().expect("Failed to load settings");
+    println!("{}", "=".repeat(72).green());
+    println!(
+        "{}",
+        "Askeladd DVM Customer — don't trust, verify."
+            .bold()
+            .green()
+    );
+    println!("{}", "=".repeat(72).green());
 
-    // ******************************************************
-    // ****************** INIT CUSTOMER *********************
-    // ******************************************************
-    println!("\n{}", "Initializing Customer...".cyan());
-    let mut customer = Customer::new(settings)?;
-    customer.init().await?;
-    println!("{}", "Customer initialized successfully.".green());
-
-    // ******************************************************
-    // ****************** PREPARE JOB ***********************
-    // ******************************************************
-    println!("\n{}", "Preparing job...".cyan());
-
-    let mut map_inputs = HashMap::<String, String>::new();
-    map_inputs.insert("log_size".to_owned(), "5".to_owned());
-    map_inputs.insert("claim".to_owned(), "443693538".to_owned());
-    map_inputs.insert("output".to_owned(), "text/json".to_owned());
-    let req_value = serde_json::to_value(FibonacciProvingRequest {
-        log_size: 5,
-        claim: 443693538,
-    })
-    .unwrap();
-    let job_request = GenerateZKPJobRequest {
-        request: req_value,
-        program: Some(ProgramParams {
-            pubkey_application: None,
-            inputs: Some(map_inputs),
-            inputs_encrypted: None,
-            inputs_types: None,
-            unique_id: None,
-            event_id: None,
-            contract_reached: ContractUploadType::InternalAskeladd,
-            contract_name: Some("FibonacciProvingRequest".to_owned()),
-            internal_contract_name: Some(ProgramInternalContractName::FibonnacciProvingRequest),
-            tags: None,
-        }),
-    };
-    println!("{}", "Job prepared successfully.".green());
-
-    // /// Add poseidon
-    let settings = Settings::new().expect("Failed to load settings");
-
-    poseidon_program(customer).await?;
-
-    let mut customer = Customer::new(settings)?;
+    let mut customer = Customer::new(Settings::new().expect("Failed to load settings"))?;
     customer.init().await?;
 
-    // ******************************************************
-    // ****************** SUBMIT JOB ************************
-    // ******************************************************
-    println!("\n{}", "Submitting job...".cyan());
-    let job_id = customer.submit_job(job_request.clone()).await?;
-    println!("{}", "Job submitted successfully.".green());
-    info!("Job ID: {}", job_id);
+    match cli.command {
+        Command::Fibonacci {
+            log_size,
+            claim,
+            timeout_secs,
+        } => {
+            run_job(
+                &customer,
+                ProgramInternalContractName::FibonacciProvingRequest,
+                serde_json::to_value(FibonacciProvingRequest { log_size, claim })?,
+                HashMap::from([
+                    ("log_size".to_owned(), log_size.to_string()),
+                    ("claim".to_owned(), claim.to_string()),
+                ]),
+                timeout_secs,
+            )
+            .await?;
+        }
+        Command::Poseidon {
+            log_n_instances,
+            timeout_secs,
+        } => {
+            run_job(
+                &customer,
+                ProgramInternalContractName::PoseidonProvingRequest,
+                serde_json::to_value(PoseidonProvingRequest { log_n_instances })?,
+                HashMap::from([("log_n_instances".to_owned(), log_n_instances.to_string())]),
+                timeout_secs,
+            )
+            .await?;
+        }
+        Command::WideFibonacci {
+            log_fibonacci_size,
+            log_n_instances,
+            timeout_secs,
+        } => {
+            run_job(
+                &customer,
+                ProgramInternalContractName::WideFibonacciProvingRequest,
+                serde_json::to_value(WideFibonacciProvingRequest {
+                    log_fibonacci_size,
+                    log_n_instances,
+                })?,
+                HashMap::from([
+                    (
+                        "log_fibonacci_size".to_owned(),
+                        log_fibonacci_size.to_string(),
+                    ),
+                    ("log_n_instances".to_owned(), log_n_instances.to_string()),
+                ]),
+                timeout_secs,
+            )
+            .await?;
+        }
+        Command::MultiFibonacci {
+            log_sizes,
+            claims,
+            timeout_secs,
+        } => {
+            let log_sizes = parse_u32_list(&log_sizes)?;
+            let claims = parse_u32_list(&claims)?;
+            let inputs = HashMap::from([
+                ("log_sizes".to_owned(), log_sizes.clone()),
+                ("claims".to_owned(), claims.clone()),
+            ]);
+            let log_sizes: Vec<u32> = serde_json::from_str(&log_sizes)?;
+            let claims: Vec<u32> = serde_json::from_str(&claims)?;
+            run_job(
+                &customer,
+                ProgramInternalContractName::MultiFibonacciProvingRequest,
+                serde_json::to_value(MultiFibonacciProvingRequest { log_sizes, claims })?,
+                inputs,
+                timeout_secs,
+            )
+            .await?;
+        }
+        Command::Demo { timeout_secs } => {
+            println!("\n{}", "Job 1/2: Fibonacci".bold().cyan());
+            run_job(
+                &customer,
+                ProgramInternalContractName::FibonacciProvingRequest,
+                serde_json::to_value(FibonacciProvingRequest {
+                    log_size: 5,
+                    claim: 443693538,
+                })?,
+                HashMap::from([
+                    ("log_size".to_owned(), "5".to_owned()),
+                    ("claim".to_owned(), "443693538".to_owned()),
+                ]),
+                timeout_secs,
+            )
+            .await?;
 
-    // ******************************************************
-    // ****************** WAIT FOR JOB RESULT ***************
-    // ******************************************************
-    println!("\n{}", "Waiting for job result...".cyan());
-    let job_result = customer.wait_for_job_result(&job_id, 60).await?;
-    println!("{}", "Job result received.".green());
-
-    // ******************************************************
-    // ****************** VERIFY PROOF **********************
-    // ******************************************************
-    println!("\n{}", "Preparing to verify proof...".cyan());
-    for i in (1..=3).rev() {
-        print!("\rVerifying proof in {} seconds...", i);
-        std::io::stdout().flush().unwrap();
-        thread::sleep(Duration::from_secs(1));
-    }
-    println!("\n");
-
-    let is_valid = customer.verify_proof(&job_result)?;
-
-    if is_valid {
-        println!("{}", "┌─────────────────────────────────────┐".green());
-        println!("{}", "│                                     │".green());
-        println!("{}", "│  Proof Verification: SUCCESSFUL     │".green());
-        println!("{}", "│                                     │".green());
-        println!("{}", "└─────────────────────────────────────┘".green());
-    } else {
-        println!("{}", "┌─────────────────────────────────────┐".red());
-        println!("{}", "│                                     │".red());
-        println!("{}", "│   Proof Verification: FAILED        │".red());
-        println!("{}", "│                                     │".red());
-        println!("{}", "└─────────────────────────────────────┘".red());
+            println!("\n{}", "Job 2/2: Poseidon".bold().cyan());
+            run_job(
+                &customer,
+                ProgramInternalContractName::PoseidonProvingRequest,
+                serde_json::to_value(PoseidonProvingRequest { log_n_instances: 9 })?,
+                HashMap::from([("log_n_instances".to_owned(), "9".to_owned())]),
+                timeout_secs,
+            )
+            .await?;
+        }
     }
 
     Ok(())
 }
 
-pub async fn poseidon_program(customer: Customer) -> Result<(), CustomerError> {
-    println!("poseidon program");
-    let mut map_inputs = HashMap::<String, String>::new();
+/// Parses a comma-separated list of u32s ("5,5") into a JSON array string
+/// ("[5,5]"), which both the typed request and the string inputs map accept.
+fn parse_u32_list(input: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let values: Vec<u32> = input
+        .split(',')
+        .map(|part| part.trim().parse::<u32>())
+        .collect::<Result<_, _>>()?;
+    Ok(serde_json::to_string(&values)?)
+}
 
-    let log_n_instances = 5;
-    map_inputs.insert("log_n_instances".to_owned(), log_n_instances.to_string());
-    map_inputs.insert("output".to_owned(), "text/json".to_owned());
-
-    let req_value = serde_json::to_value(PoseidonProvingRequest { log_n_instances }).unwrap();
-
-    let job_request = GenerateZKPJobRequest {
-        request: req_value,
-        program: Some(ProgramParams {
-            inputs: Some(map_inputs),
-            pubkey_application: None,
-            inputs_encrypted: None,
-            inputs_types: None,
-            unique_id: None,
+/// The full verifiable-computation loop: submit a job, wait for the result,
+/// verify the STARK proof attached to it.
+async fn run_job(
+    customer: &Customer,
+    program: ProgramInternalContractName,
+    request: serde_json::Value,
+    mut inputs: HashMap<String, String>,
+    timeout_secs: u64,
+) -> Result<(), CustomerError> {
+    println!("\n{}", "Submitting job...".cyan());
+    inputs.insert("output".to_owned(), "text/json".to_owned());
+    let job_request = GenerateZKPJobRequest::new(
+        request,
+        Some(ProgramParams {
             event_id: None,
+            unique_id: None,
+            pubkey_application: None,
+            inputs: Some(inputs),
+            inputs_types: None,
+            inputs_encrypted: None,
             contract_reached: ContractUploadType::InternalAskeladd,
-            contract_name: Some("PoseidonProvingRequest".to_owned()),
-            internal_contract_name: Some(ProgramInternalContractName::PoseidonProvingRequest),
+            contract_name: None,
+            internal_contract_name: Some(program.clone()),
             tags: None,
         }),
-    };
-    println!("{}", "Job prepared successfully.".green());
+    );
 
-    // ******************************************************
-    // ****************** SUBMIT JOB ************************
-    // ******************************************************
-    println!("\n{}", "Submitting job...".cyan());
-    let job_id = customer.submit_job(job_request.clone()).await?;
-    println!("{}", "Job submitted successfully.".green());
+    let job_id = customer.submit_job(job_request).await?;
     info!("Job ID: {}", job_id);
 
-    // ******************************************************
-    // ****************** WAIT FOR JOB RESULT ***************
-    // ******************************************************
-    println!("\n{}", "Waiting for job result...".cyan());
-    let job_result = customer.wait_for_job_result(&job_id, 60).await?;
-    println!("{}", "Job result received.".green());
+    println!("{}", "Waiting for a prover to pick it up...".cyan());
+    let job_result = match customer.wait_for_job_result(&job_id, timeout_secs).await {
+        Ok(result) => result,
+        Err(e) => {
+            if matches!(program, ProgramInternalContractName::PoseidonProvingRequest) {
+                eprintln!(
+                    "{}",
+                    "Hint: Poseidon proofs are ~160 KB — many public relays reject events that large. \
+                     Use a relay with raised limits (see config/nostr-rs-relay/config.toml)."
+                        .yellow()
+                );
+            }
+            return Err(e);
+        }
+    };
+    println!("{}", "Result received. Verifying proof...".cyan());
 
-    // ******************************************************
-    // ****************** VERIFY PROOF **********************
-    // ******************************************************
-    println!("\n{}", "Preparing to verify proof...".cyan());
-    for i in (1..=3).rev() {
-        print!("\rVerifying proof in {} seconds...", i);
-        std::io::stdout().flush().unwrap();
-        thread::sleep(Duration::from_secs(1));
+    match customer.verify_proof(&job_result, &program) {
+        Ok(()) => {
+            println!("{}", "┌─────────────────────────────────────┐".green());
+            println!("{}", "│                                     │".green());
+            println!("{}", "│  Proof verification: SUCCESS        │".green());
+            println!("{}", "│                                     │".green());
+            println!("{}", "└─────────────────────────────────────┘".green());
+            println!(
+                "{}",
+                "The prover's claim checked out — no trust was required.".green()
+            );
+            Ok(())
+        }
+        Err(e) => {
+            println!("{}", "┌─────────────────────────────────────┐".red());
+            println!("{}", "│                                     │".red());
+            println!("{}", "│  Proof verification: FAILED         │".red());
+            println!("{}", "│                                     │".red());
+            println!("{}", "└─────────────────────────────────────┘".red());
+            Err(e)
+        }
     }
-    println!("\n");
-
-    let is_valid = customer.verify_proof(&job_result)?;
-
-    if is_valid {
-        println!("{}", "┌─────────────────────────────────────┐".green());
-        println!("{}", "│                                     │".green());
-        println!("{}", "│  Proof Verification: SUCCESSFUL     │".green());
-        println!("{}", "│                                     │".green());
-        println!("{}", "└─────────────────────────────────────┘".green());
-    } else {
-        println!("{}", "┌─────────────────────────────────────┐".red());
-        println!("{}", "│                                     │".red());
-        println!("{}", "│   Proof Verification: FAILED        │".red());
-        println!("{}", "│                                     │".red());
-        println!("{}", "└─────────────────────────────────────┘".red());
-    }
-
-    Ok(())
 }

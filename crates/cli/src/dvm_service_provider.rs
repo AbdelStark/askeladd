@@ -1,3 +1,8 @@
+//! `dvm_service_provider` — the Askeladd prover agent.
+//!
+//! Subscribes to NIP-90 proving jobs on the configured relays, executes them
+//! with the STWO prover, and publishes results carrying STARK proofs.
+
 use std::io::Write;
 
 use askeladd::config::Settings;
@@ -8,9 +13,6 @@ use env_logger::Env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // ******************************************************
-    // ****************** SETUP *****************************
-    // ******************************************************
     dotenv().ok();
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
         .format(|buf, record| {
@@ -29,15 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let settings = Settings::new().expect("Failed to load settings");
 
-    // ******************************************************
-    // ****************** INIT SERVICE PROVIDER *************
-    // ******************************************************
     let mut service_provider = ServiceProvider::new(settings)?;
     service_provider.init().await?;
-
-    // ******************************************************
-    // ****************** RUN SERVICE PROVIDER **************
-    // ******************************************************
     service_provider.run().await?;
 
     Ok(())

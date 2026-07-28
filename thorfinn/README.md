@@ -2,6 +2,8 @@
 
 A Nostr signer extension compatible with NIP-07, optimised for DVM ([NIP-90 - Data Vending Machine](https://nips.nostr.com/90)) use.
 
+Part of [Askeladd](../README.md) — the censorship-resistant, globally verifiable proving network. Thorfinn carries the proving network into the browser: sign jobs, watch results, verify STARK proofs without trusting anyone.
+
 ## Features
 
 - Generate a new keypair

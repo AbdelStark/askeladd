@@ -1,257 +1,186 @@
-use std::collections::HashMap;
-use std::fmt;
+//! Turns proving job requests into STARK proofs.
+//!
+//! The service dispatches on the program named in the job and delegates to
+//! the STWO-based provers in `stwo_wasm`. Every failure mode is a typed
+//! error — a malformed job must never panic the agent.
 
-use serde_json::Result as SerdeResult;
-use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
-use stwo_prover::core::circle::M31_CIRCLE_LOG_ORDER;
+use serde::de::DeserializeOwned;
+use serde_json::Value;
 use stwo_prover::core::fields::m31::BaseField;
-use stwo_prover::core::prover::ProvingError;
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
+use stwo_wasm::fibonacci::multi_fibonacci::MultiFibonacci;
 use stwo_wasm::fibonacci::Fibonacci;
-use stwo_wasm::poseidon::{PoseidonStruct, LOG_N_LANES, N_LOG_INSTANCES_PER_ROW};
+use stwo_wasm::poseidon::{PoseidonStruct, MIN_LOG_N_ROWS, N_LOG_INSTANCES_PER_ROW};
 use stwo_wasm::wide_fibonacci::WideFibStruct;
 use thiserror::Error;
 
 use crate::dvm::types::{
-    ContractUploadType,
-    FibonacciProvingRequest,
-    FibonacciProvingResponse,
-    GenericProvingResponse,
-    PoseidonProvingRequest,
-    ProgramInternalContractName,
-    ProgramParams,
-    WideFibonacciProvingRequest,
-    // MultiFibonacciProvingRequest
+    ContractUploadType, FibonacciProvingRequest, GenericProvingResponse,
+    MultiFibonacciProvingRequest, PoseidonProvingRequest, ProgramInternalContractName,
+    ProgramParams, WideFibonacciProvingRequest,
 };
-// use stwo_wasm::fibonnaci::multi_fibonacci::MultiFibonacci;
 use crate::utils::convert_inputs_to_run_program;
 
-#[derive(Error, Debug, Clone)]
+/// Errors a prover agent can hit while executing a job.
+#[derive(Error, Debug)]
 pub enum ProverServiceError {
-    // #[error("No program param")]
-    NoProgramParam,
-    Custom(String),
+    /// The job request carried no program parameters at all.
+    #[error("job request carries no program parameters")]
+    MissingProgramParams,
+    /// The requested program source is not supported (only built-ins are).
+    #[error("unsupported program source: {0:?} (only built-in programs are available)")]
+    UnsupportedContractSource(ContractUploadType),
+    /// The requested program is unknown or not implemented yet.
+    #[error("unsupported program: {0}")]
+    UnsupportedProgram(String),
+    /// Inputs failed to deserialize or violate the program's size limits.
+    #[error("invalid inputs for {program}: {reason}")]
+    InvalidInputs {
+        program: &'static str,
+        reason: String,
+    },
+    /// The STARK prover itself failed.
+    #[error("proving failed: {0}")]
+    ProvingFailed(String),
 }
 
-impl fmt::Display for ProverServiceError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match *self {
-            ProverServiceError::NoProgramParam => write!(f, "NO PROGRAM PARAM"),
-            ProverServiceError::Custom(ref err) => write!(f, "ProverServiceError {}", err),
-        }
-    }
-}
-
+/// Stateless dispatcher from job requests to proofs.
 #[derive(Debug, Default)]
 pub struct ProverService {}
 
 impl ProverService {
-    pub fn generate_proof(
-        &self,
-        request: FibonacciProvingRequest,
-    ) -> Result<FibonacciProvingResponse, ProvingError> {
-        let fib = Fibonacci::new(request.log_size, BaseField::from(request.claim));
-        match fib.prove() {
-            Ok(proof) => Ok(FibonacciProvingResponse::new(
-                request.log_size,
-                request.claim,
-                proof,
-            )),
-            Err(e) => Err(e),
-        }
-    }
-
+    /// Executes the program selected in `program_params` on `request`,
+    /// returning the echoed inputs together with the STARK proof.
     pub fn generate_proof_by_program(
         &self,
-        request: serde_json::Value,
+        request: Value,
         program_params: Option<ProgramParams>,
-    ) -> Result<GenericProvingResponse, String> {
-        println!("generate_proof_by_program type {:?}", request);
-        let mut successful_parses = HashMap::new();
-        if let Some(program_params) = program_params.clone() {
-            if let Some(inputs) = program_params.inputs {
-                successful_parses = convert_inputs_to_run_program(inputs);
-            }
+    ) -> Result<GenericProvingResponse, ProverServiceError> {
+        let params = program_params.ok_or(ProverServiceError::MissingProgramParams)?;
+        match params.contract_reached {
+            ContractUploadType::InternalAskeladd => self.prove_internal(request, &params),
+            other => Err(ProverServiceError::UnsupportedContractSource(other)),
         }
-        let serialized_request = serde_json::to_string(&successful_parses).unwrap();
-        // TODO
-        // - Refacto & clean
-        // -Different type of program launched: NIP-78 andNIP-94 + NIP-96 to handle program not
-        // internal
-        self.check_and_generate_proof(request, serialized_request.clone().as_str(), program_params)
     }
 
-    pub fn check_and_generate_proof(
+    fn prove_internal(
         &self,
-        request: serde_json::Value,
-        request_str: &str,
-        program_params: Option<ProgramParams>,
-    ) -> Result<GenericProvingResponse, String> {
-        // TODO: bring others enum to publish your program and upload it
-        // IPFS, BACKEND, URL
-        if let Some(p) = program_params {
-            match p.contract_reached {
-                ContractUploadType::InternalAskeladd => {
-                    self.internal_program(request, request_str, p)
-                }
-                ContractUploadType::Ipfs => {
-                    println!("TODO implement IPFS WASM");
-                    Err("IPFS_CONTRACT_IN_PROCESS".to_string())
-                } //  => Err(ProverServiceError::NoProgramParam.to_string()),
+        request: Value,
+        params: &ProgramParams,
+    ) -> Result<GenericProvingResponse, ProverServiceError> {
+        let program = params
+            .internal_contract_name
+            .clone()
+            .ok_or_else(|| ProverServiceError::UnsupportedProgram("unspecified".to_owned()))?;
+
+        match program {
+            ProgramInternalContractName::FibonacciProvingRequest => {
+                let req: FibonacciProvingRequest = parse_inputs(&request, params, "fibonacci")?;
+                let fib = Fibonacci::new(req.log_size, BaseField::from(req.claim));
+                let proof = fib
+                    .prove()
+                    .map_err(|e| ProverServiceError::ProvingFailed(e.to_string()))?;
+                Ok(GenericProvingResponse::new(request, proof))
             }
-        } else {
-            Err(ProverServiceError::NoProgramParam.to_string())
+            ProgramInternalContractName::MultiFibonacciProvingRequest => {
+                let req: MultiFibonacciProvingRequest =
+                    parse_inputs(&request, params, "multi-fibonacci")?;
+                if req.log_sizes.len() != req.claims.len() {
+                    return Err(ProverServiceError::InvalidInputs {
+                        program: "multi-fibonacci",
+                        reason: "log_sizes and claims must have the same length".to_owned(),
+                    });
+                }
+                let claims = req.claims.into_iter().map(BaseField::from).collect();
+                let multi = MultiFibonacci::new(req.log_sizes, claims);
+                let proof = multi
+                    .prove()
+                    .map_err(|e| ProverServiceError::ProvingFailed(e.to_string()))?;
+                Ok(GenericProvingResponse::new(request, proof))
+            }
+            ProgramInternalContractName::PoseidonProvingRequest => {
+                let req: PoseidonProvingRequest = parse_inputs(&request, params, "poseidon")?;
+                validate_poseidon_inputs(req.log_n_instances)?;
+                let poseidon = PoseidonStruct::new(req.log_n_instances).map_err(|reason| {
+                    ProverServiceError::InvalidInputs {
+                        program: "poseidon",
+                        reason,
+                    }
+                })?;
+                let proof = poseidon
+                    .prove::<Blake2sMerkleHasher>()
+                    .map_err(|e| ProverServiceError::ProvingFailed(e.to_string()))?;
+                Ok(GenericProvingResponse::new(request, proof))
+            }
+            ProgramInternalContractName::WideFibonacciProvingRequest => {
+                let req: WideFibonacciProvingRequest =
+                    parse_inputs(&request, params, "wide-fibonacci")?;
+                stwo_wasm::wide_fibonacci::validate_inputs(
+                    req.log_fibonacci_size,
+                    req.log_n_instances,
+                )
+                .map_err(|reason| ProverServiceError::InvalidInputs {
+                    program: "wide-fibonacci",
+                    reason,
+                })?;
+                let wide_fib = WideFibStruct::new(req.log_fibonacci_size, req.log_n_instances);
+                let proof = wide_fib
+                    .prove::<Blake2sMerkleHasher>()
+                    .map_err(|e| ProverServiceError::ProvingFailed(e.to_string()))?;
+                Ok(GenericProvingResponse::new(request, proof))
+            }
+            ProgramInternalContractName::Custom(name) => {
+                Err(ProverServiceError::UnsupportedProgram(name))
+            }
         }
     }
+}
 
-    pub fn internal_program(
-        &self,
-        request: serde_json::Value,
-        serialized_request: &str,
-        program_params: ProgramParams,
-    ) -> Result<GenericProvingResponse, String> {
-        match program_params.clone().internal_contract_name {
-            None => {
-                println!("No internal contract name");
-                Err(ProverServiceError::NoProgramParam.to_string())
-            }
-            // TODO: add other internal contract
-            Some(internal_contract) => match internal_contract {
-                ProgramInternalContractName::FibonnacciProvingRequest => {
-                    println!("try check request fib");
-                    // let fib_req_res: SerdeResult<FibonnacciProvingRequest> =
-                    //     serde_json::from_str(serialized_request);
-                    // let fib_req = match fib_req_res.as_ref() {
-                    //     Ok(req) => req.clone(),
-                    //     Err(e) => return Err(e.to_string()),
-                    // };
-                    // println!("init fib program");
-
-                    // let fib = Fibonacci::new(fib_req.log_size, BaseField::from(fib_req.claim));
-                    // println!("try prove");
-
-                    println!("WIP FIX Fibonnacci WASM");
-
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
-
-                    // match fib.prove() {
-                    //     Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                    //     Err(e) => Err(e.to_string()),
-                    // }
+/// Deserializes program inputs, first from the structured `request` payload,
+/// falling back to the string inputs map (which is also what NIP-90 tags carry).
+fn parse_inputs<T: DeserializeOwned>(
+    request: &Value,
+    params: &ProgramParams,
+    program: &'static str,
+) -> Result<T, ProverServiceError> {
+    if let Ok(parsed) = serde_json::from_value::<T>(request.clone()) {
+        return Ok(parsed);
+    }
+    if let Some(inputs) = &params.inputs {
+        let converted = convert_inputs_to_run_program(inputs.clone());
+        if let Ok(parsed) =
+            serde_json::from_value::<T>(serde_json::to_value(converted).map_err(|e| {
+                ProverServiceError::InvalidInputs {
+                    program,
+                    reason: e.to_string(),
                 }
-                ProgramInternalContractName::MultiFibonacciProvingRequest => {
-                    println!("WIP FIX Multi Fibonnacci WASM");
-
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                    // let multi_fibo_res: SerdeResult<MultiFibonnacciProvingRequest> =
-                    //     serde_json::from_str(serialized_request);
-                    // let mul_fib_req = match multi_fibo_res.as_ref() {
-                    //     Ok(req) => req.clone(),
-                    //     Err(e) => return Err(e.to_string()),
-                    // };
-                    // let claims: Vec<BaseField> = mul_fib_req
-                    //     .claims
-                    //     .into_iter()
-                    //     .map(m31::M31::from_u32_unchecked)
-                    //     .collect();
-                    // let multi_fibo = MultiFibonacci::new(mul_fib_req.log_sizes, claims);
-                    // match multi_fibo.prove() {
-                    //     Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                    //     Err(e) => Err(e.to_string()),
-                    // }
-                }
-                ProgramInternalContractName::Custom(_) => {
-                    println!("Custom internal contract");
-                    Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                }
-                ProgramInternalContractName::PoseidonProvingRequest => {
-                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                    let poseidon_serde_req: SerdeResult<PoseidonProvingRequest> =
-                        serde_json::from_str(serialized_request);
-                    let poseidon_req = match poseidon_serde_req.as_ref() {
-                        Ok(req) => req.clone(),
-                        Err(e) => return Err(e.to_string()),
-                    };
-                    // TODO
-                    //  add requirements in inputs_requirements
-                    if poseidon_req.log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
-                        return Err("OVERFLOW".to_string());
-                    }
-
-                    assert!(poseidon_req.log_n_instances >= N_LOG_INSTANCES_PER_ROW as u32);
-                    let log_n_rows = poseidon_req.log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
-
-                    println!(
-                        "log_n_rows {} >= LOG_N_LANES {} == {}",
-                        log_n_rows,
-                        LOG_N_LANES,
-                        log_n_rows >= LOG_N_LANES,
-                    );
-                    println!("log_n_rows {}", log_n_rows);
-                    if log_n_rows < LOG_N_LANES {
-                        println!(
-                            "failed log_n_rows >= LOG_N_LANES  {}",
-                            log_n_rows >= LOG_N_LANES
-                        );
-                        return Err("log_size >= LOG_N_LANES".to_string());
-                    }
-                    println!("MIN_FFT_LOG_SIZE as usize {}", MIN_FFT_LOG_SIZE);
-
-                    println!(
-                        "poseidon_req.log_n_instances  as usize {}",
-                        poseidon_req.log_n_instances
-                    );
-
-                    println!(
-                        "poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE{}",
-                        poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE
-                    );
-
-                    if poseidon_req.log_n_instances < MIN_FFT_LOG_SIZE
-                        || log_n_rows < MIN_FFT_LOG_SIZE
-                    {
-                        println!(
-                            "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
-                            log_n_rows >= LOG_N_LANES
-                        );
-                        return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
-                    }
-
-                    if poseidon_req.log_n_instances >= M31_CIRCLE_LOG_ORDER {
-                        return Err("log_n_instances >= M31_CIRCLE_LOG_ORDER as usize".to_string());
-                    }
-
-                    let poseidon = PoseidonStruct::new(poseidon_req.log_n_instances);
-
-                    // TODO fix prove poseidon with inputs_requirements
-                    match poseidon {
-                        Ok(poseidon) => match poseidon.prove::<Blake2sMerkleHasher>() {
-                            Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                            Err(e) => Err(e.to_string()),
-                        },
-                        Err(_) => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
-                    }
-                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
-                }
-                ProgramInternalContractName::WideFibonacciProvingRequest => {
-                    // Err(ProvingError::ConstraintsNotSatisfied.to_string())
-
-                    let wide_fib_serde: SerdeResult<WideFibonacciProvingRequest> =
-                        serde_json::from_str(serialized_request);
-                    let wide_fib_req = match wide_fib_serde.as_ref() {
-                        Ok(req) => req.clone(),
-                        Err(e) => return Err(e.to_string()),
-                    };
-                    let wide_fib = WideFibStruct::new(
-                        wide_fib_req.log_fibonacci_size,
-                        wide_fib_req.log_n_instances,
-                    );
-                    match wide_fib.prove::<Blake2sMerkleHasher>() {
-                        Ok(proof) => Ok(GenericProvingResponse::new(request.clone(), proof)),
-                        Err(e) => Err(e.to_string()),
-                    }
-                } // _ => Err(ProvingError::ConstraintsNotSatisfied.to_string()),
-            },
+            })?)
+        {
+            return Ok(parsed);
         }
     }
+    Err(ProverServiceError::InvalidInputs {
+        program,
+        reason: "inputs do not match the program's expected shape".to_owned(),
+    })
+}
+
+/// Enforces the trace-size limits of the Poseidon AIR.
+fn validate_poseidon_inputs(log_n_instances: u32) -> Result<(), ProverServiceError> {
+    let invalid = |reason: String| ProverServiceError::InvalidInputs {
+        program: "poseidon",
+        reason,
+    };
+    if (log_n_instances as usize) < N_LOG_INSTANCES_PER_ROW {
+        return Err(invalid(format!(
+            "log_n_instances must be at least {N_LOG_INSTANCES_PER_ROW}"
+        )));
+    }
+    let log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
+    if log_n_rows < MIN_LOG_N_ROWS {
+        return Err(invalid(format!(
+            "log_n_rows ({log_n_rows}) must be at least {MIN_LOG_N_ROWS}; increase log_n_instances"
+        )));
+    }
+    Ok(())
 }

@@ -1,0 +1,22 @@
+# Local Nostr relay configuration for the Askeladd demo (docker-compose).
+#
+# STARK proofs are large: a Poseidon job result is a ~200 KB Nostr event.
+# The stock relay defaults (128 KB) silently drop them, so the demo relay
+# raises the relevant limits to 1 MB.
+
+[info]
+relay_url = "ws://localhost:8080/"
+name = "askeladd-local-relay"
+description = "Local relay for the Askeladd demo."
+
+[network]
+address = "0.0.0.0"
+port = 8080
+
+[options]
+reject_future_seconds = 1800
+
+[limits]
+max_event_bytes = 1048576
+max_ws_message_bytes = 1048576
+max_ws_frame_bytes = 1048576

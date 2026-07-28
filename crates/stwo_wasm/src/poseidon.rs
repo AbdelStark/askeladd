@@ -1,6 +1,7 @@
-use stwo_prover::constraint_framework::constant_columns::gen_is_first;
-// lib.rs
+//! Poseidon hash permutations, wrapped from STWO's `examples::poseidon` AIR.
+
 use stwo_prover::constraint_framework::logup::LookupElements;
+use stwo_prover::core::air::Component;
 use stwo_prover::core::backend::simd::fft::MIN_FFT_LOG_SIZE;
 use stwo_prover::core::backend::simd::SimdBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
@@ -15,21 +16,28 @@ use stwo_prover::core::vcs::blake2_hash::{Blake2sHash, Blake2sHasher};
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::core::vcs::ops::MerkleHasher;
 use stwo_prover::core::InteractionElements;
-use stwo_prover::examples::poseidon::{
-    gen_interaction_trace,
-    gen_trace,
-    // PoseidonAir,
-    PoseidonComponent, //  PoseidonComponent,
-};
+use stwo_prover::examples::poseidon::{gen_interaction_trace, gen_trace, PoseidonComponent};
 use wasm_bindgen::prelude::*;
 
 use crate::StwoResult;
 
+/// Instances are packed `2^N_LOG_INSTANCES_PER_ROW` per trace row.
 pub const N_LOG_INSTANCES_PER_ROW: usize = 3;
-pub const LOG_N_ROWS: u32 = 8;
+/// Blowup of the constraint evaluation domain.
 pub const LOG_EXPAND: u32 = 2;
+/// SIMD lane count of the Poseidon AIR.
 pub const LOG_N_LANES: u32 = 4;
-// const N_STATE: usize = 16;
+
+/// Minimum `log_n_rows` accepted by the AIR: wide enough for SIMD lanes,
+/// the FFT, and the interaction trace.
+pub const MIN_LOG_N_ROWS: u32 = {
+    let lanes_floor = LOG_N_LANES + 2;
+    if lanes_floor > MIN_FFT_LOG_SIZE {
+        lanes_floor
+    } else {
+        MIN_FFT_LOG_SIZE
+    }
+};
 
 #[wasm_bindgen]
 extern "C" {
@@ -44,123 +52,67 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
+/// A self-contained Poseidon prover/verifier for `2^log_n_instances` permutations.
 #[derive(Clone)]
 pub struct PoseidonStruct {
     pub component: PoseidonComponent,
 }
 
 impl PoseidonStruct {
+    /// Builds the AIR for `2^log_n_instances` Poseidon permutations.
+    ///
+    /// `log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW` must be at
+    /// least [`MIN_LOG_N_ROWS`].
+    ///
+    /// The public statement (the LogUp claimed sum) is reconstructed by
+    /// replaying the prover's Fiat–Shamir transcript, so a verifier can build
+    /// the exact same AIR from `log_n_instances` alone.
     pub fn new(log_n_instances: u32) -> Result<Self, String> {
-        if log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
-            return Err("log_n_instances < N_LOG_INSTANCES_PER_ROW".to_string());
+        if (log_n_instances as usize) < N_LOG_INSTANCES_PER_ROW {
+            return Err(format!(
+                "log_n_instances must be at least {N_LOG_INSTANCES_PER_ROW}"
+            ));
         }
-
         let log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
-
-        if log_n_rows < LOG_N_LANES {
-            return Err("log_n_rows < LOG_N_LANES".to_string());
+        if log_n_rows < MIN_LOG_N_ROWS {
+            return Err(format!(
+                "log_n_rows ({log_n_rows}) must be at least {MIN_LOG_N_ROWS}; \
+                 increase log_n_instances"
+            ));
         }
 
-        if log_n_rows < MIN_FFT_LOG_SIZE && log_n_instances < MIN_FFT_LOG_SIZE {
-            println!(
-                "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
-                log_n_rows >= LOG_N_LANES
-            );
-            return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
-        }
-
-        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
-
-        let log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
-
-        // Draw lookup element.
-        // let lookup_elements = LookupElements::draw(channel);
-        let lookup_elements = LookupElements::draw(channel);
-
-        // let component = PoseidonComponent {
-        // Precompute twiddles.
+        // Replay the prover's transcript: commit the base trace, then draw the
+        // lookup elements, so the claimed sum matches the one the prover proves.
         let twiddles = SimdBackend::precompute_twiddles(
             CanonicCoset::new(log_n_rows + LOG_EXPAND + LOG_BLOWUP_FACTOR)
                 .circle_domain()
                 .half_coset,
         );
-
         let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         let commitment_scheme = &mut CommitmentSchemeProver::new(LOG_BLOWUP_FACTOR, &twiddles);
-
-        // Trace.
         let (trace, lookup_data) = gen_trace(log_n_rows);
         let mut tree_builder = commitment_scheme.tree_builder();
         tree_builder.extend_evals(trace);
         tree_builder.commit(channel);
-
-        // let (trace0, interaction_data) = gen_trace(LOG_N_ROWS);
-        // let (trace1, claimed_sum) =
-        //     gen_interaction_trace(LOG_N_ROWS, interaction_data, lookup_elements);
+        let lookup_elements = LookupElements::draw(channel);
         let (_, claimed_sum) = gen_interaction_trace(log_n_rows, lookup_data, &lookup_elements);
 
-        let component = PoseidonComponent {
-            log_n_rows,
-            lookup_elements,
-            claimed_sum, // claimed_sum,
-        };
-        // let air = PoseidonAir { component };
-
-        Ok(Self { component })
-    }
-    pub fn prove<H: MerkleHasher>(&self) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
-        // let (trace, lookup_data) = gen_trace(self.air.component.log_n_rows);
-        // let res = PoseidonStruct::prove_poseidon(self.air.component.log_n_rows);
-        let res = PoseidonStruct::prove_poseidon::<Blake2sMerkleHasher>(self.component.log_n_rows);
-        match res {
-            Ok(proof) => Ok(proof),
-            Err(_) => Err(ProvingError::ConstraintsNotSatisfied),
-        }
+        Ok(Self {
+            component: PoseidonComponent {
+                log_n_rows,
+                lookup_elements,
+                claimed_sum,
+            },
+        })
     }
 
-    // @TODO handle correctly error to not crash
-    pub fn prove_poseidon<H: MerkleHasher<Hash = Blake2sHash>>(
-        // air:PoseidonAir,
-        log_n_instances: u32,
-        // ) -> Result<StarkProof<H>, String> {
-    ) -> Result<StarkProof<Blake2sMerkleHasher>, String> {
-        if log_n_instances < N_LOG_INSTANCES_PER_ROW as u32 {
-            return Err("log_n_rows < LOG_N_LANES".to_string());
-        }
-
-        let log_n_rows = log_n_instances - N_LOG_INSTANCES_PER_ROW as u32;
-
-        if log_n_rows < LOG_N_LANES {
-            return Err("log_n_rows < LOG_N_LANES".to_string());
-        }
-
-        if log_n_rows < MIN_FFT_LOG_SIZE && log_n_instances < MIN_FFT_LOG_SIZE {
-            println!(
-                "log_n_elements >= MIN_FFT_LOG_SIZE as usize {}",
-                log_n_rows >= LOG_N_LANES
-            );
-            return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
-        }
-
-        if log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE {
-            println!(
-                " log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE  {}",
-                log_n_rows >= LOG_N_LANES
-            );
-            return Err(
-                " log_n_rows < MIN_FFT_LOG_SIZE || log_n_instances < MIN_FFT_LOG_SIZE ".to_string(),
-            );
-        }
-        if log_n_rows < LOG_N_LANES + 2 {
-            println!(
-                "log_n_rows < LOG_N_LANES + 2  {}",
-                log_n_rows < LOG_N_LANES + 2
-            );
-            return Err("log_n_rows < LOG_N_LANES + 2 ".to_string());
-        }
+    /// Generates the STARK proof for the Poseidon trace.
+    pub fn prove<H: MerkleHasher<Hash = Blake2sHash>>(
+        &self,
+    ) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
+        let log_n_rows = self.component.log_n_rows;
 
         // Precompute twiddles.
-        // let span = span!(Level::INFO, "Precompute twiddles").entered();
         let twiddles = SimdBackend::precompute_twiddles(
             CanonicCoset::new(log_n_rows + LOG_EXPAND + LOG_BLOWUP_FACTOR)
                 .circle_domain()
@@ -171,13 +123,13 @@ impl PoseidonStruct {
         let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         let commitment_scheme = &mut CommitmentSchemeProver::new(LOG_BLOWUP_FACTOR, &twiddles);
 
-        // Trace.
+        // Base trace.
         let (trace, lookup_data) = gen_trace(log_n_rows);
         let mut tree_builder = commitment_scheme.tree_builder();
         tree_builder.extend_evals(trace);
         tree_builder.commit(channel);
 
-        // Draw lookup element.
+        // Draw lookup elements — same transcript point as in `new`.
         let lookup_elements = LookupElements::draw(channel);
 
         // Interaction trace.
@@ -186,47 +138,44 @@ impl PoseidonStruct {
         tree_builder.extend_evals(trace);
         tree_builder.commit(channel);
 
-        // Constant trace.
-        let mut tree_builder = commitment_scheme.tree_builder();
-        tree_builder.extend_evals(vec![gen_is_first(log_n_rows)]);
-        tree_builder.commit(channel);
-
-        // Prove constraints.
         let component = PoseidonComponent {
             log_n_rows,
             lookup_elements,
             claimed_sum,
         };
-        // let air = PoseidonAir { component };
-        let proof = prove(
+        prove(
             &[&component],
             channel,
             &InteractionElements::default(),
             commitment_scheme,
         )
-        .map_err(Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>);
-
-        match proof {
-            Ok(p) => Ok(p),
-            Err(_) => Err("PROVING_ERROR".to_string()),
-        }
-        // } else {
-        //     return Err("llog_n_elements >= MIN_FFT_LOG_SIZE as usize".to_string());
-        // }
     }
 
+    /// Verifies a proof generated by [`PoseidonStruct::prove`], driving the
+    /// verifier's commitment scheme through the same transcript as the prover.
     pub fn verify<H: MerkleHasher<Hash = Blake2sHash>>(
         &self,
         proof: StarkProof<H>,
     ) -> Result<(), VerificationError> {
-        let verifier_channel =
-            &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
+        let log_n_rows = self.component.log_n_rows;
+        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
         let commitment_scheme = &mut CommitmentSchemeVerifier::new();
 
+        // Commit the base trace root from the proof, then draw the lookup
+        // elements at the same transcript point as the prover.
+        let sizes = self.component.trace_log_degree_bounds();
+        commitment_scheme.commit(proof.commitments[0], &sizes[0], channel);
+        let lookup_elements = LookupElements::draw(channel);
+        commitment_scheme.commit(proof.commitments[1], &sizes[1], channel);
+
+        let component = PoseidonComponent {
+            log_n_rows,
+            lookup_elements,
+            claimed_sum: self.component.claimed_sum,
+        };
         verify(
-            // &self.component,
-            &[&self.component],
-            verifier_channel,
+            &[&component],
+            channel,
             &InteractionElements::default(),
             commitment_scheme,
             proof,
@@ -236,11 +185,10 @@ impl PoseidonStruct {
 
 #[wasm_bindgen]
 pub fn prove_stark_proof_poseidon(log_n_instances: u32) -> StwoResult {
-    let poseidon = PoseidonStruct::new(log_n_instances);
-    match poseidon {
+    match PoseidonStruct::new(log_n_instances) {
         Ok(poseidon) => match poseidon.prove::<Blake2sMerkleHasher>() {
             Ok(proof) => {
-                console_log!("Proof deserialized successfully");
+                console_log!("Proof generated successfully");
                 match poseidon.verify::<Blake2sMerkleHasher>(proof) {
                     Ok(()) => {
                         console_log!("Proof verified successfully");
@@ -259,28 +207,40 @@ pub fn prove_stark_proof_poseidon(log_n_instances: u32) -> StwoResult {
                 }
             }
             Err(e) => {
-                console_log!("Failed to deserialize proof: {:?}", e);
+                console_log!("Proof generation failed: {:?}", e);
                 StwoResult {
                     success: false,
-                    message: format!("Failed to deserialize proof: {:?}", e),
+                    message: format!("Proof generation failed: {:?}", e),
                 }
             }
         },
-        Err(e) => StwoResult {
-            success: false,
-            message: format!("Failed to deserialize proof: {:?}", e),
-        },
+        Err(e) => {
+            console_log!("Invalid inputs: {:?}", e);
+            StwoResult {
+                success: false,
+                message: format!("Invalid inputs: {:?}", e),
+            }
+        }
     }
 }
 
 #[wasm_bindgen]
 pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) -> StwoResult {
-    let poseidon = PoseidonStruct::new(log_n_instances);
-
     let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
         serde_json::from_str(stark_proof_str);
-    match poseidon {
-        Ok(p) => match p.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
+    let proof = match stark_proof {
+        Ok(proof) => proof,
+        Err(e) => {
+            console_log!("Failed to deserialize proof: {:?}", e);
+            return StwoResult {
+                success: false,
+                message: format!("Failed to deserialize proof: {:?}", e),
+            };
+        }
+    };
+
+    match PoseidonStruct::new(log_n_instances) {
+        Ok(poseidon) => match poseidon.verify::<Blake2sMerkleHasher>(proof) {
             Ok(()) => {
                 console_log!("Proof verified successfully");
                 StwoResult {
@@ -296,9 +256,12 @@ pub fn verify_stark_proof_poseidon(log_n_instances: u32, stark_proof_str: &str) 
                 }
             }
         },
-        Err(_) => StwoResult {
-            success: false,
-            message: "Proof verified successfully".to_string(),
-        },
+        Err(e) => {
+            console_log!("Invalid inputs: {:?}", e);
+            StwoResult {
+                success: false,
+                message: format!("Invalid inputs: {:?}", e),
+            }
+        }
     }
 }

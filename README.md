@@ -1,30 +1,54 @@
 <div align="center">
-    <img src="docs/img/askeladd-text.png" alt="Askeladd" height=256>
-    <h2>Censorship-resistant global proving network.</h2>
+    <img src="docs/img/askeladd-text.png" alt="Askeladd" height="256">
+    <h2>Censorship-resistant, globally verifiable proving network.</h2>
+    <p><strong>Don't trust. Verify.</strong> STARK proofs for Nostr Data Vending Machines.</p>
 
-<a href="https://github.com/AbdelStark/askeladd/actions/workflows/ci.yaml"><img alt="GitHub Workflow Status (with event)" src="https://img.shields.io/github/actions/workflow/status/AbdelStark/askeladd/ci.yaml?style=for-the-badge" height=30></a>
-
-<!--a href="https://github.com/AbdelStark/askeladd/actions/workflows/e2e-test.yaml"><img alt="GitHub Workflow Status E2E Tests" src="https://img.shields.io/github/actions/workflow/status/AbdelStark/askeladd/e2e-test.yaml?style=for-the-badge" height=30></a-->
-
-<a href="https://bitcoin.org/"> <img alt="Bitcoin" src="https://img.shields.io/badge/Bitcoin-000?style=for-the-badge&logo=bitcoin&logoColor=white" height=30></a>
-<a href="https://nostr.com/"> <img alt="Nostr" src="https://img.shields.io/badge/Nostr-000?style=for-the-badge" height=30></a>
-<a href="https://lightning.network/"><img src="https://img.shields.io/badge/Ligthning Network-000.svg?&style=for-the-badge&logo=data:image/svg%2bxml;base64%2CPD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI%2FPg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIEZpcmV3b3JrcyAxMCwgRXhwb3J0IFNWRyBFeHRlbnNpb24gYnkgQWFyb24gQmVhbGwgKGh0dHA6Ly9maXJld29ya3MuYWJlYWxsLmNvbSkgLiBWZXJzaW9uOiAwLjYuMSAgLS0%2BDQo8IURPQ1RZUEUgc3ZnIFBVQkxJQyAiLS8vVzNDLy9EVEQgU1ZHIDEuMS8vRU4iICJodHRwOi8vd3d3LnczLm9yZy9HcmFwaGljcy9TVkcvMS4xL0RURC9zdmcxMS5kdGQiPg0KPHN2ZyBpZD0iYml0Y29pbl9saWdodG5pbmdfaWNvbi5mdy1QYWdlJTIwMSIgdmlld0JveD0iMCAwIDI4MCAyODAiIHN0eWxlPSJiYWNrZ3JvdW5kLWNvbG9yOiNmZmZmZmYwMCIgdmVyc2lvbj0iMS4xIg0KCXhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHhtbDpzcGFjZT0icHJlc2VydmUiDQoJeD0iMHB4IiB5PSIwcHgiIHdpZHRoPSIyODBweCIgaGVpZ2h0PSIyODBweCINCj4NCgk8cGF0aCBpZD0iRWxsaXBzZSIgZD0iTSA3IDE0MC41IEMgNyA2Ni43NjkgNjYuNzY5IDcgMTQwLjUgNyBDIDIxNC4yMzEgNyAyNzQgNjYuNzY5IDI3NCAxNDAuNSBDIDI3NCAyMTQuMjMxIDIxNC4yMzEgMjc0IDE0MC41IDI3NCBDIDY2Ljc2OSAyNzQgNyAyMTQuMjMxIDcgMTQwLjUgWiIgZmlsbD0iI2Y3OTMxYSIvPg0KCTxwYXRoIGQ9Ik0gMTYxLjE5NDMgNTEuNSBDIDE1My4yMzQ5IDcyLjE2MDcgMTQ1LjI3NTYgOTQuNDEwNyAxMzUuNzI0NCAxMTYuNjYwNyBDIDEzNS43MjQ0IDExNi42NjA3IDEzNS43MjQ0IDExOS44MzkzIDEzOC45MDgxIDExOS44MzkzIEwgMjA0LjE3NDcgMTE5LjgzOTMgQyAyMDQuMTc0NyAxMTkuODM5MyAyMDQuMTc0NyAxMjEuNDI4NiAyMDUuNzY2NyAxMjMuMDE3OSBMIDExMC4yNTQ1IDIyOS41IEMgMTA4LjY2MjYgMjI3LjkxMDcgMTA4LjY2MjYgMjI2LjMyMTQgMTA4LjY2MjYgMjI0LjczMjEgTCAxNDIuMDkxOSAxNTMuMjE0MyBMIDE0Mi4wOTE5IDE0Ni44NTcxIEwgNzUuMjMzMyAxNDYuODU3MSBMIDc1LjIzMzMgMTQwLjUgTCAxNTYuNDE4NyA1MS41IEwgMTYxLjE5NDMgNTEuNSBaIiBmaWxsPSIjZmZmZmZmIi8%2BDQo8L3N2Zz4%3D" alt="Bitcoin Lightning" height="30"></a>
-<a href="https://www.rust-lang.org/"> <img alt="Rust" src="https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white" height=30></a>
+<a href="https://github.com/AbdelStark/askeladd/actions/workflows/ci.yaml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/AbdelStark/askeladd/ci.yaml?style=for-the-badge" height="28"></a>
+<a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-000?style=for-the-badge" height="28"></a>
+<a href="https://nips.nostr.com/90"><img alt="NIP-90" src="https://img.shields.io/badge/NIP--90-DVM-000?style=for-the-badge" height="28"></a>
+<a href="https://bitcoin.org/"><img alt="Bitcoin" src="https://img.shields.io/badge/Bitcoin-000?style=for-the-badge&logo=bitcoin&logoColor=white" height="28"></a>
+<a href="https://nostr.com/"><img alt="Nostr" src="https://img.shields.io/badge/Nostr-000?style=for-the-badge" height="28"></a>
+<a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-000?style=for-the-badge&logo=rust&logoColor=white" height="28"></a>
 
 </div>
 
-## About
+---
 
-Askeladd is a censorship-resistant global proving network, for anyone to be able to generate validity proofs, using [STWO](https://github.com/starkware-libs/stwo) prover, and verify them. It enables to submit proving request to the network and retrieve the generated proof for any given request.
-Askeladd leverages [Nostr](https://github.com/nostr-protocol/nostr) for the communication layer, to gossip the proving requests and generated proofs, following the [NIP-90 - Data Vending Machine](https://nips.nostr.com/90) specification.
+> *"Cryptography shifts the balance of power from those with a monopoly on violence to those who comprehend mathematics and security design."* — Jacob Appelbaum
 
-> **Disclaimer:** Askeladd is only a proof of concept and should not be used in a production environment. It's a work in progress as a showcase of the STWO prover and the Nostr protocol.
+## Why this exists
 
-Check out this video demonstration of Askeladd in action:
+[Nostr](https://github.com/nostr-protocol/nostr) is rebuilding the internet on open, permissionless rails. [Data Vending Machines](https://nips.nostr.com/90) (DVMs, NIP-90) turn it into a **free market for computation**: broadcast a job, attach a Lightning micropayment, and machines around the world compete to execute it. No accounts, no gatekeepers, no platform risk.
+
+But a market where anyone can sell computation has a problem: **why should you believe the answer?**
+
+Askeladd's answer is the only one worth having: don't trust — verify. Every job result comes back with a **STARK proof** of correct execution, generated with StarkWare's [STWO](https://github.com/starkware-libs/stwo) prover ([Circle STARKs](https://eprint.iacr.org/2024/278)). The customer verifies the proof locally, in the browser if needed, and gains *mathematical certainty* that the computation was performed correctly — without redoing it, and without trusting the machine that did it.
+
+This is the missing layer of the Nostr economy, and it matters more every day. As AI agents start hiring other machines to compute for them, a receipt is not enough — they need a proof. Sovereign, open-source, unstoppable AI needs **verifiable computation** the same way free speech needed Nostr and free money needed Bitcoin. Askeladd is a step toward that world: the **Integrity Web**, where trust is replaced by mathematics.
+
+Read the full thesis: [Powering Verifiable Computation for the Nostr Revolution](https://hackmd.io/@AbdelStark/nostr-dvm-verifiable-computation) and the worldview behind it: [A Freedom Tech Manifesto](https://www.fgu.tech/).
+
+## What it is
+
+Askeladd is a working proof of concept of a verifiable DVM:
+
+1. A **customer** submits a proving job to the Nostr network (NIP-90 job request, kind `5600`).
+2. A **service provider** — the prover agent — picks it up, runs the computation, and generates a STARK proof with STWO.
+3. The result and the proof are published back to Nostr (job result, kind `6600`).
+4. The customer **verifies the proof** — natively in Rust, or in the browser through WebAssembly.
+
+Built-in provable programs (STWO reference AIRs): **Fibonacci**, **Multi-Fibonacci**, **Wide Fibonacci** (SIMD), and **Poseidon** hashing. They are deliberately simple — the point is the pattern, and the pattern generalizes to any computation you can express as a STARK.
+
+> [!IMPORTANT]
+> **Status: proof of concept, built for education.** Askeladd demonstrates the architecture end to end, but it is not audited, has no payment enforcement, and must not be trusted with production workloads. Read the code, run the demo, steal the ideas.
+
+Watch it work:
 
 [![asciicast](https://asciinema.org/a/670103.png)](https://asciinema.org/a/670103)
 
-## Architecture
+![Demo against a public relay](docs/demo/askeladd_demo_public_relayer_output.gif)
+
+## How it works
 
 ```mermaid
 graph LR
@@ -34,12 +58,12 @@ graph LR
     STWO_P[STWO Prover]
     STWO_V[STWO Verifier]
 
-    Customer -->|1. Submit Proving Request<br>Kind: 5600| Nostr
-    Nostr -->|2. Fetch Request| SP
-    SP -->|3. Generate Proof| STWO_P
-    SP -->|4. Publish Proof<br>Kind: 6600| Nostr
-    Nostr -->|5. Fetch Proof| Customer
-    Customer -->|6. Verify Proof| STWO_V
+    Customer -->|1. Submit proving request<br>Kind: 5600| Nostr
+    Nostr -->|2. Fetch request| SP
+    SP -->|3. Generate proof| STWO_P
+    SP -->|4. Publish proof<br>Kind: 6600| Nostr
+    Nostr -->|5. Fetch proof| Customer
+    Customer -->|6. Verify proof| STWO_V
 
     classDef customer fill:#f9d71c,stroke:#333,stroke-width:2px;
     classDef provider fill:#66b3ff,stroke:#333,stroke-width:2px;
@@ -54,83 +78,120 @@ graph LR
     class STWO_V verifier;
 ```
 
-Typical flow:
+Every piece of the exchange is a plain Nostr event — the network is the message bus, the job board, and the proof distribution layer in one. Proofs are self-contained: anyone who sees the result event can verify it, not just the original customer.
 
-1. User submits a proving request to the network (DVM Job Kind `5600`)
-2. A DVM Service Provider picks the request and generates a proof using the STWO prover.
-3. The proof is published to the Nostr network (DVM Job Result Kind `6600`).
-4. The DVM Customer can verify the proof using the STWO verifier.
+| Event kind | Role |
+| ---------- | ---- |
+| `5600` | Job request: program selector + inputs (NIP-90 range) |
+| `6600` | Job result: output + serialized STARK proof |
+| `5700` | Program launch (experimental, see [roadmap](#roadmap)) |
 
-## Running the demo
+Deep dive: [docs/architecture.md](docs/architecture.md) · [docs/protocol.md](docs/protocol.md) · [docs/vision.md](docs/vision.md)
 
-### Using docker-compose
+## Quickstart
+
+Prerequisites: [Rust](https://rustup.rs/) (the repo pins a toolchain via `rust-toolchain.toml`), and optionally Docker for the local relay.
+
+### One-command demo (Docker)
+
+Spins up a local Nostr relay, a prover agent, and a customer:
 
 ```bash
 ./scripts/demo_docker_compose_local_relayer.sh
 ```
 
-### Manually
-
-Create a `.env` file, you can use the `.env.example` file as a reference.
+### Manual
 
 ```bash
-cp .env.example .env
-
-# Set the relay URL in the .env file
-
-# Using a local relay
-APP_SUBSCRIBED_RELAYS=ws://localhost:8080
-
-# Or a public relay
-APP_SUBSCRIBED_RELAYS=wss://relay.nostr.net
+cp .env.example .env   # then edit APP_SUBSCRIBED_RELAYS
 ```
 
-(Optional, if you want to run a local nostr relay) In a terminal, run the local nostr relay:
+Point `APP_SUBSCRIBED_RELAYS` at a local relay (`ws://localhost:8080`, run one with `docker run -p 8080:8080 scsibug/nostr-rs-relay`) or a public one (`wss://relay.damus.io`). Then, in two terminals:
 
 ```bash
-docker run -p 8080:8080 scsibug/nostr-rs-relay
-```
-
-In a terminal, run the prover agent:
-
-```bash
+# Terminal 1 — the prover agent (DVM service provider)
 cargo run --bin dvm_service_provider
+
+# Terminal 2 — the customer: the classic two-job demo
+cargo run --bin dvm_customer -- demo
 ```
 
-In a terminal, run the user CLI:
+The customer CLI can also drive each program individually:
 
 ```bash
-cargo run --bin dvm_customer
+cargo run --bin dvm_customer -- fibonacci --log-size 5 --claim 443693538
+cargo run --bin dvm_customer -- poseidon --log-n-instances 9
+cargo run --bin dvm_customer -- wide-fibonacci --log-fibonacci-size 8 --log-n-instances 8
+cargo run --bin dvm_customer -- multi-fibonacci --log-sizes 5,5 --claims 443693538,443693538
 ```
 
-The user CLI binary will submit a proving request to the Nostr network. The prover agent will generate a proof for the request and publish it to the Nostr network. The user CLI binary will be able to verify the proof.
+Each command submits a proving job to the network, waits for the prover's result, and verifies the STARK proof locally. The tmux script `./scripts/demo.sh` runs the same flow in a split terminal (requires release binaries: `cargo build --release`).
 
-## Askeladd DVM Marketplace
+Configuration lives in `config/default.toml` and can be overridden per environment (`config/{RUN_MODE}.toml`, `config/local.toml`) or via `APP_*` environment variables. See [docs/architecture.md](docs/architecture.md#configuration).
 
-See the [Askeladd DVM Marketplace](https://github.com/AbdelStark/askeladd-dvm-marketplace) for more information.
+## In the browser
 
-This requires to build the STWO WASM bindings and to copy the generated artifacts.
+The [`stwo_wasm`](crates/stwo_wasm) crate compiles the prover and verifier to WebAssembly, which powers two frontends:
 
-Go to [crates/stwo_wasm](crates/stwo_wasm) and run `wasm-pack build --target web` to build the STWO WASM bindings.
+- **[Askeladd DVM Marketplace](askeladd-dvm-marketplace/)** — a Next.js web app to publish and verify proving jobs through Nostr, with in-browser STARK verification. The WASM bindings are prebuilt and committed under `src/pkg/`, so it runs out of the box. ([demo video](docs/demo/askeladd-dvm-marketplace-demo.mp4))
+- **[Thorfinn](thorfinn/)** — a browser extension for generating and verifying STARK proofs over Nostr.
 
-Then copy the generated `pkg` directory to [askeladd-dvm-marketplace/src/](askeladd-dvm-marketplace/src/).
+To rebuild the WASM bindings after changing the Rust prover code: `cd crates/stwo_wasm && wasm-pack build --target web`, then copy the generated `pkg/` directory into `askeladd-dvm-marketplace/src/`.
 
-## 🤝 Contributing
+## Repository layout
 
-We love contributions! If you have ideas for improvements or find any issues, please open an issue or submit a pull request.
+```
+crates/
+  core/        askeladd — DVM customer & service provider, Nostr plumbing, SQLite job ledger
+  cli/         dvm_customer & dvm_service_provider binaries
+  stwo_wasm/   STWO prover/verifier exposed to Rust and WebAssembly (Fibonacci, Poseidon, ...)
+askeladd-dvm-marketplace/   Next.js web marketplace
+thorfinn/                   Browser extension
+config/        Layered configuration (TOML + env)
+scripts/       Demo, lint, and formatting scripts
+docs/          Vision, architecture, and protocol documentation
+```
 
-## 📜 License
+## Roadmap
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- [x] End-to-end verifiable DVM flow over Nostr (NIP-90 kinds 5600/6600)
+- [x] STWO proofs for Fibonacci, Multi-Fibonacci, Wide Fibonacci, and Poseidon
+- [x] In-browser proving and verification via WebAssembly
+- [ ] Lightning payments wired into the job lifecycle (NIP-57 zaps)
+- [ ] Large-proof distribution: chunked events or out-of-band proofs (NIP-94 / Blossom / IPFS) so Poseidon-class results fit any relay
+- [ ] Pluggable programs: WASM modules fetched from Nostr (NIP-94/96) or IPFS
+- [ ] Reputation and discovery for provers (NIP-89 announcements)
+- [ ] Verifiable AI inference as a first-class job type
 
-## 🙏 Acknowledgements
+## The name
 
-This demo is powered by the amazing [STWO Prover](https://github.com/starkware-libs/stwo) from StarkWare. A big thank you to the StarkWare team and all contributors!
+Askeladd is the cunning hero of Norwegian folklore — the underdog who wins not by force but by wit. (Fans of *Vinland Saga* will recognize both him and [Thorfinn](thorfinn/).) Fitting for a project whose whole thesis is that mathematics outsmarts power.
 
-## 📚 Resources
+## Contributing
 
-- [Nostr Rust relay](https://github.com/scsibug/nostr-rs-relay/)
-- [Nostr web tooling](https://nostrtool.com/)
-- [NIP-90 - Data Vending Machine](https://nips.nostr.com/90)
-- [Vendata.io](https://vendata.io/dvms)
-- [Data Vending Machines](https://www.data-vending-machines.org/)
+Contributions are welcome — code, docs, ideas, and new provable programs. Read [CONTRIBUTING.md](CONTRIBUTING.md) to get started, and open an issue to discuss anything bigger.
+
+If you build freedom tech, you're already one of us. Write code as if your future depends on it.
+
+## Security
+
+Askeladd is a proof of concept and has not been audited. See [SECURITY.md](SECURITY.md) for how to report vulnerabilities.
+
+## License
+
+[MIT](LICENSE) — the code is free, forever, for everyone.
+
+## Acknowledgements
+
+- [STWO](https://github.com/starkware-libs/stwo) — the blazing-fast Circle STARK prover this demo is built on, from StarkWare and its contributors.
+- [rust-nostr](https://github.com/rust-nostr/nostr) — the Nostr SDK used for all network communication.
+- The cypherpunks — who wrote code so the rest of us could write more of it.
+
+## Resources
+
+- Thesis: [Powering Verifiable Computation for the Nostr Revolution](https://hackmd.io/@AbdelStark/nostr-dvm-verifiable-computation)
+- Worldview: [A Freedom Tech Manifesto](https://www.fgu.tech/)
+- [NIP-90 — Data Vending Machine](https://nips.nostr.com/90) · [NIP-57 — Zaps](https://nips.nostr.com/57)
+- [Circle STARKs (paper)](https://eprint.iacr.org/2024/278) · [STWO prover](https://github.com/starkware-libs/stwo)
+- [Data Vending Machines](https://www.data-vending-machines.org/) · [Vendata.io](https://vendata.io/dvms)
+- [Nostr web tooling](https://nostrtool.com/) · [nostr-rs-relay](https://github.com/scsibug/nostr-rs-relay/)

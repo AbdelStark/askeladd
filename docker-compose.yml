@@ -5,6 +5,9 @@ services:
     image: scsibug/nostr-rs-relay:latest
     ports:
       - "8080:8080"
+    volumes:
+      # Raised event-size limits: STARK proofs are large (see config file).
+      - ./config/nostr-rs-relay/config.toml:/usr/src/app/config.toml:ro
 
   dvm-service-provider:
     build:

@@ -1,17 +1,22 @@
-// lib.rs
-use stwo_prover::core::backend::cpu::CpuCircleEvaluation;
+//! Wide Fibonacci: many Fibonacci sequences proven in a single STARK proof,
+//! built on STWO's SIMD `examples::wide_fibonacci` AIR.
+//!
+//! Semantics: the proof covers `2^log_n_instances` independent Fibonacci
+//! sequences, each `2^log_fibonacci_size` cells long, packed into a single
+//! trace of `2^LOG_N_COLUMNS` columns.
+
+use stwo_prover::core::backend::simd::SimdBackend;
 use stwo_prover::core::channel::{Blake2sChannel, Channel};
-use stwo_prover::core::fields::m31::{self, BaseField};
+use stwo_prover::core::fields::m31::BaseField;
 use stwo_prover::core::fields::IntoSlice;
-use stwo_prover::core::poly::circle::CanonicCoset;
 use stwo_prover::core::prover::{ProvingError, StarkProof, VerificationError};
 use stwo_prover::core::vcs::blake2_hash::{Blake2sHash, Blake2sHasher};
 use stwo_prover::core::vcs::blake2_merkle::Blake2sMerkleHasher;
 use stwo_prover::core::vcs::ops::MerkleHasher;
-use stwo_prover::examples::wide_fibonacci::component::{
-    Input, WideFibAir, WideFibComponent, LOG_N_COLUMNS,
+use stwo_prover::examples::wide_fibonacci::component::LOG_N_COLUMNS;
+use stwo_prover::examples::wide_fibonacci::simd::{
+    gen_trace, SimdWideFibAir, SimdWideFibComponent,
 };
-use stwo_prover::examples::wide_fibonacci::constraint_eval::gen_trace;
 use stwo_prover::trace_generation::{commit_and_prove, commit_and_verify};
 use wasm_bindgen::prelude::*;
 
@@ -30,88 +35,75 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-pub trait WideFairImpl {
-    fn verify<H: MerkleHasher>(proof: StarkProof<H>) -> Result<(), VerificationError>;
-    fn prove<H: MerkleHasher>(
-        log_fibonacci_size: u32,
-        log_n_instances: u32,
-    ) -> Result<StarkProof<H>, ProvingError>;
+/// Minimum sequence length: traces are packed `2^LOG_N_COLUMNS` columns wide.
+pub const MIN_LOG_FIBONACCI_SIZE: u32 = LOG_N_COLUMNS as u32;
+
+/// Minimum trace height: SIMD lanes require at least `2^LOG_N_LANES` rows.
+/// Since `log_column_size = log_n_instances + log_fibonacci_size - LOG_N_COLUMNS`,
+/// the pair must satisfy `log_n_instances + log_fibonacci_size >= 12`.
+pub const MIN_LOG_COLUMN_SIZE: u32 = 4;
+
+/// Validates wide-Fibonacci job inputs before proving (trace generation
+/// panics on undersized inputs — check first).
+pub fn validate_inputs(log_fibonacci_size: u32, log_n_instances: u32) -> Result<(), String> {
+    if log_fibonacci_size < MIN_LOG_FIBONACCI_SIZE {
+        return Err(format!(
+            "log_fibonacci_size must be at least {MIN_LOG_FIBONACCI_SIZE}"
+        ));
+    }
+    let log_column_size = log_n_instances + log_fibonacci_size - MIN_LOG_FIBONACCI_SIZE;
+    if log_column_size < MIN_LOG_COLUMN_SIZE {
+        return Err(format!(
+            "log_n_instances + log_fibonacci_size must be at least {}",
+            MIN_LOG_FIBONACCI_SIZE + MIN_LOG_COLUMN_SIZE
+        ));
+    }
+    Ok(())
 }
 
+/// A self-contained wide-Fibonacci prover/verifier.
 #[derive(Clone)]
 pub struct WideFibStruct {
-    pub air: WideFibAir,
+    pub air: SimdWideFibAir,
 }
 
 impl WideFibStruct {
+    /// Builds the AIR for `2^log_n_instances` sequences of `2^log_fibonacci_size` cells.
     pub fn new(log_fibonacci_size: u32, log_n_instances: u32) -> Self {
-        let component = WideFibComponent {
-            log_fibonacci_size: log_fibonacci_size + LOG_N_COLUMNS as u32,
+        let component = SimdWideFibComponent {
+            log_fibonacci_size,
             log_n_instances,
         };
-        let wide_fib = WideFibAir {
-            component: component.clone(),
-        };
-        Self { air: wide_fib }
+        Self {
+            air: SimdWideFibAir { component },
+        }
     }
+
+    /// Generates the STARK proof for the wide-Fibonacci trace.
     pub fn prove<H: MerkleHasher<Hash = Blake2sHash>>(
         &self,
     ) -> Result<StarkProof<Blake2sMerkleHasher>, ProvingError> {
-        let private_input = (0..(1 << self.air.component.log_n_instances))
-            .map(|i| Input {
-                a: m31::M31::from_u32_unchecked(i),
-                b: m31::M31::from_u32_unchecked(i),
-            })
-            .collect();
-        let trace = gen_trace(&self.air.component.clone(), private_input);
-        let trace_domain = CanonicCoset::new(self.air.component.log_column_size());
-        let trace = trace
-            .into_iter()
-            .map(|eval| CpuCircleEvaluation::new_canonical_ordered(trace_domain, eval))
-            .collect();
-        let prover_channel =
-            &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
-        let res_proof: Result<StarkProof<Blake2sMerkleHasher>, ProvingError> =
-            commit_and_prove(&self.air, prover_channel, trace);
-        match res_proof {
-            Ok(r) => Ok(r),
-            Err(e) => Err(e),
-        }
-        // let res_proof = prove(
-        //     &self.air,
-        //     prover_channel,
-        //     &InteractionElements::default(),
-        //     None,
-        // )
-        // .map_err(|op| Err::<StarkProof<Blake2sMerkleHasher>, ProvingError>(op));
-        // res_proof
+        let trace = gen_trace(self.air.component.log_column_size());
+        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
+        commit_and_prove(&self.air, channel, trace)
     }
 
+    /// Verifies a proof generated by [`WideFibStruct::prove`].
     pub fn verify<H: MerkleHasher>(
         &self,
         proof: StarkProof<Blake2sMerkleHasher>,
     ) -> Result<(), VerificationError> {
-        let verifier_channel =
-            &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
-        commit_and_verify(proof, &self.air, verifier_channel)
+        let channel = &mut Blake2sChannel::new(Blake2sHasher::hash(BaseField::into_slice(&[])));
+        commit_and_verify(proof, &self.air, channel)
     }
 }
 
 #[wasm_bindgen]
 pub fn stark_proof_wide_fibo(log_fibonacci_size: u32, log_n_instances: u32) -> StwoResult {
-    let component = WideFibComponent {
-        log_fibonacci_size: log_fibonacci_size + LOG_N_COLUMNS as u32,
-        log_n_instances,
-    };
-
-    let wide_fib_air = WideFibAir {
-        component: component.clone(),
-    };
-
-    let wide_fib = WideFibStruct { air: wide_fib_air };
+    let wide_fib = WideFibStruct::new(log_fibonacci_size, log_n_instances);
     match wide_fib.prove::<Blake2sMerkleHasher>() {
         Ok(proof) => {
-            console_log!("Proof deserialized successfully");
+            console_log!("Proof generated successfully");
             match wide_fib.verify::<Blake2sMerkleHasher>(proof) {
                 Ok(()) => {
                     console_log!("Proof verified successfully");
@@ -130,10 +122,10 @@ pub fn stark_proof_wide_fibo(log_fibonacci_size: u32, log_n_instances: u32) -> S
             }
         }
         Err(e) => {
-            console_log!("Failed to deserialize proof: {:?}", e);
+            console_log!("Proof generation failed: {:?}", e);
             StwoResult {
                 success: false,
-                message: format!("Failed to deserialize proof: {:?}", e),
+                message: format!("Proof generation failed: {:?}", e),
             }
         }
     }
@@ -145,33 +137,38 @@ pub fn verify_stark_proof_wide_fibo(
     log_n_instances: u32,
     stark_proof_str: &str,
 ) -> StwoResult {
-    let component = WideFibComponent {
-        log_fibonacci_size: log_fibonacci_size + LOG_N_COLUMNS as u32,
-        log_n_instances,
-    };
-
-    let wide_fib_air = WideFibAir {
-        component: component.clone(),
-    };
-
-    let wide_fib = WideFibStruct { air: wide_fib_air };
+    let wide_fib = WideFibStruct::new(log_fibonacci_size, log_n_instances);
 
     let stark_proof: Result<StarkProof<Blake2sMerkleHasher>, serde_json::Error> =
         serde_json::from_str(stark_proof_str);
-    match wide_fib.verify::<Blake2sMerkleHasher>(stark_proof.unwrap()) {
-        Ok(()) => {
-            console_log!("Proof verified successfully");
-            StwoResult {
-                success: true,
-                message: "Proof verified successfully".to_string(),
+    match stark_proof {
+        Ok(proof) => match wide_fib.verify::<Blake2sMerkleHasher>(proof) {
+            Ok(()) => {
+                console_log!("Proof verified successfully");
+                StwoResult {
+                    success: true,
+                    message: "Proof verified successfully".to_string(),
+                }
             }
-        }
+            Err(e) => {
+                console_log!("Proof verification failed: {:?}", e);
+                StwoResult {
+                    success: false,
+                    message: format!("Proof verification failed: {:?}", e),
+                }
+            }
+        },
         Err(e) => {
-            console_log!("Proof verification failed: {:?}", e);
+            console_log!("Failed to deserialize proof: {:?}", e);
             StwoResult {
                 success: false,
-                message: format!("Proof verification failed: {:?}", e),
+                message: format!("Failed to deserialize proof: {:?}", e),
             }
         }
     }
 }
+
+// Suppress the unused-backend lint when compiled natively without the SIMD
+// code path being referenced elsewhere.
+#[allow(dead_code)]
+type _WideFibBackend = SimdBackend;

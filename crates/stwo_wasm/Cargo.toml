@@ -10,7 +10,7 @@ license = "MIT"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-stwo-prover = { git = "https://github.com/starkware-libs/stwo.git" }
+stwo-prover.workspace = true
 wasm-bindgen = "0.2.84"
 serde = "1.0.204"
 serde_json = "1.0.121"

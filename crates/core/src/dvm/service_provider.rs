@@ -1,21 +1,24 @@
-use std::collections::HashMap;
-// use std::collections::HashMap;
+//! The prover agent: a NIP-90 service provider that answers proving jobs
+//! with STARK proofs.
+//!
+//! The agent subscribes to job requests on the configured relays, executes
+//! the requested program, and publishes the result — output plus proof —
+//! back to the network. A local SQLite ledger makes completed jobs sticky,
+//! so events redelivered by relay gossip are never executed twice.
+
 use std::error::Error;
+use std::time::Duration;
 
 use colored::*;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use nostr_sdk::prelude::*;
-use serde_json::Result as SerdeResult;
 use thiserror::Error;
 
 use crate::config::Settings;
 use crate::db::{Database, RequestStatus};
 use crate::dvm::constants::{JOB_LAUNCH_PROGRAM_KIND, JOB_REQUEST_KIND};
-use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult, ProgramParams};
-use crate::nostr_utils::extract_params_from_tags;
-// use crate::nostr_utils::extract_params_from_tags;
+use crate::dvm::types::{GenerateZKPJobRequest, GenerateZKPJobResult};
 use crate::prover_service::ProverService;
-use crate::utils::convert_inputs_to_run_program;
 
 /// ServiceProvider is the main component of the Askeladd prover agent.
 /// It manages the lifecycle of proving requests, from receiving them via Nostr,
@@ -39,20 +42,22 @@ pub struct ServiceProvider {
 /// Errors that can occur during ServiceProvider operations
 #[derive(Error, Debug)]
 pub enum ServiceProviderError {
-    #[error("Failed to connect to Nostr relay: {0}")]
+    #[error("invalid prover agent secret key: {0}")]
+    InvalidSecretKey(String),
+    #[error("invalid database path")]
+    InvalidDatabasePath,
+    #[error("failed to connect to Nostr relay: {0}")]
     NostrConnectionError(String),
-    #[error("Failed to subscribe to Nostr events: {0}")]
+    #[error("failed to subscribe to Nostr events: {0}")]
     NostrSubscriptionError(String),
-    #[error("Database error: {0}")]
+    #[error("Nostr event builder error: {0}")]
+    EventBuilderError(String),
+    #[error("database error: {0}")]
     DatabaseError(#[from] rusqlite::Error),
     #[error("Nostr client error: {0}")]
     NostrClientError(#[from] nostr_sdk::client::Error),
     #[error("JSON serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
-    #[error("Unknown error")]
-    Unknown,
-    #[error("No program param")]
-    NoProgramParam,
 }
 
 impl ServiceProvider {
@@ -67,13 +72,23 @@ impl ServiceProvider {
     /// A Result containing the new ServiceProvider or an error
     pub fn new(settings: Settings) -> Result<Self, ServiceProviderError> {
         // Initialize Nostr keys and client
-        let prover_agent_keys =
-            Keys::new(SecretKey::from_bech32(&settings.prover_agent_sk).unwrap());
-        let opts = Options::new().wait_for_send(false);
+        let secret_key = SecretKey::from_bech32(&settings.prover_agent_sk)
+            .map_err(|e| ServiceProviderError::InvalidSecretKey(e.to_string()))?;
+        let prover_agent_keys = Keys::new(secret_key);
+        // Wait for relay acknowledgment so rejected events (e.g. oversized
+        // proofs refused by relay policy) surface as errors instead of
+        // vanishing silently.
+        let opts = Options::new()
+            .wait_for_send(true)
+            .send_timeout(Some(Duration::from_secs(15)));
         let client = Client::with_opts(&prover_agent_keys, opts);
 
         // Initialize database
-        let db = Database::new(settings.db_path.to_str().unwrap())?;
+        let db_path = settings
+            .db_path
+            .to_str()
+            .ok_or(ServiceProviderError::InvalidDatabasePath)?;
+        let db = Database::new(db_path)?;
 
         Ok(Self {
             settings,
@@ -94,6 +109,9 @@ impl ServiceProvider {
                 .map_err(|e| ServiceProviderError::NostrConnectionError(e.to_string()))?;
         }
         self.nostr_client.connect().await;
+        crate::nostr_utils::wait_for_relay_connection(&self.nostr_client, Duration::from_secs(10))
+            .await
+            .map_err(ServiceProviderError::NostrConnectionError)?;
         debug!("Nostr client connected to relays.");
         Ok(())
     }
@@ -108,7 +126,7 @@ impl ServiceProvider {
             .kind(Kind::Custom(JOB_REQUEST_KIND))
             .since(Timestamp::now());
 
-        // Subscribe to Nostr events
+        // Subscribe to proving job requests
         self.nostr_client
             .subscribe_with_id(proving_req_sub_id.clone(), vec![filter], None)
             .await
@@ -116,13 +134,12 @@ impl ServiceProvider {
 
         info!("Subscribed to proving requests, waiting for requests...");
 
-        // Start JOB LAUNCH PROGRAM subscription
+        // Subscribe to program-launch requests (experimental, kind 5700)
         let launch_program_req_id = SubscriptionId::new(&self.settings.launch_program_req_id);
         let filter_launch_program = Filter::new()
             .kind(Kind::Custom(JOB_LAUNCH_PROGRAM_KIND))
             .since(Timestamp::now());
 
-        // Subscribe to LAUCH_PROGRAM DVM KIND event
         self.nostr_client
             .subscribe_with_id(
                 launch_program_req_id.clone(),
@@ -132,7 +149,7 @@ impl ServiceProvider {
             .await
             .map_err(|e| ServiceProviderError::NostrSubscriptionError(e.to_string()))?;
 
-        info!("Subscribed to launch program, waiting for requests...");
+        info!("Subscribed to program launch requests (experimental).");
 
         // Start handling Nostr notifications
         self.nostr_client
@@ -159,121 +176,58 @@ impl ServiceProvider {
         } = notification
         {
             if subscription_id == SubscriptionId::new(&self.settings.proving_req_sub_id) {
-                let _ = self.handle_event(event).await;
+                if let Err(e) = self.handle_proving_request(event).await {
+                    error!("Failed to handle proving request: {}", e);
+                }
             } else if subscription_id == SubscriptionId::new(&self.settings.launch_program_req_id) {
-                let _ = self.handle_event_launch_program(event).await;
+                Self::handle_launch_request(&event);
             }
         }
         Ok(false)
     }
 
-    fn deserialize_zkp_request_data(
-        json_data: &str,
-    ) -> Result<GenerateZKPJobRequest, ServiceProviderError> {
-        let zkp_request: SerdeResult<GenerateZKPJobRequest> = serde_json::from_str(json_data);
-        zkp_request.map_err(ServiceProviderError::SerializationError)
-    }
-
-    /// Handles a single proving request event
-    async fn handle_event(&self, event: Box<Event>) -> Result<(), ServiceProviderError> {
+    /// Handles a single proving request event: parse, deduplicate, prove, publish.
+    async fn handle_proving_request(&self, event: Box<Event>) -> Result<(), ServiceProviderError> {
         info!("Proving request received [{}]", event.id);
 
-        let tags = event.tags.clone();
         let job_id = event.id.to_string();
-        let zkp_request =
-            match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
-                Ok(zkp) => zkp,
-                Err(e) => {
-                    println!("{:?}", e);
-                    return Err(e);
-                }
-            };
-        println!("zkp_request {:?}", zkp_request);
-        let params_program: Option<ProgramParams> = zkp_request.program.clone();
-        // let params_inputs= new HashMap()
-        let mut params_inputs: HashMap<String, Value> = HashMap::new();
-        // TODO Check strict if user have sent a good request
-        if let Some(program_params) = params_program.clone() {
-            println!("params_program {:?}", params_program);
-            if let Some(inputs) = program_params.inputs {
-                let successful_parses = convert_inputs_to_run_program(inputs);
-                params_inputs = successful_parses.clone();
-                println!("params_inputs {:?}", params_inputs);
-            } else {
-                let successful_parses = extract_params_from_tags(&tags);
-                successful_parses.into_iter().for_each(|(k, v)| {
-                    let val: Value = serde_json::to_value(v).unwrap();
-                    params_inputs.insert(k.clone(), val.clone());
-                });
-                // let inputs_values:HashMap<String,Value>= successful_parses
-                //     .into_iter()
-                //     .map(|(k, v)| {
-                //         let val:Value= serde_json::to_value(v).unwrap();
-                //         params_inputs.insert(k.clone(), val.clone());
-                //         return (k, val)
-                //     })
-                //     .collect();
-                // params_inputs = inputs_values;
-            }
-        } else {
-            println!("program_params {:?}", params_program);
-        }
+        let zkp_request: GenerateZKPJobRequest = serde_json::from_str(&event.content)?;
 
-        let request_str = serde_json::to_string(&zkp_request.request).unwrap();
-        let request_value = serde_json::from_str(&request_str).unwrap();
-        println!("request_str {:?}", request_str);
-
-        if let Some(status) = self.db.get_request_status(&job_id)? {
-            match status {
-                RequestStatus::Completed => {
-                    info!("Request {} already processed, skipping", &job_id);
-                    return Ok(());
-                }
-                RequestStatus::Failed => {
-                    info!("Request {} failed before, retrying", &job_id);
-                }
-                RequestStatus::Pending => {
-                    info!("Request {} is already pending, skipping", &job_id);
-                    return Ok(());
-                }
+        // Skip jobs already completed; retry jobs that failed before.
+        match self.db.get_request_status(&job_id)? {
+            Some(RequestStatus::Completed) | Some(RequestStatus::Pending) => {
+                info!("Request {} already handled, skipping", &job_id);
+                return Ok(());
             }
-        } else {
-            self.db.insert_request(&job_id, &request_value)?;
+            Some(RequestStatus::Failed) => {
+                info!("Request {} failed before, retrying", &job_id);
+            }
+            None => {
+                self.db.insert_request(&job_id, &zkp_request.request)?;
+            }
         }
 
         match self
             .proving_service
-            .generate_proof_by_program(request_value, params_program)
+            .generate_proof_by_program(zkp_request.request, zkp_request.program)
         {
             Ok(response) => {
-                let serialized_proof = serde_json::to_string(&response.proof)?;
-                println!("Generated proof: {:?}", serialized_proof);
-                let answer_string = serde_json::to_string(&response).unwrap();
-                let value_answer: Value = serde_json::from_str(&answer_string)?;
+                let job_result =
+                    GenerateZKPJobResult::new(job_id.clone(), serde_json::to_value(&response)?);
 
-                let job_result = GenerateZKPJobResult {
-                    job_id: job_id.clone(),
-                    response: value_answer,
-                    proof: response.proof,
-                };
+                let tags = vec![Tag::parse(&["e", job_id.as_str(), "", "reply"])
+                    .map_err(|e| ServiceProviderError::EventBuilderError(e.to_string()))?];
 
-                let tags = vec![
-                    // Reply tag directly to the JOB_REQUEST
-                    Tag::parse(&["e", &job_id.clone(), "", "reply"]).unwrap(),
-                ];
+                let result_json = serde_json::to_string(&job_result)?;
+                let job_result_event = EventBuilder::job_result(*event, result_json, 0, None)
+                    .map_err(|e| ServiceProviderError::EventBuilderError(e.to_string()))?
+                    .add_tags(tags)
+                    .to_event(&self.prover_agent_keys)
+                    .map_err(|e| ServiceProviderError::EventBuilderError(e.to_string()))?;
 
-                let response_json = serde_json::to_string(&job_result)?;
-                println!("Response JSON: {:?}", response_json);
-
-                let job_result_event: Event =
-                    EventBuilder::job_result(*event, response_json, 0, None)
-                        .unwrap()
-                        .add_tags(tags)
-                        .to_event(&self.prover_agent_keys)
-                        .unwrap();
-
-                let event_id = self.nostr_client.send_event(job_result_event).await?;
-                info!("Proving response published [{}]", event_id.to_string());
+                let result_event_id = job_result_event.id;
+                self.nostr_client.send_event(job_result_event).await?;
+                info!("Proving response published [{}]", result_event_id);
 
                 self.db.update_request(
                     &job_id,
@@ -282,7 +236,7 @@ impl ServiceProvider {
                 )?;
             }
             Err(e) => {
-                error!("Proof generation failed: {}", e);
+                error!("Proof generation failed for job {}: {}", &job_id, e);
                 self.db
                     .update_request(&job_id, None, RequestStatus::Failed)?;
             }
@@ -291,97 +245,27 @@ impl ServiceProvider {
         Ok(())
     }
 
-    // @TODO finish implement launch program with NIP-78, 94 and 96
-    async fn handle_event_launch_program(
-        &self,
-        event: Box<Event>,
-    ) -> Result<(), ServiceProviderError> {
-        info!("LAUNCH_PROGRAM request received [{}]", event.id);
-        let job_id = event.id.to_string();
-        println!("job_id {:?}", job_id);
-
-        let tags = &event.tags;
-        let params = extract_params_from_tags(tags);
-
-        println!("params {:?}", params);
-        // Request on the content
-        // Check request of the launch_program
-        let request_str = serde_json::to_string(&event.content).unwrap();
-        let request_value: Value = serde_json::from_str(&request_str).unwrap();
-        println!("request_value {:?}", request_value);
-
-        // TAGS
-        // let program_str = serde_json::to_string(&zkp_request.program).unwrap();
-        let program_value: Value = serde_json::from_str(&request_str).unwrap();
-        println!("program_value {:?}", program_value);
-
-        // Deserialze content
-        let zkp_request =
-            match ServiceProvider::deserialize_zkp_request_data(&event.content.to_owned()) {
-                Ok(zkp) => zkp,
-                Err(e) => {
-                    println!("{:?}", e);
-                    return Err(e);
-                }
-            };
-        println!("zkp_request {:?}", zkp_request);
-        //  TODO
-        // Look if this program is already launched and save
-        // if let Some(status) = self.db.get_program_status(&job_id)? {
-        //     match status {
-        //         RequestStatus::Completed => {
-        //             info!("Request LAUNCH_PROGRAM {} already processed, skipping", &job_id);
-        //             return Ok(());
-        //         }
-        //         RequestStatus::Failed => {
-        //             info!("Request LAUNCH_PROGRAM {} failed before, retrying", &job_id);
-        //         }
-        //         RequestStatus::Pending => {
-        //             info!("Request LAUNCH_PROGRAM {} is already pending, skipping", &job_id);
-        //             return Ok(());
-        //         }
-        //     }
-        // } else {
-        //     self.db
-        //         .insert_program_launched(&job_id, &request_value, &program_value)?;
-        // }
-
-        // Look program param
-
-        // Get URL and verify:
-        // @TODO NIP-78 and NIP-94 and 96 to be implemented
-        // Backend endpoint
-        // WASM program
-        // Maybe other way to do it
-
-        // TODO check
-
-        // Send JOB_RESULT
-        let response_json = serde_json::to_string(&request_str)?;
-        println!("Response JSON: {:?}", response_json);
-
-        let job_result_event: Event = EventBuilder::job_result(*event, response_json, 0, None)
-            .unwrap()
-            .to_event(&self.prover_agent_keys)
-            .unwrap();
-
-        let event_id = self.nostr_client.send_event(job_result_event).await?;
-        info!(
-            "LAUNCH PROGRAM response published [{}]",
-            event_id.to_string()
+    /// Program launch (kind 5700) is reserved for the pluggable-program roadmap:
+    /// provers will fetch WASM programs published as Nostr events (NIP-94/96)
+    /// or from IPFS. Until then, launch requests are acknowledged and ignored.
+    fn handle_launch_request(event: &Event) {
+        warn!(
+            "Program launch request [{}] ignored: uploaded programs are not supported yet.",
+            event.id
         );
-        Ok(())
     }
 }
 
 fn print_banner() {
-    let askeladd = text_to_ascii_art::to_art("Askeladd".to_string(), "standard", 0, 0, 0).unwrap();
-    let zk_proof = text_to_ascii_art::to_art("ZK proof DVM".to_string(), "small", 0, 0, 0).unwrap();
+    let askeladd = text_to_ascii_art::to_art("Askeladd".to_string(), "standard", 0, 0, 0)
+        .unwrap_or_else(|_| "Askeladd".to_string());
+    let zk_proof = text_to_ascii_art::to_art("ZK proof DVM".to_string(), "small", 0, 0, 0)
+        .unwrap_or_else(|_| "ZK proof DVM".to_string());
 
     println!("{}", "*".repeat(80).green());
     println!("\n{}", askeladd.green());
     println!("{}", zk_proof.green());
-    println!("{}", "Censorship global proving network".green());
+    println!("{}", "Censorship-resistant global proving network.".green());
     println!("{}", "Powered by Nostr and Circle STARKs.".green());
     println!("{}", "*".repeat(80).green());
 }

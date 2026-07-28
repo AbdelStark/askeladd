@@ -14,6 +14,6 @@ dotenv = "0.15"
 rusqlite = { version = "0.32.0", features = ["bundled"] }
 nostr-sdk = { git = "https://github.com/rust-nostr/nostr", rev = "f66ea1b" }
 log = "0.4.22"
-tokio = { version = "1", default-features = false }
+tokio = { version = "1", default-features = false, features = ["sync", "time"] }
 text-to-ascii-art = "0.1.10"
 colored = "2.0.0"
